@@ -35,6 +35,10 @@ function getProximoNumeroOficio() {
 
 export default function DashboardPage() {
   const proximoNumero = getProximoNumeroOficio();
+  const oficiosRecentes = mockOficios
+    .filter(o => o.tipo === 'enviado')
+    .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
+    .slice(0, 5);
 
   return (
     <div className="flex flex-col h-full">
@@ -81,7 +85,7 @@ export default function DashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockOficios.filter(o => o.tipo === 'enviado').slice(0, 5).map((oficio) => (
+                {oficiosRecentes.map((oficio) => (
                   <TableRow key={oficio.id}>
                     <TableCell className="font-medium">{oficio.numero}</TableCell>
                     <TableCell className="max-w-[200px] truncate">{oficio.assunto}</TableCell>
