@@ -80,7 +80,8 @@ export default function DashboardPage() {
                 <TableRow>
                   <TableHead>Número</TableHead>
                   <TableHead>Assunto</TableHead>
-                  <TableHead className="hidden md:table-cell">Destinatário</TableHead>
+                  <TableHead>Destinatário</TableHead>
+                  <TableHead>Responsável</TableHead>
                   <TableHead className="hidden sm:table-cell">Data</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>
@@ -93,8 +94,11 @@ export default function DashboardPage() {
                   <TableRow key={oficio.id}>
                     <TableCell className="font-medium">{oficio.numero}</TableCell>
                     <TableCell className="max-w-[200px] truncate">{oficio.assunto}</TableCell>
-                    <TableCell className="hidden md:table-cell">
+                    <TableCell>
                       {oficio.destinatario}
+                    </TableCell>
+                    <TableCell>
+                      {oficio.responsavel}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       {new Date(oficio.data).toLocaleDateString("pt-BR", {

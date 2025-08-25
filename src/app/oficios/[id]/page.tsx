@@ -11,7 +11,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { mockOficios, Oficio } from "@/lib/mock-data";
 import { Badge } from "@/components/ui/badge";
-import { FileEdit, Printer, Paperclip, ArrowLeft } from "lucide-react";
+import { FileEdit, Printer, User, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 const statusVariantMap: {
@@ -87,11 +87,16 @@ export default function OficioDetalhesPage({
                   {oficio.status.charAt(0).toUpperCase() + oficio.status.slice(1)}
                 </Badge>
               </div>
+              <Separator orientation="vertical" className="h-4" />
+              <div className="flex items-center">
+                <User className="mr-2 h-4 w-4" />
+                <span>Responsável: {oficio.responsavel}</span>
+              </div>
             </div>
             <Separator className="my-4" />
-            <div className="prose prose-sm dark:prose-invert max-w-none text-foreground whitespace-pre-wrap">
-              {oficio.conteudo}
-            </div>
+            <p className="text-sm text-muted-foreground">
+              Este ofício não possui corpo de texto detalhado. O registro foca no assunto, destinatário e responsável.
+            </p>
           </CardContent>
         </Card>
 
