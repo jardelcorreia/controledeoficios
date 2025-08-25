@@ -1,0 +1,17 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Permite acesso de leitura e escrita para as coleções da aplicação.
+    // ATENÇÃO: Para produção, implemente regras de segurança mais restritivas.
+    match /oficios/{document=**} {
+      allow read, write: if true;
+    }
+    match /config/{document=**} {
+      allow read, write: if true;
+    }
+    match /historico/{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
