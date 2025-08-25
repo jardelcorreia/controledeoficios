@@ -36,11 +36,13 @@ const statusVariantMap: {
 };
 
 export default function OficiosPage() {
+  const oficiosEnviados = mockOficios.filter(o => o.tipo === 'enviado');
+
   return (
     <div className="flex flex-col h-full">
       <PageHeader
         title="Gerenciamento de Ofícios"
-        description="Crie, edite e visualize os ofícios."
+        description="Crie, edite e visualize os ofícios enviados."
       >
         <Button asChild>
           <Link href="/oficios/novo">
@@ -54,7 +56,7 @@ export default function OficiosPage() {
           <CardHeader>
             <CardTitle>Lista de Ofícios</CardTitle>
             <CardDescription>
-              Todos os documentos enviados e recebidos.
+              Todos os documentos enviados.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -72,7 +74,7 @@ export default function OficiosPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockOficios.map((oficio) => (
+                {oficiosEnviados.map((oficio) => (
                   <TableRow key={oficio.id}>
                     <TableCell className="font-medium">{oficio.numero}</TableCell>
                     <TableCell className="max-w-[250px] truncate">{oficio.assunto}</TableCell>

@@ -72,9 +72,7 @@ export default function OficioDetalhesPage({
           <CardHeader>
             <CardTitle>{oficio.assunto}</CardTitle>
             <CardDescription>
-              {oficio.tipo === "enviado"
-                ? `Enviado para ${oficio.destinatario}`
-                : `Recebido de ${oficio.destinatario}`}
+              {`Enviado para ${oficio.destinatario}`}
               {" em "}
               {new Date(oficio.data).toLocaleDateString("pt-BR", {
                 timeZone: "UTC",
@@ -88,10 +86,6 @@ export default function OficioDetalhesPage({
                 <Badge variant={statusVariantMap[oficio.status] || "default"}>
                   {oficio.status.charAt(0).toUpperCase() + oficio.status.slice(1)}
                 </Badge>
-              </div>
-              <Separator orientation="vertical" className="h-4" />
-              <div>
-                Tipo: <Badge variant="outline">{oficio.tipo === 'enviado' ? 'Enviado' : 'Recebido'}</Badge>
               </div>
             </div>
             <Separator className="my-4" />

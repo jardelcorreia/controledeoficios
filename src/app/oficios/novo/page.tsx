@@ -24,19 +24,11 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   assunto: z.string().min(5, "O assunto deve ter pelo menos 5 caracteres."),
-  tipo: z.enum(["enviado", "recebido"]),
   destinatario: z.string().min(3, "O destinatário é obrigatório."),
   conteudo: z.string().min(20, "O conteúdo deve ter pelo menos 20 caracteres."),
 });
@@ -49,14 +41,13 @@ export default function NovoOficioPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       assunto: "",
-      tipo: "enviado",
       destinatario: "",
       conteudo: "",
     },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+    console.log({ ...values, tipo: 'enviado' });
     toast({
       title: "Ofício Criado!",
       description: "O novo ofício foi salvo com sucesso.",
@@ -97,37 +88,12 @@ export default function NovoOficioPage() {
                     </FormItem>
                   )}
                 />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="tipo"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tipo de Ofício</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o tipo" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="enviado">Enviado</SelectItem>
-                            <SelectItem value="recebido">Recebido</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
+                 <FormField
                     control={form.control}
                     name="destinatario"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Destinatário / Remetente</FormLabel>
+                        <FormLabel>Destinatário</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="Ex: Secretaria de Obras"
@@ -138,7 +104,6 @@ export default function NovoOficioPage() {
                       </FormItem>
                     )}
                   />
-                </div>
                 <FormField
                   control={form.control}
                   name="conteudo"

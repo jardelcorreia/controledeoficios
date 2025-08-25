@@ -35,12 +35,10 @@ function getProximoNumeroOficio() {
 
 export default function DashboardPage() {
   const totalEnviados = mockOficios.filter(o => o.tipo === 'enviado').length;
-  const totalRecebidos = mockOficios.filter(o => o.tipo === 'recebido').length;
   const proximoNumero = getProximoNumeroOficio();
 
   const stats = [
     { title: "Ofícios Enviados", value: totalEnviados.toString(), icon: ArrowUpRight },
-    { title: "Total de Ofícios", value: (totalEnviados + totalRecebidos).toString(), icon: Sigma },
   ];
 
   return (
@@ -50,7 +48,7 @@ export default function DashboardPage() {
         description="Visão geral do sistema de controle de ofícios."
       />
       <main className="flex-1 p-4 sm:p-6 space-y-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Card className="lg:col-span-1 flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Próximo Ofício</CardTitle>
@@ -99,7 +97,7 @@ export default function DashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockOficios.slice(0, 5).map((oficio) => (
+                {mockOficios.filter(o => o.tipo === 'enviado').slice(0, 5).map((oficio) => (
                   <TableRow key={oficio.id}>
                     <TableCell className="font-medium">{oficio.numero}</TableCell>
                     <TableCell className="max-w-[200px] truncate">{oficio.assunto}</TableCell>
