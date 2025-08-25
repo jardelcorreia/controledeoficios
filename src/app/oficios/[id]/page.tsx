@@ -61,9 +61,11 @@ export default function OficioDetalhesPage({
             <Printer className="mr-2 h-4 w-4" />
             Imprimir
           </Button>
-          <Button>
-            <FileEdit className="mr-2 h-4 w-4" />
-            Editar
+          <Button asChild>
+            <Link href={`/oficios/${oficio.id}/editar`}>
+              <FileEdit className="mr-2 h-4 w-4" />
+              Editar
+            </Link>
           </Button>
         </div>
       </PageHeader>

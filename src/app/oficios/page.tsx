@@ -113,9 +113,11 @@ export default function OficiosPage() {
                               Visualizar
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <FileEdit className="mr-2 h-4 w-4" />
-                            Editar
+                          <DropdownMenuItem asChild>
+                            <Link href={`/oficios/${oficio.id}/editar`}>
+                              <FileEdit className="mr-2 h-4 w-4" />
+                              Editar
+                            </Link>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
