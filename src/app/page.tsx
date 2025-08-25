@@ -1,9 +1,11 @@
 
 import PageHeader from "@/components/PageHeader";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { mockHistorico, mockOficios } from "@/lib/mock-data";
 import { ArrowUpRight, Sigma, FilePlus2 } from "lucide-react";
+import Link from "next/link";
 
 function getProximoNumeroOficio() {
   const oficiosEnviados = mockOficios
@@ -39,13 +41,20 @@ export default function DashboardPage() {
       />
       <main className="flex-1 p-4 sm:p-6 space-y-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-          <Card className="lg:col-span-1">
+          <Card className="lg:col-span-1 flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Próximo Ofício</CardTitle>
               <FilePlus2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{proximoNumero}</div>
+            <CardContent className="flex-1 flex flex-col justify-between">
+              <div>
+                <div className="text-2xl font-bold">{proximoNumero}</div>
+              </div>
+              <Button asChild className="mt-2 w-full">
+                <Link href="/oficios/novo">
+                  Usar este número
+                </Link>
+              </Button>
             </CardContent>
           </Card>
           {stats.map((stat) => (
