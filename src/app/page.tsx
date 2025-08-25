@@ -30,10 +30,13 @@ async function DashboardPage() {
               <CardContent className="flex-1 flex flex-col justify-between">
                 <div>
                   <div className="text-2xl font-bold">{proximoNumero}</div>
+                  <p className="text-xs text-muted-foreground">
+                    Este será o número do próximo ofício a ser criado.
+                  </p>
                 </div>
-                <Button asChild className="mt-2 w-full">
+                <Button asChild className="mt-4 w-full">
                   <Link href="/oficios/novo">
-                    Usar este número
+                    Criar Novo Ofício
                   </Link>
                 </Button>
               </CardContent>

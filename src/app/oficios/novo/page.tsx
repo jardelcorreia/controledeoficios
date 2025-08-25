@@ -27,6 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { createOficio, getProximoNumeroOficio } from "@/lib/oficios";
 import { useEffect, useState, useTransition } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const formSchema = z.object({
   assunto: z.string().min(5, "O assunto deve ter pelo menos 5 caracteres."),
@@ -37,11 +38,11 @@ const formSchema = z.object({
 export default function NovoOficioPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const [proximoNumero, setProximoNumero] = useState("Carregando...");
+  const [proximoNumero, setProximoNumero] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    getProximoNumeroOficio().then(setProximoNumero);
+    getProximoNumeroOficio().then(setProximoNumero).catch(() => setProximoNumero('Erro!'));
   }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -56,7 +57,7 @@ export default function NovoOficioPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     startTransition(async () => {
       try {
-        await createOficio(values);
+        const novoOficioId = await createOficio(values);
         toast({
           title: "Ofício Criado!",
           description: `O ofício nº ${proximoNumero} foi salvo com sucesso.`,
@@ -65,7 +66,7 @@ export default function NovoOficioPage() {
       } catch (error) {
          toast({
           title: "Erro ao criar ofício",
-          description: "Não foi possível criar o ofício. Tente novamente.",
+          description: "Não foi possível criar o ofício. Verifique as configurações e tente novamente.",
           variant: "destructive",
         });
       }
@@ -86,9 +87,14 @@ export default function NovoOficioPage() {
                 <CardTitle>Detalhes do Ofício</CardTitle>
                 <CardDescription>
                   O número do ofício a ser criado é:{" "}
-                  <span className="font-bold text-primary">
-                    {proximoNumero}
-                  </span>
+                  {proximoNumero ? (
+                     <span className="font-bold text-primary">
+                        {proximoNumero}
+                     </span>
+                  ) : (
+                     <Skeleton className="inline-block h-5 w-40" />
+                  )
+                  }
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -145,7 +151,7 @@ export default function NovoOficioPage() {
                 <Button variant="outline" asChild>
                   <Link href="/oficios">Cancelar</Link>
                 </Button>
-                <Button type="submit" disabled={isPending}>
+                <Button type="submit" disabled={isPending || !proximoNumero}>
                   {isPending ? "Salvando..." : "Salvar Ofício"}
                 </Button>
               </CardFooter>
