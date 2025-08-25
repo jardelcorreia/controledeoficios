@@ -3,9 +3,19 @@ import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { mockHistorico, mockOficios } from "@/lib/mock-data";
-import { ArrowUpRight, Sigma, FilePlus2 } from "lucide-react";
+import { mockOficios } from "@/lib/mock-data";
+import { ArrowUpRight, Sigma, FilePlus2, Eye } from "lucide-react";
 import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+
+const statusVariantMap: {
+  [key: string]: "default" | "secondary" | "destructive" | "outline";
+} = {
+  pendente: "secondary",
+  respondido: "default",
+  arquivado: "outline",
+};
+
 
 function getProximoNumeroOficio() {
   const oficiosEnviados = mockOficios
@@ -71,26 +81,52 @@ export default function DashboardPage() {
         </div>
         <Card>
           <CardHeader>
-            <CardTitle>Atividade Recente</CardTitle>
-            <CardDescription>Últimas ações registradas no sistema.</CardDescription>
+            <CardTitle>Ofícios Recentes</CardTitle>
+            <CardDescription>Últimos ofícios criados no sistema.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
+             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Ação</TableHead>
-                  <TableHead className="hidden md:table-cell">Usuário</TableHead>
-                  <TableHead>Data e Hora</TableHead>
-                  <TableHead className="hidden lg:table-cell">Detalhes</TableHead>
+                  <TableHead>Número</TableHead>
+                  <TableHead>Assunto</TableHead>
+                  <TableHead className="hidden md:table-cell">Destinatário</TableHead>
+                  <TableHead className="hidden sm:table-cell">Data</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>
+                    <span className="sr-only">Ações</span>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockHistorico.slice(0, 5).map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.acao}</TableCell>
-                    <TableCell className="hidden md:table-cell">{item.usuario}</TableCell>
-                    <TableCell>{item.data}</TableCell>
-                    <TableCell className="hidden lg:table-cell">{item.detalhes}</TableCell>
+                {mockOficios.slice(0, 5).map((oficio) => (
+                  <TableRow key={oficio.id}>
+                    <TableCell className="font-medium">{oficio.numero}</TableCell>
+                    <TableCell className="max-w-[200px] truncate">{oficio.assunto}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {oficio.destinatario}
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      {new Date(oficio.data).toLocaleDateString("pt-BR", {
+                        timeZone: "UTC",
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={statusVariantMap[oficio.status] || "default"}
+                      >
+                        {oficio.status.charAt(0).toUpperCase() +
+                          oficio.status.slice(1)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                       <Button asChild variant="ghost" size="icon">
+                        <Link href={`/oficios/${oficio.id}`}>
+                          <Eye className="h-4 w-4" />
+                           <span className="sr-only">Visualizar</span>
+                        </Link>
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
