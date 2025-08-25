@@ -27,6 +27,8 @@ import { useToast } from "@/hooks/use-toast";
 import { getNumeracaoConfig, saveNumeracaoConfig } from "@/lib/oficios";
 import { useEffect, useTransition, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Terminal } from "lucide-react";
 
 
 const formSchema = z.object({
@@ -40,6 +42,7 @@ export default function ConfiguracoesPage() {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,14 +61,10 @@ export default function ConfiguracoesPage() {
       setLoading(false);
     }).catch(err => {
         console.error(err);
+        setError(err);
         setLoading(false);
-        toast({
-            title: "Erro de Conexão",
-            description: "Não foi possível carregar as configurações. Verifique se a API do Firestore está ativa no seu projeto Firebase.",
-            variant: "destructive"
-        });
     });
-  }, [form, toast]);
+  }, [form]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     startTransition(async () => {
@@ -83,6 +82,32 @@ export default function ConfiguracoesPage() {
         });
       }
     });
+  }
+   if (error) {
+    const isPermissionError = error.message.includes("PERMISSION_DENIED");
+    return (
+      <div className="flex flex-col h-full">
+        <PageHeader
+          title="Configurações"
+          description="Ajuste as configurações gerais do sistema."
+        />
+        <main className="flex-1 p-4 sm:p-6">
+          <Alert variant={isPermissionError ? "destructive" : "default"}>
+            <Terminal className="h-4 w-4" />
+            <AlertTitle>
+              {isPermissionError
+                ? "Erro de Permissão"
+                : "Erro de Conexão"}
+            </AlertTitle>
+            <AlertDescription>
+              {isPermissionError
+                ? "As regras de segurança do Firestore não permitem o acesso. Verifique se o arquivo firestore.rules foi implantado corretamente."
+                : "Não foi possível carregar os dados. Verifique sua conexão com a internet ou as configurações do Firebase."}
+            </AlertDescription>
+          </Alert>
+        </main>
+      </div>
+    );
   }
 
   if (loading) {
