@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { mockOficios, Oficio } from "@/lib/mock-data";
-import { FileEdit, Printer, User, ArrowLeft } from "lucide-react";
+import { FileEdit, User, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 export default function OficioDetalhesPage({
@@ -48,10 +48,6 @@ export default function OficioDetalhesPage({
         description={`Detalhes do ofício sobre "${oficio.assunto}"`}
       >
         <div className="flex gap-2">
-          <Button variant="outline">
-            <Printer className="mr-2 h-4 w-4" />
-            Imprimir
-          </Button>
           <Button asChild>
             <Link href={`/oficios/${oficio.id}/editar`}>
               <FileEdit className="mr-2 h-4 w-4" />
