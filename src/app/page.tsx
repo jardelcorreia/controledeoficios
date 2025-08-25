@@ -1,8 +1,9 @@
+
 import PageHeader from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { mockHistorico, mockOficios } from "@/lib/mock-data";
-import { ArrowDownLeft, ArrowUpRight, Clock, Sigma, FilePlus2 } from "lucide-react";
+import { ArrowUpRight, Sigma, FilePlus2 } from "lucide-react";
 
 function getProximoNumeroOficio() {
   const oficiosEnviados = mockOficios
@@ -23,13 +24,10 @@ function getProximoNumeroOficio() {
 export default function DashboardPage() {
   const totalEnviados = mockOficios.filter(o => o.tipo === 'enviado').length;
   const totalRecebidos = mockOficios.filter(o => o.tipo === 'recebido').length;
-  const pendentes = mockOficios.filter(o => o.status === 'pendente').length;
   const proximoNumero = getProximoNumeroOficio();
 
   const stats = [
     { title: "Ofícios Enviados", value: totalEnviados.toString(), icon: ArrowUpRight },
-    { title: "Ofícios Recebidos", value: totalRecebidos.toString(), icon: ArrowDownLeft },
-    { title: "Pendentes de Resposta", value: pendentes.toString(), icon: Clock },
     { title: "Total de Ofícios", value: (totalEnviados + totalRecebidos).toString(), icon: Sigma },
   ];
 
