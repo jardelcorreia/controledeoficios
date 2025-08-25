@@ -10,17 +10,8 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { mockOficios, Oficio } from "@/lib/mock-data";
-import { Badge } from "@/components/ui/badge";
 import { FileEdit, Printer, User, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-
-const statusVariantMap: {
-  [key: string]: "default" | "secondary" | "destructive" | "outline";
-} = {
-  pendente: "secondary",
-  respondido: "default",
-  arquivado: "outline",
-};
 
 export default function OficioDetalhesPage({
   params,
@@ -83,13 +74,6 @@ export default function OficioDetalhesPage({
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-              <div>
-                Status:{" "}
-                <Badge variant={statusVariantMap[oficio.status] || "default"}>
-                  {oficio.status.charAt(0).toUpperCase() + oficio.status.slice(1)}
-                </Badge>
-              </div>
-              <Separator orientation="vertical" className="h-4" />
               <div className="flex items-center">
                 <User className="mr-2 h-4 w-4" />
                 <span>Responsável: {oficio.responsavel}</span>

@@ -12,7 +12,6 @@ import {
 import { mockOficios } from "@/lib/mock-data";
 import { PlusCircle, MoreHorizontal, FileEdit, Eye } from "lucide-react";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,14 +25,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-const statusVariantMap: {
-  [key: string]: "default" | "secondary" | "destructive" | "outline";
-} = {
-  pendente: "secondary",
-  respondido: "default",
-  arquivado: "outline",
-};
 
 export default function OficiosPage() {
   const oficiosEnviados = mockOficios.filter(o => o.tipo === 'enviado');
@@ -68,7 +59,6 @@ export default function OficiosPage() {
                   <TableHead>Destinatário</TableHead>
                   <TableHead>Responsável</TableHead>
                   <TableHead className="hidden sm:table-cell">Data</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>
                     <span className="sr-only">Ações</span>
                   </TableHead>
@@ -89,14 +79,6 @@ export default function OficiosPage() {
                       {new Date(oficio.data).toLocaleDateString("pt-BR", {
                         timeZone: "UTC",
                       })}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={statusVariantMap[oficio.status] || "default"}
-                      >
-                        {oficio.status.charAt(0).toUpperCase() +
-                          oficio.status.slice(1)}
-                      </Badge>
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>

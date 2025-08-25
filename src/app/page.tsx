@@ -6,16 +6,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { mockOficios } from "@/lib/mock-data";
 import { ArrowUpRight, Sigma, FilePlus2, Eye } from "lucide-react";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-
-const statusVariantMap: {
-  [key: string]: "default" | "secondary" | "destructive" | "outline";
-} = {
-  pendente: "secondary",
-  respondido: "default",
-  arquivado: "outline",
-};
-
 
 function getProximoNumeroOficio() {
   const oficiosEnviados = mockOficios
@@ -83,7 +73,6 @@ export default function DashboardPage() {
                   <TableHead>Destinatário</TableHead>
                   <TableHead>Responsável</TableHead>
                   <TableHead className="hidden sm:table-cell">Data</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>
                     <span className="sr-only">Ações</span>
                   </TableHead>
@@ -104,14 +93,6 @@ export default function DashboardPage() {
                       {new Date(oficio.data).toLocaleDateString("pt-BR", {
                         timeZone: "UTC",
                       })}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={statusVariantMap[oficio.status] || "default"}
-                      >
-                        {oficio.status.charAt(0).toUpperCase() +
-                          oficio.status.slice(1)}
-                      </Badge>
                     </TableCell>
                     <TableCell>
                        <Button asChild variant="ghost" size="icon">

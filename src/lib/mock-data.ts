@@ -7,7 +7,6 @@ export type Oficio = {
   destinatario: string;
   responsavel: string;
   data: string;
-  status: "pendente" | "respondido" | "arquivado";
 };
 
 export type Historico = {
@@ -27,7 +26,6 @@ export const mockOficios: Oficio[] = [
     destinatario: "Secretaria de Obras",
     responsavel: "João Silva",
     data: "2024-07-15",
-    status: "pendente",
   },
   {
     id: "2",
@@ -37,7 +35,6 @@ export const mockOficios: Oficio[] = [
     destinatario: "Departamento de Pessoal",
     responsavel: "Maria Oliveira",
     data: "2024-07-12",
-    status: "respondido",
   },
   {
     id: "4",
@@ -47,7 +44,6 @@ export const mockOficios: Oficio[] = [
     destinatario: "Tribunal de Contas",
     responsavel: "Carlos Pereira",
     data: "2024-07-08",
-    status: "arquivado",
   },
     {
     id: "5",
@@ -57,7 +53,6 @@ export const mockOficios: Oficio[] = [
     destinatario: "Setor de Compras",
     responsavel: "Ana Costa",
     data: "2024-07-05",
-    status: "pendente",
   },
 ];
 
