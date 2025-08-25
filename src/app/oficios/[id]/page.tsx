@@ -8,19 +8,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { mockOficios, Oficio } from "@/lib/mock-data";
+import { getOficioById } from "@/lib/oficios";
 import { FileEdit, User, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
-export default function OficioDetalhesPage({
+export default async function OficioDetalhesPage({
   params,
 }: {
   params: { id: string };
 }) {
-  const oficio: Oficio | undefined = mockOficios.find(
-    (o) => o.id === params.id
-  );
+  const oficio = await getOficioById(params.id);
 
   if (!oficio) {
     return (

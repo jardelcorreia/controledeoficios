@@ -25,7 +25,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { mockOficios } from "@/lib/mock-data";
+import { createOficio, getProximoNumeroOficio } from "@/lib/oficios";
+import { useEffect, useState, useTransition } from "react";
 
 const formSchema = z.object({
   assunto: z.string().min(5, "O assunto deve ter pelo menos 5 caracteres."),
@@ -33,26 +34,15 @@ const formSchema = z.object({
   responsavel: z.string().min(3, "O responsável é obrigatório."),
 });
 
-function getProximoNumeroOficio() {
-  const oficiosEnviados = mockOficios
-    .filter(o => o.tipo === 'enviado' && o.numero.includes('/2024-GAB'))
-    .map(o => {
-      const match = o.numero.match(/^(\d+)/);
-      return match ? parseInt(match[1], 10) : 0;
-    })
-    .sort((a, b) => b - a);
-
-  const ultimoNumero = oficiosEnviados.length > 0 ? oficiosEnviados[0] : 0;
-  const proximoNumero = (ultimoNumero + 1).toString().padStart(3, '0');
-  
-  return `${proximoNumero}/2024-GAB`;
-}
-
-
 export default function NovoOficioPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const proximoNumero = getProximoNumeroOficio();
+  const [proximoNumero, setProximoNumero] = useState("Carregando...");
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    getProximoNumeroOficio().then(setProximoNumero);
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -63,13 +53,23 @@ export default function NovoOficioPage() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log({ ...values, tipo: 'enviado', numero: proximoNumero });
-    toast({
-      title: "Ofício Criado!",
-      description: `O ofício nº ${proximoNumero} foi salvo com sucesso.`,
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    startTransition(async () => {
+      try {
+        await createOficio(values);
+        toast({
+          title: "Ofício Criado!",
+          description: `O ofício nº ${proximoNumero} foi salvo com sucesso.`,
+        });
+        router.push("/oficios");
+      } catch (error) {
+         toast({
+          title: "Erro ao criar ofício",
+          description: "Não foi possível criar o ofício. Tente novamente.",
+          variant: "destructive",
+        });
+      }
     });
-    router.push("/oficios");
   }
 
   return (
@@ -85,7 +85,10 @@ export default function NovoOficioPage() {
               <CardHeader>
                 <CardTitle>Detalhes do Ofício</CardTitle>
                 <CardDescription>
-                  O número do ofício a ser criado é: <span className="font-bold text-primary">{proximoNumero}</span>
+                  O número do ofício a ser criado é:{" "}
+                  <span className="font-bold text-primary">
+                    {proximoNumero}
+                  </span>
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -105,44 +108,46 @@ export default function NovoOficioPage() {
                     </FormItem>
                   )}
                 />
-                 <FormField
-                    control={form.control}
-                    name="destinatario"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Destinatário</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Ex: Secretaria de Obras"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="responsavel"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Responsável</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Ex: Nome do responsável pelo envio"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <FormField
+                  control={form.control}
+                  name="destinatario"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Destinatário</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Ex: Secretaria de Obras"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="responsavel"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Responsável</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Ex: Nome do responsável pelo envio"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </CardContent>
               <CardFooter className="flex justify-end gap-2">
                 <Button variant="outline" asChild>
                   <Link href="/oficios">Cancelar</Link>
                 </Button>
-                <Button type="submit">Salvar Ofício</Button>
+                <Button type="submit" disabled={isPending}>
+                  {isPending ? "Salvando..." : "Salvar Ofício"}
+                </Button>
               </CardFooter>
             </form>
           </Form>

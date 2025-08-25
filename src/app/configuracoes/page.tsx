@@ -24,6 +24,10 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
+import { getNumeracaoConfig, saveNumeracaoConfig } from "@/lib/oficios";
+import { useEffect, useTransition, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+
 
 const formSchema = z.object({
   prefixo: z.string().optional(),
@@ -33,22 +37,86 @@ const formSchema = z.object({
 
 export default function ConfiguracoesPage() {
   const { toast } = useToast();
+  const [isPending, startTransition] = useTransition();
+  const [loading, setLoading] = useState(true);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      prefixo: "OF",
-      sufixo: "GAB",
+      prefixo: "",
+      sufixo: "",
       anoBase: new Date().getFullYear(),
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    toast({
-      title: "Configurações Salvas!",
-      description: "As configurações de numeração foram atualizadas.",
+  useEffect(() => {
+    setLoading(true);
+    getNumeracaoConfig().then((config) => {
+      form.reset(config);
+      setLoading(false);
+    }).catch(err => {
+        console.error(err);
+        setLoading(false);
+        toast({
+            title: "Erro de Conexão",
+            description: "Não foi possível carregar as configurações. Verifique se a API do Firestore está ativa no seu projeto Firebase.",
+            variant: "destructive"
+        });
     });
+  }, [form, toast]);
+
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    startTransition(async () => {
+       try {
+        await saveNumeracaoConfig(values);
+        toast({
+          title: "Configurações Salvas!",
+          description: "As configurações de numeração foram atualizadas.",
+        });
+      } catch (error) {
+        toast({
+          title: "Erro ao salvar",
+          description: "Não foi possível salvar as configurações.",
+          variant: "destructive",
+        });
+      }
+    });
+  }
+
+  if (loading) {
+    return (
+       <div className="flex flex-col h-full">
+        <PageHeader
+          title="Configurações"
+          description="Ajuste as configurações gerais do sistema."
+        />
+        <main className="flex-1 p-4 sm:p-6">
+          <Card className="max-w-2xl mx-auto">
+             <CardHeader>
+                <Skeleton className="h-8 w-1/2" />
+                <Skeleton className="h-4 w-3/4" />
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+               <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            </CardContent>
+            <CardFooter className="border-t px-6 py-4">
+              <Skeleton className="h-10 w-40" />
+            </CardFooter>
+          </Card>
+        </main>
+      </div>
+    )
   }
 
   return (
@@ -120,7 +188,9 @@ export default function ConfiguracoesPage() {
                 />
               </CardContent>
               <CardFooter className="border-t px-6 py-4">
-                <Button type="submit">Salvar Configurações</Button>
+                <Button type="submit" disabled={isPending}>
+                  {isPending ? "Salvando..." : "Salvar Configurações"}
+                </Button>
               </CardFooter>
             </form>
           </Form>
