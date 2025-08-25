@@ -21,7 +21,7 @@ export type Historico = {
 export const mockOficios: Oficio[] = [
   {
     id: "1",
-    numero: "001/2024-GAB",
+    numero: "060/2024-GAB",
     assunto: "Solicitação de informações sobre o projeto X",
     tipo: "enviado",
     destinatario: "Secretaria de Obras",
@@ -31,7 +31,7 @@ export const mockOficios: Oficio[] = [
   },
   {
     id: "2",
-    numero: "002/2024-GAB",
+    numero: "061/2024-GAB",
     assunto: "Convite para reunião de alinhamento",
     tipo: "enviado",
     destinatario: "Departamento de Pessoal",
@@ -41,7 +41,7 @@ export const mockOficios: Oficio[] = [
   },
   {
     id: "4",
-    numero: "003/2024-GAB",
+    numero: "062/2024-GAB",
     assunto: "Encaminhamento de relatório anual",
     tipo: "enviado",
     destinatario: "Tribunal de Contas",
@@ -51,7 +51,7 @@ export const mockOficios: Oficio[] = [
   },
     {
     id: "5",
-    numero: "004/2024-GAB",
+    numero: "063/2024-GAB",
     assunto: "Reiteração de pedido de material de escritório",
     tipo: "enviado",
     destinatario: "Setor de Compras",
