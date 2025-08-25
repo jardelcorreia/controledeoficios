@@ -82,7 +82,7 @@ export default function OficioDetalhesPage({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-4">
+            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
               <div>
                 Status:{" "}
                 <Badge variant={statusVariantMap[oficio.status] || "default"}>
@@ -95,21 +95,6 @@ export default function OficioDetalhesPage({
                 <span>Responsável: {oficio.responsavel}</span>
               </div>
             </div>
-            <Separator className="my-4" />
-            <p className="text-sm text-muted-foreground">
-              Este ofício não possui corpo de texto detalhado. O registro foca no assunto, destinatário e responsável.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Anexos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mt-4">
-              Nenhum anexo encontrado.
-            </p>
           </CardContent>
         </Card>
       </main>
