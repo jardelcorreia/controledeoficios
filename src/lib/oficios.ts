@@ -14,6 +14,7 @@ import {
   limit,
   writeBatch,
   where,
+  setDoc,
 } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 
@@ -77,7 +78,7 @@ async function getProximoNumeroSequencial(ano: number, numeroInicial: number): P
   const querySnapshot = await getDocs(q);
 
   if (querySnapshot.empty) {
-    return numeroInicial > 1 ? numeroInicial : 1;
+    return numeroInicial > 0 ? numeroInicial : 1;
   }
 
   const ultimoOficio = querySnapshot.docs[0].data() as Oficio;
@@ -161,8 +162,8 @@ export async function updateOficio(
 // --- Configurações de Numeração ---
 
 export type NumeracaoConfig = {
-    prefixo: string;
-    sufixo: string;
+    prefixo?: string;
+    sufixo?: string;
     anoBase: number;
     numeroInicial: number;
 }
@@ -170,9 +171,9 @@ export type NumeracaoConfig = {
 const CONFIG_COLLECTION = 'config';
 const NUMERACAO_DOC_ID = 'numeracao';
 
-export async function saveNumeracaoConfig(config: NumeracaoConfig) {
+export async function saveNumeracaoConfig(config: Omit<NumeracaoConfig, 'id'>) {
     const docRef = doc(db, CONFIG_COLLECTION, NUMERACAO_DOC_ID);
-    await writeBatch(db).set(docRef, config).commit();
+    await setDoc(docRef, config);
     revalidatePath('/configuracoes');
     revalidatePath('/');
     revalidatePath('/oficios/novo');

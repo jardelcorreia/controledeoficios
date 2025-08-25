@@ -24,7 +24,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
-import { getNumeracaoConfig, saveNumeracaoConfig } from "@/lib/oficios";
+import { getNumeracaoConfig, saveNumeracaoConfig, NumeracaoConfig } from "@/lib/oficios";
 import { useEffect, useTransition, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -57,8 +57,10 @@ export default function ConfiguracoesPage() {
   useEffect(() => {
     setLoading(true);
     getNumeracaoConfig().then((config) => {
-      form.reset(config);
-      setLoading(false);
+        if (config) {
+            form.reset(config);
+        }
+        setLoading(false);
     }).catch(err => {
         console.error(err);
         setError(err);
@@ -175,7 +177,7 @@ export default function ConfiguracoesPage() {
                     <FormItem>
                       <FormLabel>Prefixo</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ex: OF" {...field} />
+                        <Input placeholder="Ex: OF" {...field} value={field.value || ''} />
                       </FormControl>
                       <FormDescription>
                         Texto que aparece antes do número do ofício.
