@@ -88,7 +88,9 @@ async function getProximoNumeroSequencial(ano: number): Promise<number> {
 
 async function getNumeroFormatado(numeroSequencial: number, ano: number, prefixo?: string, sufixo?: string) {
     const numeroFormatado = numeroSequencial.toString().padStart(3, '0');
-    return `${prefixo || 'OF'}-${numeroFormatado}/${ano}-${sufixo || 'GAB'}`;
+    const partePrefixo = `${prefixo || 'OF'}-${numeroFormatado}/${ano}`;
+    const parteSufixo = sufixo ? `-${sufixo}` : '';
+    return `${partePrefixo}${parteSufixo}`;
 }
 
 
