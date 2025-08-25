@@ -1,15 +1,36 @@
 import PageHeader from "@/components/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { mockHistorico } from "@/lib/mock-data";
-import { ArrowDownLeft, ArrowUpRight, Clock, Sigma } from "lucide-react";
+import { mockHistorico, mockOficios } from "@/lib/mock-data";
+import { ArrowDownLeft, ArrowUpRight, Clock, Sigma, FilePlus2 } from "lucide-react";
+
+function getProximoNumeroOficio() {
+  const oficiosEnviados = mockOficios
+    .filter(o => o.tipo === 'enviado' && o.numero.includes('/2024-GAB'))
+    .map(o => {
+      const match = o.numero.match(/^(\d+)/);
+      return match ? parseInt(match[1], 10) : 0;
+    })
+    .sort((a, b) => b - a);
+
+  const ultimoNumero = oficiosEnviados.length > 0 ? oficiosEnviados[0] : 0;
+  const proximoNumero = (ultimoNumero + 1).toString().padStart(3, '0');
+  
+  return `${proximoNumero}/2024-GAB`;
+}
+
 
 export default function DashboardPage() {
+  const totalEnviados = mockOficios.filter(o => o.tipo === 'enviado').length;
+  const totalRecebidos = mockOficios.filter(o => o.tipo === 'recebido').length;
+  const pendentes = mockOficios.filter(o => o.status === 'pendente').length;
+  const proximoNumero = getProximoNumeroOficio();
+
   const stats = [
-    { title: "Ofícios Enviados", value: "125", icon: ArrowUpRight },
-    { title: "Ofícios Recebidos", value: "88", icon: ArrowDownLeft },
-    { title: "Pendentes de Resposta", value: "12", icon: Clock },
-    { title: "Total de Ofícios", value: "213", icon: Sigma },
+    { title: "Ofícios Enviados", value: totalEnviados.toString(), icon: ArrowUpRight },
+    { title: "Ofícios Recebidos", value: totalRecebidos.toString(), icon: ArrowDownLeft },
+    { title: "Pendentes de Resposta", value: pendentes.toString(), icon: Clock },
+    { title: "Total de Ofícios", value: (totalEnviados + totalRecebidos).toString(), icon: Sigma },
   ];
 
   return (
@@ -19,7 +40,16 @@ export default function DashboardPage() {
         description="Visão geral do sistema de controle de ofícios."
       />
       <main className="flex-1 p-4 sm:p-6 space-y-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <Card className="lg:col-span-1">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Próximo Ofício</CardTitle>
+              <FilePlus2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{proximoNumero}</div>
+            </CardContent>
+          </Card>
           {stats.map((stat) => (
             <Card key={stat.title}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
