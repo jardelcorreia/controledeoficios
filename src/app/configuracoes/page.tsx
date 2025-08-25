@@ -33,6 +33,7 @@ const formSchema = z.object({
   prefixo: z.string().optional(),
   sufixo: z.string().optional(),
   anoBase: z.coerce.number().min(2000).max(2100),
+  numeroInicial: z.coerce.number().min(1),
 });
 
 export default function ConfiguracoesPage() {
@@ -46,6 +47,7 @@ export default function ConfiguracoesPage() {
       prefixo: "",
       sufixo: "",
       anoBase: new Date().getFullYear(),
+      numeroInicial: 1,
     },
   });
 
@@ -109,6 +111,10 @@ export default function ConfiguracoesPage() {
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="h-10 w-full" />
               </div>
+               <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-10 w-full" />
+              </div>
             </CardContent>
             <CardFooter className="border-t px-6 py-4">
               <Skeleton className="h-10 w-40" />
@@ -160,10 +166,10 @@ export default function ConfiguracoesPage() {
                     <FormItem>
                       <FormLabel>Sufixo</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ex: GAB" {...field} />
+                        <Input placeholder="Ex: GAB" {...field} value={field.value || ''} />
                       </FormControl>
                       <FormDescription>
-                        Texto que aparece após o ano.
+                        Texto que aparece após o ano. (Opcional)
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -181,6 +187,22 @@ export default function ConfiguracoesPage() {
                       <FormDescription>
                         O ano corrente para a numeração. A contagem reinicia a
                         cada ano.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="numeroInicial"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número Inicial</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="Ex: 1" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        A contagem iniciará a partir deste número a cada ano, a menos que já exista um número maior.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

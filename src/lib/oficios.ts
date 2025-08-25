@@ -13,6 +13,7 @@ import {
   orderBy,
   limit,
   writeBatch,
+  where,
 } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 
@@ -64,26 +65,26 @@ export async function getOficiosRecentes(count: number): Promise<Oficio[]> {
 
 // --- Lógica de Numeração ---
 
-async function getProximoNumeroSequencial(ano: number): Promise<number> {
+async function getProximoNumeroSequencial(ano: number, numeroInicial: number): Promise<number> {
    const q = query(
     collection(db, OFICIOS_COLLECTION),
+    where('data', '>=', `${ano}-01-01T00:00:00.000Z`),
+    where('data', '<=', `${ano}-12-31T23:59:59.999Z`),
+    orderBy('data', 'desc'),
     orderBy('numeroSequencial', 'desc'),
     limit(1)
   );
   const querySnapshot = await getDocs(q);
-  
+
   if (querySnapshot.empty) {
-    return 1;
+    return numeroInicial > 1 ? numeroInicial : 1;
   }
-  
+
   const ultimoOficio = querySnapshot.docs[0].data() as Oficio;
-  const ultimoAno = new Date(ultimoOficio.data).getFullYear();
+  
+  const proximoNumero = ultimoOficio.numeroSequencial + 1;
 
-  if(ano > ultimoAno) {
-      return 1;
-  }
-
-  return ultimoOficio.numeroSequencial + 1;
+  return Math.max(proximoNumero, numeroInicial);
 }
 
 async function getNumeroFormatado(numeroSequencial: number, ano: number, prefixo?: string, sufixo?: string) {
@@ -95,8 +96,8 @@ async function getNumeroFormatado(numeroSequencial: number, ano: number, prefixo
 
 
 export async function getProximoNumeroOficio(): Promise<string> {
-    const { anoBase, prefixo, sufixo } = await getNumeracaoConfig();
-    const proximoNumero = await getProximoNumeroSequencial(anoBase);
+    const { anoBase, prefixo, sufixo, numeroInicial } = await getNumeracaoConfig();
+    const proximoNumero = await getProximoNumeroSequencial(anoBase, numeroInicial);
     return getNumeroFormatado(proximoNumero, anoBase, prefixo, sufixo);
 }
 
@@ -108,8 +109,8 @@ export async function createOficio(data: {
   destinatario: string;
   responsavel: string;
 }) {
-  const { anoBase, prefixo, sufixo } = await getNumeracaoConfig();
-  const numeroSequencial = await getProximoNumeroSequencial(anoBase);
+  const { anoBase, prefixo, sufixo, numeroInicial } = await getNumeracaoConfig();
+  const numeroSequencial = await getProximoNumeroSequencial(anoBase, numeroInicial);
   const numero = await getNumeroFormatado(numeroSequencial, anoBase, prefixo, sufixo);
 
   const newOficio: Omit<Oficio, 'id'> = {
@@ -120,7 +121,7 @@ export async function createOficio(data: {
   };
 
   const docRef = await addDoc(collection(db, OFICIOS_COLLECTION), newOficio);
-  
+
   await addHistorico({
       acao: 'Criação de Ofício',
       detalhes: `Ofício nº ${numero} criado.`,
@@ -145,7 +146,7 @@ export async function updateOficio(
   if (!oficio) throw new Error("Ofício não encontrado");
 
   await updateDoc(docRef, data);
-  
+
   await addHistorico({
       acao: 'Edição de Ofício',
       detalhes: `Ofício nº ${oficio.numero} atualizado.`,
@@ -163,6 +164,7 @@ export type NumeracaoConfig = {
     prefixo: string;
     sufixo: string;
     anoBase: number;
+    numeroInicial: number;
 }
 
 const CONFIG_COLLECTION = 'config';
@@ -188,7 +190,8 @@ export async function getNumeracaoConfig(): Promise<NumeracaoConfig> {
     return {
         prefixo: 'OF',
         sufixo: 'GAB',
-        anoBase: new Date().getFullYear()
+        anoBase: new Date().getFullYear(),
+        numeroInicial: 1
     }
 }
 
