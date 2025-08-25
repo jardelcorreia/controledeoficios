@@ -37,7 +37,11 @@ export default function DashboardPage() {
   const proximoNumero = getProximoNumeroOficio();
   const oficiosRecentes = mockOficios
     .filter(o => o.tipo === 'enviado')
-    .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
+    .sort((a, b) => {
+      const numA = parseInt(a.numero.match(/^(\d+)/)?.[1] || '0', 10);
+      const numB = parseInt(b.numero.match(/^(\d+)/)?.[1] || '0', 10);
+      return numB - numA;
+    })
     .slice(0, 5);
 
   return (
