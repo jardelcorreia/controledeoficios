@@ -34,15 +34,22 @@ export default async function HistoricoPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Ação</TableHead>
-                        <TableHead>Data e Hora</TableHead>
+                        <TableHead className="hidden md:table-cell">Data e Hora</TableHead>
                         <TableHead>Detalhes</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {historico.map((item) => (
                         <TableRow key={item.id}>
-                          <TableCell className="font-medium">{item.acao}</TableCell>
-                          <TableCell>
+                          <TableCell className="font-medium">
+                            <div>{item.acao}</div>
+                            <div className="text-muted-foreground text-xs md:hidden">
+                                {new Date(item.data).toLocaleString("pt-BR", {
+                                  timeZone: "America/Sao_Paulo", 
+                                })}
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
                             {new Date(item.data).toLocaleString("pt-BR", {
                               timeZone: "America/Sao_Paulo", // Ajuste para o seu fuso horário
                             })}
@@ -58,8 +65,7 @@ export default async function HistoricoPage() {
           </div>
         );
     } catch (e: any) {
-        const isPermissionError = e.code === 'permission-denied';
-         return (
+        return (
             <div className="flex flex-col h-full">
                  <PageHeader
                     title="Erro ao carregar histórico"
@@ -69,14 +75,11 @@ export default async function HistoricoPage() {
                     <Alert variant="destructive">
                         <Terminal className="h-4 w-4" />
                         <AlertTitle>
-                            {isPermissionError ? "Erro de Permissão" : "Erro de Conexão"}
+                            Erro ao carregar dados
                         </AlertTitle>
                         <AlertDescription>
-                            {isPermissionError
-                                ? "Verifique as regras de segurança do Firestore. É necessário permitir a leitura da coleção 'historico'."
-                                : "A API Cloud Firestore pode estar desativada ou há um problema de conexão. Verifique o status da API no Console do Google Cloud e sua conexão com a internet."
-                            }
-                             <p className="mt-2 text-xs font-mono">{e.message}</p>
+                           <p>Não foi possível carregar os dados. Verifique sua conexão ou a configuração do Firestore.</p>
+                           <p className="mt-2 text-xs font-mono">{e.message}</p>
                         </AlertDescription>
                     </Alert>
                  </main>

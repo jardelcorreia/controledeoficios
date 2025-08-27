@@ -39,7 +39,7 @@ async function DashboardPage() {
                   Erro ao carregar dados
                 </AlertTitle>
                 <AlertDescription>
-                  <p>Não foi possível carregar os dados do dashboard. Isso pode ser devido a um índice ausente no Firestore.</p>
+                  <p>Não foi possível carregar os dados do dashboard. Verifique sua conexão ou as configurações do Firestore.</p>
                   <p className="mt-2 text-xs font-mono">
                     <strong>Erro:</strong> {error.message}
                   </p>
@@ -79,8 +79,8 @@ async function DashboardPage() {
                   <TableRow>
                     <TableHead>Número</TableHead>
                     <TableHead>Assunto</TableHead>
-                    <TableHead>Destinatário</TableHead>
-                    <TableHead>Responsável</TableHead>
+                    <TableHead className="hidden md:table-cell">Destinatário</TableHead>
+                    <TableHead className="hidden lg:table-cell">Responsável</TableHead>
                     <TableHead className="hidden sm:table-cell">Data</TableHead>
                     <TableHead>
                       <span className="sr-only">Ações</span>
@@ -91,11 +91,11 @@ async function DashboardPage() {
                   {oficiosRecentes.length > 0 ? oficiosRecentes.map((oficio) => (
                     <TableRow key={oficio.id}>
                       <TableCell className="font-medium">{oficio.numero}</TableCell>
-                      <TableCell className="max-w-[200px] truncate">{oficio.assunto}</TableCell>
-                      <TableCell>
+                      <TableCell className="max-w-[150px] sm:max-w-[200px] truncate">{oficio.assunto}</TableCell>
+                      <TableCell className="hidden md:table-cell">
                         {oficio.destinatario}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden lg:table-cell">
                         {oficio.responsavel}
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">

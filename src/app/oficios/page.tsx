@@ -40,7 +40,8 @@ export default async function OficiosPage() {
               <Button asChild>
                 <Link href="/oficios/novo">
                   <PlusCircle className="mr-2 h-4 w-4" />
-                  Novo Ofício
+                  <span className="hidden sm:inline">Novo Ofício</span>
+                  <span className="inline sm:hidden">Novo</span>
                 </Link>
               </Button>
             </PageHeader>
@@ -56,11 +57,11 @@ export default async function OficiosPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Número</TableHead>
+                        <TableHead className="w-[120px]">Número</TableHead>
                         <TableHead>Assunto</TableHead>
-                        <TableHead>Destinatário</TableHead>
-                        <TableHead>Responsável</TableHead>
-                        <TableHead className="hidden sm:table-cell">Data</TableHead>
+                        <TableHead className="hidden md:table-cell">Destinatário</TableHead>
+                        <TableHead className="hidden lg:table-cell">Responsável</TableHead>
+                        <TableHead className="hidden sm:table-cell w-[120px]">Data</TableHead>
                         <TableHead>
                           <span className="sr-only">Ações</span>
                         </TableHead>
@@ -70,11 +71,11 @@ export default async function OficiosPage() {
                       {oficiosEnviados.map((oficio) => (
                         <TableRow key={oficio.id}>
                           <TableCell className="font-medium">{oficio.numero}</TableCell>
-                          <TableCell className="max-w-[250px] truncate">{oficio.assunto}</TableCell>
-                          <TableCell>
+                          <TableCell className="max-w-[200px] sm:max-w-[250px] truncate">{oficio.assunto}</TableCell>
+                          <TableCell className="hidden md:table-cell">
                             {oficio.destinatario}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden lg:table-cell">
                             {oficio.responsavel}
                           </TableCell>
                           <TableCell className="hidden sm:table-cell">
@@ -116,7 +117,6 @@ export default async function OficiosPage() {
           </div>
         );
     } catch(e: any) {
-        const isPermissionError = e.code === 'permission-denied';
         return (
             <div className="flex flex-col h-full">
                  <PageHeader
@@ -127,14 +127,11 @@ export default async function OficiosPage() {
                     <Alert variant="destructive">
                         <Terminal className="h-4 w-4" />
                         <AlertTitle>
-                            {isPermissionError ? "Erro de Permissão" : "Erro de Conexão"}
+                           Erro ao carregar dados
                         </AlertTitle>
                         <AlertDescription>
-                            {isPermissionError
-                                ? "Verifique as regras de segurança do Firestore. É necessário permitir a leitura da coleção 'oficios'."
-                                : "A API Cloud Firestore pode estar desativada ou há um problema de conexão. Verifique o status da API no Console do Google Cloud e sua conexão com a internet."
-                            }
-                             <p className="mt-2 text-xs font-mono">{e.message}</p>
+                           <p>Não foi possível carregar os dados. Verifique sua conexão ou a configuração do Firestore.</p>
+                           <p className="mt-2 text-xs font-mono">{e.message}</p>
                         </AlertDescription>
                     </Alert>
                  </main>
