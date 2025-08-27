@@ -71,7 +71,6 @@ async function getProximoNumeroSequencial(ano: number, numeroInicial: number): P
     collection(db, OFICIOS_COLLECTION),
     where('data', '>=', `${ano}-01-01T00:00:00.000Z`),
     where('data', '<=', `${ano}-12-31T23:59:59.999Z`),
-    orderBy('data', 'desc'),
     orderBy('numeroSequencial', 'desc'),
     limit(1)
   );
