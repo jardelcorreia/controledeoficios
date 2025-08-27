@@ -86,20 +86,6 @@ export default function ConfiguracoesPage() {
     });
   }
    if (error) {
-    const isPermissionError = error.message.includes("PERMISSION_DENIED");
-    const isFirestoreApiDisabled = error.message.includes("firestore.googleapis.com");
-
-    let title = "Erro de Conexão";
-    let description = "Não foi possível carregar os dados. Verifique sua conexão com a internet ou as configurações do Firebase.";
-
-    if (isPermissionError) {
-      title = "Erro de Permissão";
-      description = "As regras de segurança do Firestore não permitem o acesso. Verifique se o arquivo firestore.rules foi implantado corretamente.";
-    } else if (isFirestoreApiDisabled) {
-        title = "API do Firestore Desativada";
-        description = "A API Cloud Firestore pode estar desativada ou há um problema de conexão. Verifique o status da API no Console do Google Cloud e sua conexão com a internet.";
-    }
-    
     return (
       <div className="flex flex-col h-full">
         <PageHeader
@@ -110,10 +96,10 @@ export default function ConfiguracoesPage() {
           <Alert variant="destructive">
             <Terminal className="h-4 w-4" />
             <AlertTitle>
-              {title}
+              Erro ao Carregar
             </AlertTitle>
             <AlertDescription>
-              {description}
+              Não foi possível carregar as configurações. Tente novamente mais tarde.
             </AlertDescription>
           </Alert>
         </main>
