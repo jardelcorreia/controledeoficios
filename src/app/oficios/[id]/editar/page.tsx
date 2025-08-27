@@ -24,7 +24,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { getOficioById, updateOficio, Oficio } from "@/lib/oficios";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
@@ -36,13 +36,12 @@ const formSchema = z.object({
   responsavel: z.string().min(3, "O responsável é obrigatório."),
 });
 
-export default function EditarOficioPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function EditarOficioPage() {
   const { toast } = useToast();
   const router = useRouter();
+  const params = useParams();
+  const id = params.id as string;
+
   const [oficio, setOficio] = useState<Oficio | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
@@ -57,8 +56,9 @@ export default function EditarOficioPage({
   });
 
   useEffect(() => {
+    if (!id) return;
     setLoading(true);
-    getOficioById(params.id)
+    getOficioById(id)
       .then((data) => {
         if (data) {
           setOficio(data);
@@ -71,7 +71,7 @@ export default function EditarOficioPage({
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [params.id, form]);
+  }, [id, form]);
 
   if (loading) {
     return (
@@ -129,7 +129,7 @@ export default function EditarOficioPage({
   async function onSubmit(values: z.infer<typeof formSchema>) {
     startTransition(async () => {
       try {
-        await updateOficio(params.id, values);
+        await updateOficio(id, values);
         toast({
           title: "Ofício Atualizado!",
           description: `O ofício nº ${oficio?.numero} foi atualizado com sucesso.`,

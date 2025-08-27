@@ -11,18 +11,47 @@ import {
 import { getOficioById } from "@/lib/oficios";
 import { FileEdit, User, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Terminal } from "lucide-react";
 
 export default async function OficioDetalhesPage({
   params,
 }: {
   params: { id: string };
 }) {
-  const oficio = await getOficioById(params.id);
+  const { id } = params;
+  let oficio;
+  let error = null;
+
+  try {
+    oficio = await getOficioById(id);
+  } catch (e: any) {
+    error = e;
+  }
+  
+  if (error) {
+     return (
+      <div className="flex flex-col h-full">
+        <PageHeader title="Erro ao Carregar Ofício" description="Não foi possível buscar os dados do documento." />
+        <main className="flex-1 p-6">
+          <Alert variant="destructive">
+            <Terminal className="h-4 w-4" />
+            <AlertTitle>Erro de Conexão</AlertTitle>
+            <AlertDescription>
+                <p className="mb-2">Não foi possível carregar os dados. Verifique sua conexão com a internet ou as configurações do Firebase.</p>
+                <p className="font-mono text-xs">{error.message}</p>
+            </AlertDescription>
+          </Alert>
+        </main>
+      </div>
+    );
+  }
+
 
   if (!oficio) {
     return (
       <div className="flex flex-col h-full">
-        <PageHeader title="Erro" description="Ofício não encontrado." />
+        <PageHeader title="Erro 404" description="Ofício não encontrado." />
         <main className="flex-1 p-6 flex flex-col items-center justify-center text-center">
           <p className="mb-4">
             O ofício que você está procurando não existe ou foi movido.
