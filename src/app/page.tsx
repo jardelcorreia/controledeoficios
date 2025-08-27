@@ -106,11 +106,13 @@ async function DashboardPage() {
           <Alert variant={isPermissionError ? "destructive" : "default"}>
             <Terminal className="h-4 w-4" />
             <AlertTitle>
-              {isPermissionError ? "API do Firestore Desativada" : "Erro de Conexão"}
+              {isPermissionError
+                ? "Erro de Permissão"
+                : "Erro de Conexão"}
             </AlertTitle>
             <AlertDescription>
               {isPermissionError
-                ? "A API Cloud Firestore não foi usada neste projeto ou está desativada. Ative-a no Console do Google Cloud e tente novamente."
+                ? "As regras de segurança do Firestore não permitem o acesso. Verifique se o arquivo firestore.rules foi implantado corretamente e se a API do Firestore está ativa."
                 : "Não foi possível carregar os dados. Verifique sua conexão com a internet ou as configurações do Firebase."}
             </AlertDescription>
           </Alert>
