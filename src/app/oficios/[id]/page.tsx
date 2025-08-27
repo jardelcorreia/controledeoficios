@@ -1,4 +1,6 @@
 
+"use client";
+
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,25 +10,78 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getOficioById } from "@/lib/oficios";
-import { FileEdit, User, ArrowLeft } from "lucide-react";
+import { deleteOficio, getOficioById, Oficio } from "@/lib/oficios";
+import { FileEdit, User, ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
-export default async function OficioDetalhesPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const { id } = params;
-  let oficio;
-  let error = null;
+export default function OficioDetalhesPage() {
+  const params = useParams();
+  const router = useRouter();
+  const { toast } = useToast();
+  const id = params.id as string;
 
-  try {
-    oficio = await getOficioById(id);
-  } catch (e: any) {
-    error = e;
+  const [oficio, setOficio] = useState<Oficio | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isDeletePending, startDeleteTransition] = useTransition();
+
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    getOficioById(id)
+      .then((data) => {
+        setOficio(data);
+      })
+      .catch((err) => {
+        setError(err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [id]);
+
+  const handleDelete = () => {
+    if (!oficio) return;
+    startDeleteTransition(async () => {
+      try {
+        await deleteOficio(oficio.id);
+        toast({
+          title: "Ofício Excluído!",
+          description: `O ofício nº ${oficio.numero} foi removido do sistema.`,
+        });
+        router.push("/oficios");
+      } catch (error) {
+        toast({
+          title: "Erro ao excluir",
+          description: "Não foi possível excluir o ofício. Tente novamente.",
+          variant: "destructive",
+        });
+      }
+    });
+  };
+
+  if (loading) {
+     return (
+      <div className="flex flex-col h-full">
+        <PageHeader title="Carregando..." description="Buscando informações do ofício." />
+      </div>
+    );
   }
   
   if (error) {
@@ -74,12 +129,34 @@ export default async function OficioDetalhesPage({
         description={`Detalhes do ofício sobre "${oficio.assunto}"`}
       >
         <div className="flex gap-2">
-          <Button asChild>
+          <Button variant="outline" asChild>
             <Link href={`/oficios/${oficio.id}/editar`}>
               <FileEdit className="mr-2 h-4 w-4" />
               Editar
             </Link>
           </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Excluir
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta ação não pode ser desfeita. Isso excluirá permanentemente o ofício <strong>nº {oficio.numero}</strong>.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} disabled={isDeletePending}>
+                  {isDeletePending ? "Excluindo..." : "Confirmar Exclusão"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </PageHeader>
       <main className="flex-1 p-4 sm:p-6 space-y-6">

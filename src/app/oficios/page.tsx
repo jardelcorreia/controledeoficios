@@ -1,4 +1,6 @@
 
+"use client";
+
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,14 +11,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getOficios } from "@/lib/oficios";
-import { PlusCircle, MoreHorizontal, FileEdit, Eye, Terminal } from "lucide-react";
+import { deleteOficio, getOficios, Oficio } from "@/lib/oficios";
+import { PlusCircle, MoreHorizontal, FileEdit, Eye, Terminal, Trash2 } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   Card,
@@ -25,13 +28,98 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { useEffect, useState, useTransition } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 
-export default async function OficiosPage() {
-    try {
-        const oficiosEnviados = await getOficios();
+export default function OficiosPage() {
+    const [oficios, setOficios] = useState<Oficio[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<Error | null>(null);
+    const [isDeletePending, startDeleteTransition] = useTransition();
+    const [oficioToDelete, setOficioToDelete] = useState<Oficio | null>(null);
+    const { toast } = useToast();
+
+    useEffect(() => {
+        getOficios()
+            .then(data => setOficios(data))
+            .catch(err => setError(err))
+            .finally(() => setLoading(false));
+    }, []);
+    
+    const handleDelete = () => {
+        if (!oficioToDelete) return;
+
+        startDeleteTransition(async () => {
+            try {
+                await deleteOficio(oficioToDelete.id);
+                toast({
+                    title: "Ofício Excluído!",
+                    description: `O ofício nº ${oficioToDelete.numero} foi removido com sucesso.`,
+                });
+                // Optimistic update
+                setOficios(prev => prev.filter(o => o.id !== oficioToDelete.id));
+                setOficioToDelete(null);
+            } catch (error) {
+                 toast({
+                    title: "Erro ao excluir",
+                    description: "Não foi possível excluir o ofício. Tente novamente.",
+                    variant: "destructive",
+                });
+            }
+        });
+    }
+
+    if (error) {
+       return (
+            <div className="flex flex-col h-full">
+                 <PageHeader
+                    title="Erro ao carregar ofícios"
+                    description="Não foi possível buscar os dados do Firestore."
+                 />
+                 <main className="flex-1 p-4 sm:p-6">
+                    <Alert variant="destructive">
+                        <Terminal className="h-4 w-4" />
+                        <AlertTitle>
+                           Erro ao carregar dados
+                        </AlertTitle>
+                        <AlertDescription>
+                           <p>Não foi possível carregar os dados. Verifique sua conexão ou a configuração do Firestore.</p>
+                           <p className="mt-2 text-xs font-mono">{error.message}</p>
+                        </AlertDescription>
+                    </Alert>
+                 </main>
+            </div>
+        )
+    }
+
+    if (loading) {
         return (
+             <div className="flex flex-col h-full">
+                <PageHeader
+                    title="Gerenciamento de Ofícios"
+                    description="Crie, edite e visualize os ofícios enviados."
+                />
+                 <main className="flex-1 p-4 sm:p-6">
+                    <p>Carregando...</p>
+                 </main>
+            </div>
+        )
+    }
+
+    return (
+        <AlertDialog open={!!oficioToDelete} onOpenChange={(open) => !open && setOficioToDelete(null)}>
           <div className="flex flex-col h-full">
             <PageHeader
               title="Gerenciamento de Ofícios"
@@ -68,7 +156,7 @@ export default async function OficiosPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {oficiosEnviados.map((oficio) => (
+                      {oficios.map((oficio) => (
                         <TableRow key={oficio.id}>
                           <TableCell className="font-medium">{oficio.numero}</TableCell>
                           <TableCell className="max-w-[200px] sm:max-w-[250px] truncate">{oficio.assunto}</TableCell>
@@ -104,6 +192,11 @@ export default async function OficiosPage() {
                                     Editar
                                   </Link>
                                 </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => setOficioToDelete(oficio)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Excluir
+                                </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </TableCell>
@@ -114,28 +207,21 @@ export default async function OficiosPage() {
                 </CardContent>
               </Card>
             </main>
+             <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Esta ação não pode ser desfeita. Isso excluirá permanentemente o ofício <strong>nº {oficioToDelete?.numero}</strong>.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setOficioToDelete(null)}>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} disabled={isDeletePending} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                        {isDeletePending ? "Excluindo..." : "Confirmar Exclusão"}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
           </div>
-        );
-    } catch(e: any) {
-        return (
-            <div className="flex flex-col h-full">
-                 <PageHeader
-                    title="Erro ao carregar ofícios"
-                    description="Não foi possível buscar os dados do Firestore."
-                 />
-                 <main className="flex-1 p-4 sm:p-6">
-                    <Alert variant="destructive">
-                        <Terminal className="h-4 w-4" />
-                        <AlertTitle>
-                           Erro ao carregar dados
-                        </AlertTitle>
-                        <AlertDescription>
-                           <p>Não foi possível carregar os dados. Verifique sua conexão ou a configuração do Firestore.</p>
-                           <p className="mt-2 text-xs font-mono">{e.message}</p>
-                        </AlertDescription>
-                    </Alert>
-                 </main>
-            </div>
-        )
-    }
+        </AlertDialog>
+    );
 }

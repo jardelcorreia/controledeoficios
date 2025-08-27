@@ -15,6 +15,7 @@ import {
   writeBatch,
   where,
   setDoc,
+  deleteDoc,
 } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 
@@ -157,6 +158,22 @@ export async function updateOficio(
   revalidatePath(`/oficios/${id}/editar`);
   revalidatePath('/oficios');
   revalidatePath('/');
+}
+
+export async function deleteOficio(id: string) {
+    const oficio = await getOficioById(id);
+    if (!oficio) throw new Error("Ofício não encontrado para exclusão");
+
+    const docRef = doc(db, OFICIOS_COLLECTION, id);
+    await deleteDoc(docRef);
+
+    await addHistorico({
+        acao: "Exclusão de Ofício",
+        detalhes: `Ofício nº ${oficio.numero} excluído.`
+    });
+
+    revalidatePath('/oficios');
+    revalidatePath('/');
 }
 
 // --- Configurações de Numeração ---
