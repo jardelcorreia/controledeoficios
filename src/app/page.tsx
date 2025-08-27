@@ -62,7 +62,7 @@ async function DashboardPage() {
                 </div>
                 <Button asChild className="mt-4 w-full" disabled={!proximoNumero}>
                   <Link href="/oficios/novo">
-                    Criar Novo Ofício
+                    Usar este número
                   </Link>
                 </Button>
               </CardContent>
