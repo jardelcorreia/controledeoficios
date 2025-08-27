@@ -94,7 +94,21 @@ async function DashboardPage() {
       </div>
     );
   } catch (error: any) {
+    console.error("Erro ao carregar o dashboard:", error);
     const isPermissionError = error.message.includes("PERMISSION_DENIED");
+    const isFirestoreApiDisabled = error.message.includes("firestore.googleapis.com");
+
+    let title = "Erro de Conexão";
+    let description = "Não foi possível carregar os dados. Verifique sua conexão com a internet ou as configurações do Firebase.";
+
+    if (isPermissionError) {
+      title = "Erro de Permissão";
+      description = "As regras de segurança do Firestore não permitem o acesso. Verifique se o arquivo firestore.rules foi implantado corretamente e se a API do Firestore está ativa.";
+    } else if (isFirestoreApiDisabled) {
+      title = "API do Firestore Desativada";
+      description = "A API Cloud Firestore pode estar desativada ou há um problema de conexão. Verifique o status da API no Console do Google Cloud e sua conexão com a internet.";
+    }
+    
     return (
        <div className="flex flex-col h-full">
         <PageHeader
@@ -102,17 +116,13 @@ async function DashboardPage() {
           description="Visão geral do sistema de controle de ofícios."
         />
         <main className="flex-1 p-4 sm:p-6">
-          <Alert variant={isPermissionError ? "destructive" : "default"}>
+          <Alert variant="destructive">
             <Terminal className="h-4 w-4" />
             <AlertTitle>
-              {isPermissionError
-                ? "Erro de Permissão"
-                : "Erro de Conexão"}
+              {title}
             </AlertTitle>
             <AlertDescription>
-              {isPermissionError
-                ? "As regras de segurança do Firestore não permitem o acesso. Verifique se o arquivo firestore.rules foi implantado corretamente e se a API do Firestore está ativa."
-                : "A API Cloud Firestore pode estar desativada ou há um problema de conexão. Verifique o status da API no Console do Google Cloud e sua conexão com a internet."}
+              {description}
             </AlertDescription>
           </Alert>
         </main>
