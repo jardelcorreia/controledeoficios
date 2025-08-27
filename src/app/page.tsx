@@ -4,10 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getOficiosRecentes, getProximoNumeroOficio } from "@/lib/oficios";
-import { FilePlus2, Eye } from "lucide-react";
+import { FilePlus2, Eye, Terminal } from "lucide-react";
 import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal } from "lucide-react";
 
 async function DashboardPage() {
   try {
@@ -113,7 +112,7 @@ async function DashboardPage() {
             <AlertDescription>
               {isPermissionError
                 ? "As regras de segurança do Firestore não permitem o acesso. Verifique se o arquivo firestore.rules foi implantado corretamente e se a API do Firestore está ativa."
-                : "Não foi possível carregar os dados. Verifique sua conexão com a internet ou as configurações do Firebase."}
+                : "A API Cloud Firestore pode estar desativada ou há um problema de conexão. Verifique o status da API no Console do Google Cloud e sua conexão com a internet."}
             </AlertDescription>
           </Alert>
         </main>
