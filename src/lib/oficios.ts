@@ -1,3 +1,4 @@
+
 // src/lib/oficios.ts
 'use server';
 
@@ -65,6 +66,21 @@ export async function getOficiosRecentes(count: number): Promise<Oficio[]> {
     (doc) => ({ id: doc.id, ...doc.data() } as Oficio)
   );
 }
+
+export async function getUltimoOficio(): Promise<Oficio | null> {
+    const q = query(
+        collection(db, OFICIOS_COLLECTION),
+        orderBy('numeroSequencial', 'desc'),
+        limit(1)
+    );
+    const querySnapshot = await getDocs(q);
+    if(querySnapshot.empty){
+        return null;
+    }
+    const doc = querySnapshot.docs[0];
+    return { id: doc.id, ...doc.data() } as Oficio;
+}
+
 
 // --- Lógica de Numeração ---
 
@@ -163,6 +179,12 @@ export async function updateOficio(
 export async function deleteOficio(id: string) {
     const oficio = await getOficioById(id);
     if (!oficio) throw new Error("Ofício não encontrado para exclusão");
+    
+    const ultimoOficio = await getUltimoOficio();
+    if (!ultimoOficio || oficio.id !== ultimoOficio.id) {
+        throw new Error("Apenas o último ofício pode ser excluído.");
+    }
+
 
     const docRef = doc(db, OFICIOS_COLLECTION, id);
     await deleteDoc(docRef);

@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { deleteOficio, getOficioById, Oficio } from "@/lib/oficios";
+import { deleteOficio, getOficioById, getUltimoOficio, Oficio } from "@/lib/oficios";
 import { FileEdit, User, ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -37,6 +37,7 @@ export default function OficioDetalhesPage() {
   const id = params.id as string;
 
   const [oficio, setOficio] = useState<Oficio | null>(null);
+  const [ultimoOficio, setUltimoOficio] = useState<Oficio | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDeletePending, startDeleteTransition] = useTransition();
@@ -44,9 +45,12 @@ export default function OficioDetalhesPage() {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    getOficioById(id)
-      .then((data) => {
-        setOficio(data);
+    Promise.all([
+        getOficioById(id),
+        getUltimoOficio()
+    ]).then(([oficioData, ultimoOficioData]) => {
+        setOficio(oficioData);
+        setUltimoOficio(ultimoOficioData);
       })
       .catch((err) => {
         setError(err);
@@ -75,6 +79,9 @@ export default function OficioDetalhesPage() {
       }
     });
   };
+  
+  const canDelete = oficio && ultimoOficio && oficio.id === ultimoOficio.id;
+
 
   if (loading) {
      return (
@@ -88,13 +95,12 @@ export default function OficioDetalhesPage() {
      return (
       <div className="flex flex-col h-full">
         <PageHeader title="Erro ao Carregar Ofício" description="Não foi possível buscar os dados do documento." />
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-4 sm:p-6">
           <Alert variant="destructive">
             <Terminal className="h-4 w-4" />
             <AlertTitle>Erro de Conexão</AlertTitle>
             <AlertDescription>
                 <p className="mb-2">Não foi possível carregar os dados. Verifique sua conexão com a internet ou as configurações do Firebase.</p>
-                <p className="font-mono text-xs">{error.message}</p>
             </AlertDescription>
           </Alert>
         </main>
@@ -107,7 +113,7 @@ export default function OficioDetalhesPage() {
     return (
       <div className="flex flex-col h-full">
         <PageHeader title="Erro 404" description="Ofício não encontrado." />
-        <main className="flex-1 p-6 flex flex-col items-center justify-center text-center">
+        <main className="flex-1 p-4 sm:p-6 flex flex-col items-center justify-center text-center">
           <p className="mb-4">
             O ofício que você está procurando não existe ou foi movido.
           </p>
@@ -135,28 +141,30 @@ export default function OficioDetalhesPage() {
               Editar
             </Link>
           </Button>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive">
-                <Trash2 className="mr-2 h-4 w-4" />
-                Excluir
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Esta ação não pode ser desfeita. Isso excluirá permanentemente o ofício <strong>nº {oficio.numero}</strong>.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete} disabled={isDeletePending}>
-                  {isDeletePending ? "Excluindo..." : "Confirmar Exclusão"}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          {canDelete && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Excluir
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta ação não pode ser desfeita. Isso excluirá permanentemente o ofício <strong>nº {oficio.numero}</strong>.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} disabled={isDeletePending}>
+                    {isDeletePending ? "Excluindo..." : "Confirmar Exclusão"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       </PageHeader>
       <main className="flex-1 p-4 sm:p-6 space-y-6">
@@ -180,6 +188,15 @@ export default function OficioDetalhesPage() {
             </div>
           </CardContent>
         </Card>
+         {!canDelete && (
+            <Alert>
+                <Terminal className="h-4 w-4" />
+                <AlertTitle>Exclusão não permitida</AlertTitle>
+                <AlertDescription>
+                    Este ofício não pode ser excluído porque não é o último registro. Apenas o último ofício criado pode ser removido para manter a integridade da sequência.
+                </AlertDescription>
+            </Alert>
+         )}
       </main>
     </div>
   );

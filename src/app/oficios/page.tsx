@@ -80,6 +80,9 @@ export default function OficiosPage() {
             }
         });
     }
+    
+    const ultimoOficioId = oficios.length > 0 ? oficios[0].id : null;
+
 
     if (error) {
        return (
@@ -96,7 +99,6 @@ export default function OficiosPage() {
                         </AlertTitle>
                         <AlertDescription>
                            <p>Não foi possível carregar os dados. Verifique sua conexão ou a configuração do Firestore.</p>
-                           <p className="mt-2 text-xs font-mono">{error.message}</p>
                         </AlertDescription>
                     </Alert>
                  </main>
@@ -138,7 +140,7 @@ export default function OficiosPage() {
                 <CardHeader>
                   <CardTitle>Lista de Ofícios</CardTitle>
                   <CardDescription>
-                    Todos os documentos enviados.
+                    Todos os documentos enviados. Apenas o último ofício pode ser excluído.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -193,7 +195,11 @@ export default function OficiosPage() {
                                   </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => setOficioToDelete(oficio)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                                <DropdownMenuItem 
+                                    onClick={() => setOficioToDelete(oficio)} 
+                                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                                    disabled={oficio.id !== ultimoOficioId}
+                                >
                                     <Trash2 className="mr-2 h-4 w-4" />
                                     Excluir
                                 </DropdownMenuItem>
