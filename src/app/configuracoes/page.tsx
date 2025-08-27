@@ -56,13 +56,13 @@ export default function ConfiguracoesPage() {
 
   useEffect(() => {
     setLoading(true);
+    console.log("Iniciando busca por configurações...");
     getNumeracaoConfig().then((config) => {
-        // A config sempre será retornada, com valores do DB ou padrão.
+        console.log("Configurações recebidas:", config);
         form.reset(config);
         setLoading(false);
     }).catch(err => {
-        // O catch agora só deve pegar erros de permissão ou conexão real.
-        console.error(err);
+        console.error("Erro detalhado ao buscar configurações:", err);
         setError(err);
         setLoading(false);
     });
