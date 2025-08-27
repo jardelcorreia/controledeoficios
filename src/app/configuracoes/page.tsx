@@ -57,11 +57,11 @@ export default function ConfiguracoesPage() {
   useEffect(() => {
     setLoading(true);
     getNumeracaoConfig().then((config) => {
-        if (config) {
-            form.reset(config);
-        }
+        // A config sempre será retornada, com valores do DB ou padrão.
+        form.reset(config);
         setLoading(false);
     }).catch(err => {
+        // O catch agora só deve pegar erros de permissão ou conexão real.
         console.error(err);
         setError(err);
         setLoading(false);
