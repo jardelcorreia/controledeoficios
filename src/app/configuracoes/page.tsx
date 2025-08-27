@@ -56,13 +56,12 @@ export default function ConfiguracoesPage() {
 
   useEffect(() => {
     setLoading(true);
-    console.log("Iniciando busca por configurações...");
     getNumeracaoConfig().then((config) => {
-        console.log("Configurações recebidas:", config);
-        form.reset(config);
+        if (config) {
+          form.reset(config);
+        }
         setLoading(false);
     }).catch(err => {
-        console.error("Erro detalhado ao buscar configurações:", err);
         setError(err);
         setLoading(false);
     });
