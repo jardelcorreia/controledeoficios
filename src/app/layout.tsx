@@ -1,3 +1,4 @@
+
 import type { Metadata } from "next";
 import "./globals.css";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
@@ -8,6 +9,9 @@ export const metadata: Metadata = {
   title: "Controle de Ofícios",
   description: "Sistema para gerenciamento de ofícios",
   manifest: "/manifest.webmanifest",
+   icons: {
+    icon: "/favicon.ico",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
