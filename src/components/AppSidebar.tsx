@@ -15,12 +15,14 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarContent,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 const AppSidebar = () => {
   const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
 
   const menuItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -47,6 +49,7 @@ const AppSidebar = () => {
                 asChild
                 isActive={pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))}
                 tooltip={{ children: item.label }}
+                onClick={() => setOpenMobile(false)}
               >
                 <Link href={item.href}>
                   <item.icon />
