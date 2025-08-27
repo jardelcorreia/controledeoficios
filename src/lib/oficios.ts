@@ -26,6 +26,7 @@ export type Oficio = {
   responsavel: string;
   data: string; // ISO 8601 format
   numeroSequencial: number;
+  ano: number;
 };
 
 const OFICIOS_COLLECTION = 'oficios';
@@ -69,8 +70,7 @@ export async function getOficiosRecentes(count: number): Promise<Oficio[]> {
 async function getProximoNumeroSequencial(ano: number, numeroInicial: number): Promise<number> {
    const q = query(
     collection(db, OFICIOS_COLLECTION),
-    where('data', '>=', `${ano}-01-01T00:00:00.000Z`),
-    where('data', '<=', `${ano}-12-31T23:59:59.999Z`),
+    where('ano', '==', ano),
     orderBy('numeroSequencial', 'desc'),
     limit(1)
   );
@@ -117,6 +117,7 @@ export async function createOficio(data: {
     ...data,
     numero,
     numeroSequencial,
+    ano: anoBase,
     data: new Date().toISOString(),
   };
 
