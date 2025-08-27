@@ -168,7 +168,7 @@ export default function OficioDetalhesPage() {
         </div>
       </PageHeader>
       <main className="flex-1 p-4 sm:p-6 space-y-6">
-        <Card>
+        <Card className="max-w-2xl mx-auto">
           <CardHeader>
             <CardTitle>{oficio.assunto}</CardTitle>
             <CardDescription>
@@ -189,7 +189,7 @@ export default function OficioDetalhesPage() {
           </CardContent>
         </Card>
          {!canDelete && (
-            <Alert>
+            <Alert className="max-w-2xl mx-auto">
                 <Terminal className="h-4 w-4" />
                 <AlertTitle>Exclusão não permitida</AlertTitle>
                 <AlertDescription>

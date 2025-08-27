@@ -80,7 +80,7 @@ export default function NovoOficioPage() {
         description="Preencha os dados para criar um novo ofício."
       />
       <main className="flex-1 p-4 sm:p-6">
-        <Card>
+        <Card className="max-w-2xl mx-auto">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <CardHeader>
@@ -106,7 +106,7 @@ export default function NovoOficioPage() {
                       <FormLabel>Assunto</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Ex: Solicitação de informações"
+                          placeholder="Digite o assunto do ofício"
                           {...field}
                         />
                       </FormControl>
@@ -122,7 +122,7 @@ export default function NovoOficioPage() {
                       <FormLabel>Destinatário</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Ex: Secretaria de Obras"
+                          placeholder="Ex: Setor Financeiro"
                           {...field}
                         />
                       </FormControl>
@@ -138,7 +138,7 @@ export default function NovoOficioPage() {
                       <FormLabel>Responsável</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Ex: Nome do responsável pelo envio"
+                          placeholder="Digite o seu nome"
                           {...field}
                         />
                       </FormControl>

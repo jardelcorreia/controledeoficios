@@ -78,7 +78,7 @@ export default function EditarOficioPage() {
       <div className="flex flex-col h-full">
         <PageHeader title="Carregando..." description="Buscando dados do ofício." />
         <main className="flex-1 p-4 sm:p-6">
-          <Card>
+          <Card className="max-w-2xl mx-auto">
             <CardHeader>
               <Skeleton className="h-8 w-3/4" />
               <Skeleton className="h-4 w-1/2" />
@@ -152,7 +152,7 @@ export default function EditarOficioPage() {
         description="Altere os dados necessários e salve."
       />
       <main className="flex-1 p-4 sm:p-6">
-        <Card>
+        <Card className="max-w-2xl mx-auto">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <CardHeader>
