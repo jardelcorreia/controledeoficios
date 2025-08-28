@@ -51,10 +51,14 @@ const db = admin.firestore();
 // Configura as chaves VAPID (devem ser configuradas como variáveis de ambiente)
 // firebase functions:config:set vapid.public_key="YOUR_PUBLIC_KEY"
 // firebase functions:config:set vapid.private_key="YOUR_PRIVATE_KEY"
-const vapidPublicKey = functions.config().vapid.public_key;
-const vapidPrivateKey = functions.config().vapid.private_key;
-webpush.setVapidDetails("mailto:your-email@example.com", // Substitua pelo seu email de contato
-vapidPublicKey, vapidPrivateKey);
+const vapidConfig = functions.config().vapid;
+if (vapidConfig && vapidConfig.public_key && vapidConfig.private_key) {
+    webpush.setVapidDetails("mailto:your-email@example.com", // Substitua pelo seu email de contato
+    vapidConfig.public_key, vapidConfig.private_key);
+}
+else {
+    functions.logger.warn("VAPID keys not configured. Push notifications will be disabled.");
+}
 /**
  * Função acionada na criação ou atualização de um ofício.
  * Envia notificações push para os usuários inscritos.
@@ -63,6 +67,11 @@ exports.sendOficioNotification = functions
     .region("southamerica-east1") // Especifique a região mais próxima
     .firestore.document("oficios/{oficioId}")
     .onWrite(async (change, context) => {
+    // Verifica se as chaves VAPID estão configuradas antes de prosseguir
+    if (!vapidConfig || !vapidConfig.public_key || !vapidConfig.private_key) {
+        functions.logger.error("VAPID keys are not set. Cannot send notification.");
+        return null;
+    }
     const oficioId = context.params.oficioId;
     const dataAfter = change.after.data();
     const dataBefore = change.before.data();
