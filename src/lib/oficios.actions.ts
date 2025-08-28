@@ -37,8 +37,8 @@ const PUSH_SUBSCRIPTIONS_COLLECTION = 'pushSubscriptions';
 
 // --- Configuração do Web Push ---
 // As chaves VAPID devem ser variáveis de ambiente em produção
-const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "BEeIAPi2yCgY46z17aM1Hk3goj5L0t9a_ePZXV2s74Y_m4Q1FPDaT89zVLF0MUnY0n2aB2ARy3gS_8dZoB2Tz-k";
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "9LzS7j9RI24vD4yXB3kI-aJzO9mZTUSz3y8pGnCA7i8";
+const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 
 if (vapidPublicKey && vapidPrivateKey) {
     webpush.setVapidDetails(

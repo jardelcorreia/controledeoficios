@@ -326,9 +326,9 @@ export default function ConfiguracoesPage() {
 
         <Card className="max-w-2xl mx-auto">
             <CardHeader>
-                <CardTitle>Notificações Push</CardTitle>
+                <CardTitle>Notificações</CardTitle>
                 <CardDescription>
-                    Receba alertas sobre novos ofícios e atualizações importantes diretamente no seu dispositivo.
+                    Receba alertas sobre novos ofícios e ofícios enviados.
                 </CardDescription>
             </CardHeader>
             <CardContent>
