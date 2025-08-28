@@ -208,11 +208,12 @@ export default function OficioDetalhesPage() {
           <CardHeader>
             <CardTitle>{oficio.assunto}</CardTitle>
             <CardDescription>
-              {`Enviado para ${oficio.destinatario}`}
-              {" em "}
-              {new Date(oficio.data).toLocaleDateString("pt-BR", {
-                timeZone: "UTC",
-              })}
+              {oficio.status === "Aguardando Envio" &&
+                `Aguardando envio para ${oficio.destinatario}`}
+              {oficio.status === "Enviado" &&
+                `Enviado para ${oficio.destinatario} em ${new Date(
+                  oficio.data
+                ).toLocaleDateString("pt-BR", { timeZone: "UTC" })}`}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
