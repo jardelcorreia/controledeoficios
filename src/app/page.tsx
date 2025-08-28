@@ -3,10 +3,16 @@ import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getOficiosRecentes, getProximoNumeroOficio } from "@/lib/oficios";
+import { getOficiosRecentes, getProximoNumeroOficio, Status } from "@/lib/oficios";
 import { FilePlus2, Eye, Terminal } from "lucide-react";
 import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+
+const statusColors: Record<Status, string> = {
+    "Aguardando Envio": "bg-yellow-500",
+    "Enviado": "bg-blue-500",
+};
 
 async function DashboardPage() {
     let proximoNumero = null;
@@ -78,6 +84,7 @@ async function DashboardPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Número</TableHead>
+                    <TableHead className="hidden sm:table-cell">Status</TableHead>
                     <TableHead>Assunto</TableHead>
                     <TableHead className="hidden md:table-cell">Destinatário</TableHead>
                     <TableHead className="hidden lg:table-cell">Responsável</TableHead>
@@ -91,6 +98,11 @@ async function DashboardPage() {
                   {oficiosRecentes.length > 0 ? oficiosRecentes.map((oficio) => (
                     <TableRow key={oficio.id}>
                       <TableCell className="font-medium">{oficio.numero}</TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <Badge className={`${statusColors[oficio.status]} text-white hover:${statusColors[oficio.status]}`}>
+                            {oficio.status}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="max-w-[150px] sm:max-w-[200px] truncate">{oficio.assunto}</TableCell>
                       <TableCell className="hidden md:table-cell">
                         {oficio.destinatario}
@@ -114,7 +126,7 @@ async function DashboardPage() {
                     </TableRow>
                   )) : (
                      <TableRow>
-                        <TableCell colSpan={6} className="text-center">
+                        <TableCell colSpan={7} className="text-center">
                             {error ? "Não foi possível carregar os ofícios." : "Nenhum ofício recente encontrado."}
                         </TableCell>
                     </TableRow>
