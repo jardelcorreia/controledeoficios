@@ -109,10 +109,10 @@ export const sendOficioNotification = functions
       await Promise.all(sendPromises);
 
       functions.logger.info("Notificações enviadas com sucesso!");
-      return {success: true};
+      return { success: true };
     } catch (error) {
       functions.logger.error("Erro ao enviar notificações push:", error);
       // Aqui você pode adicionar lógica para limpar inscrições inválidas
-      return {error: "Falha ao enviar notificações."};
+      return { error: "Falha ao enviar notificações." };
     }
   });
