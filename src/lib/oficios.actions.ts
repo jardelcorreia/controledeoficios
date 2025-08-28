@@ -11,6 +11,8 @@ import {
   deleteDoc,
   serverTimestamp,
   getDocs,
+  query,
+  where
 } from 'firebase/firestore';
 import {
   getNumeracaoConfig,
@@ -34,7 +36,7 @@ const PUSH_SUBSCRIPTIONS_COLLECTION = 'pushSubscriptions';
 
 // --- Configuração do Web Push ---
 // As chaves VAPID devem ser variáveis de ambiente em produção
-const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "BPEyLWa6M13jDk-1lB2k2BAlmN5AJH6c_x9pY2Ua3jZ-o_6t5Z6j-4z3Jq_qf8k_7v9X9eLwR8qQ5sI";
+const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "BMOvZxaUXFm3yDnbYMxTKKfgkLC7ErYNVBHjGWPFHeGyCHq9b5mmCPPivky-KWClfOqVY6WPS9niSXdLD8rTjrQ";
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "4-C0Y9nUm3D_p32d8Z-J4aRj-3n4a-9Z8j-1c2a3b4d5e6f";
 
 if (vapidPublicKey && vapidPrivateKey) {

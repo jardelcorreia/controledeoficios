@@ -40,7 +40,7 @@ const formSchema = z.object({
 });
 
 // Chave pública VAPID - Substitua por suas chaves geradas
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "BPEyLWa6M13jDk-1lB2k2BAlmN5AJH6c_x9pY2Ua3jZ-o_6t5Z6j-4z3Jq_qf8k_7v9X9eLwR8qQ5sI";
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "BMOvZxaUXFm3yDnbYMxTKKfgkLC7ErYNVBHjGWPFHeGyCHq9b5mmCPPivky-KWClfOqVY6WPS9niSXdLD8rTjrQ";
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
