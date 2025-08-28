@@ -19,13 +19,20 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, useParams } from "next/navigation";
-import { getOficioById, updateOficio, Oficio } from "@/lib/oficios";
+import { getOficioById, updateOficio, Oficio, statusList, Status } from "@/lib/oficios";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,6 +41,9 @@ const formSchema = z.object({
   assunto: z.string().min(5, "O assunto deve ter pelo menos 5 caracteres."),
   destinatario: z.string().min(3, "O destinatário é obrigatório."),
   responsavel: z.string().min(3, "O responsável é obrigatório."),
+  status: z.custom<Status>((val) => statusList.includes(val as Status), {
+      message: "Status inválido"
+  })
 });
 
 export default function EditarOficioPage() {
@@ -52,6 +62,7 @@ export default function EditarOficioPage() {
       assunto: "",
       destinatario: "",
       responsavel: "",
+      status: "Rascunho"
     },
   });
 
@@ -66,6 +77,7 @@ export default function EditarOficioPage() {
             assunto: data.assunto,
             destinatario: data.destinatario,
             responsavel: data.responsavel,
+            status: data.status
           });
         }
         setLoading(false);
@@ -84,6 +96,10 @@ export default function EditarOficioPage() {
               <Skeleton className="h-4 w-1/2" />
             </CardHeader>
             <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-10 w-full" />
+              </div>
               <div className="space-y-2">
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="h-10 w-full" />
@@ -162,6 +178,30 @@ export default function EditarOficioPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                           <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecione o status" />
+                            </SelectTrigger>
+                            </FormControl>
+                           <SelectContent>
+                                {statusList.map(status => (
+                                    <SelectItem key={status} value={status}>
+                                        {status}
+                                    </SelectItem>
+                                ))}
+                           </SelectContent>
+                        </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="assunto"

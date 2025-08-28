@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { deleteOficio, getOficios, Oficio } from "@/lib/oficios";
+import { deleteOficio, getOficios, Oficio, Status } from "@/lib/oficios";
 import { PlusCircle, MoreHorizontal, FileEdit, Eye, Terminal, Trash2 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -39,9 +39,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { useEffect, useState, useTransition } from "react";
 import { useToast } from "@/hooks/use-toast";
 
+
+const statusColors: Record<Status, string> = {
+    "Rascunho": "bg-gray-400",
+    "Aguardando Envio": "bg-yellow-500",
+    "Enviado": "bg-blue-500",
+    "Respondido": "bg-green-500",
+    "Arquivado": "bg-purple-500",
+};
 
 export default function OficiosPage() {
     const [oficios, setOficios] = useState<Oficio[]>([]);
@@ -148,6 +157,7 @@ export default function OficiosPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-[120px]">Número</TableHead>
+                        <TableHead className="w-[100px] hidden sm:table-cell">Status</TableHead>
                         <TableHead>Assunto</TableHead>
                         <TableHead className="hidden md:table-cell">Destinatário</TableHead>
                         <TableHead className="hidden lg:table-cell">Responsável</TableHead>
@@ -161,6 +171,11 @@ export default function OficiosPage() {
                       {oficios.map((oficio) => (
                         <TableRow key={oficio.id}>
                           <TableCell className="font-medium">{oficio.numero}</TableCell>
+                          <TableCell className="hidden sm:table-cell">
+                            <Badge className={`${statusColors[oficio.status]} text-white hover:${statusColors[oficio.status]}`}>
+                                {oficio.status}
+                            </Badge>
+                          </TableCell>
                           <TableCell className="max-w-[200px] sm:max-w-[250px] truncate">{oficio.assunto}</TableCell>
                           <TableCell className="hidden md:table-cell">
                             {oficio.destinatario}

@@ -3,6 +3,7 @@
 
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -10,8 +11,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { deleteOficio, getOficioById, getUltimoOficio, Oficio } from "@/lib/oficios";
-import { FileEdit, User, ArrowLeft, Trash2 } from "lucide-react";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { deleteOficio, getOficioById, getUltimoOficio, Oficio, updateOficio, statusList, Status } from "@/lib/oficios";
+import { FileEdit, User, ArrowLeft, Trash2, ChevronDown, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import {
   AlertDialog,
@@ -30,6 +37,15 @@ import { useEffect, useState, useTransition } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
+const statusColors: Record<Status, string> = {
+    "Rascunho": "bg-gray-400",
+    "Aguardando Envio": "bg-yellow-500",
+    "Enviado": "bg-blue-500",
+    "Respondido": "bg-green-500",
+    "Arquivado": "bg-purple-500",
+};
+
+
 export default function OficioDetalhesPage() {
   const params = useParams();
   const router = useRouter();
@@ -41,6 +57,8 @@ export default function OficioDetalhesPage() {
   const [error, setError] = useState<Error | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDeletePending, startDeleteTransition] = useTransition();
+  const [isStatusPending, startStatusTransition] = useTransition();
+
 
   useEffect(() => {
     if (!id) return;
@@ -80,6 +98,26 @@ export default function OficioDetalhesPage() {
     });
   };
   
+  const handleStatusChange = (newStatus: Status) => {
+      if (!oficio) return;
+      startStatusTransition(async () => {
+          try {
+              await updateOficio(oficio.id, { status: newStatus });
+              setOficio(prev => prev ? {...prev, status: newStatus} : null);
+              toast({
+                  title: "Status Atualizado!",
+                  description: `O status do ofício foi alterado para "${newStatus}".`
+              });
+          } catch(e) {
+              toast({
+                title: "Erro ao alterar status",
+                description: "Não foi possível alterar o status. Tente novamente.",
+                variant: "destructive",
+            });
+          }
+      });
+  }
+
   const canDelete = oficio && ultimoOficio && oficio.id === ultimoOficio.id;
 
 
@@ -179,12 +217,33 @@ export default function OficioDetalhesPage() {
               })}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+          <CardContent className="space-y-4">
+             <div className="flex items-center space-x-4 text-sm text-muted-foreground">
               <div className="flex items-center">
                 <User className="mr-2 h-4 w-4" />
                 <span>Responsável: {oficio.responsavel}</span>
               </div>
+            </div>
+            <div className="flex items-center gap-4">
+                 <Badge className={`${statusColors[oficio.status]} text-white hover:${statusColors[oficio.status]} text-base`}>
+                    Status: {oficio.status}
+                </Badge>
+                 <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline" disabled={isStatusPending}>
+                            {isStatusPending ? "Alterando..." : "Alterar Status"}
+                            <ChevronDown className="ml-2 h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        {statusList.map(status => (
+                            <DropdownMenuItem key={status} onSelect={() => handleStatusChange(status)} disabled={oficio.status === status}>
+                                {oficio.status === status && <CheckCircle className="mr-2 h-4 w-4 text-green-500" />}
+                                {status}
+                            </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
           </CardContent>
         </Card>

@@ -1,6 +1,4 @@
-
 // src/lib/oficios.ts
-'use server';
 
 import { db } from '@/lib/firebase';
 import {
@@ -20,6 +18,16 @@ import {
 } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 
+export const statusList = [
+    "Rascunho",
+    "Aguardando Envio",
+    "Enviado",
+    "Respondido",
+    "Arquivado"
+] as const;
+
+export type Status = typeof statusList[number];
+
 export type Oficio = {
   id: string;
   numero: string;
@@ -29,6 +37,7 @@ export type Oficio = {
   data: string; // ISO 8601 format
   numeroSequencial: number;
   ano: number;
+  status: Status;
 };
 
 const OFICIOS_COLLECTION = 'oficios';
@@ -136,13 +145,14 @@ export async function createOficio(data: {
     numeroSequencial,
     ano: anoBase,
     data: new Date().toISOString(),
+    status: 'Rascunho'
   };
 
   const docRef = await addDoc(collection(db, OFICIOS_COLLECTION), newOficio);
 
   await addHistorico({
       acao: 'Criação de Ofício',
-      detalhes: `Ofício nº ${numero} criado.`,
+      detalhes: `Ofício nº ${numero} criado com status 'Rascunho'.`,
   });
 
   revalidatePath('/oficios');
@@ -152,11 +162,7 @@ export async function createOficio(data: {
 
 export async function updateOficio(
   id: string,
-  data: {
-    assunto: string;
-    destinatario: string;
-    responsavel: string;
-  }
+  data: Partial<Pick<Oficio, 'assunto' | 'destinatario' | 'responsavel' | 'status'>>
 ) {
   const docRef = doc(db, OFICIOS_COLLECTION, id);
   const oficio = await getOficioById(id);
@@ -165,9 +171,13 @@ export async function updateOficio(
 
   await updateDoc(docRef, data);
 
+  const detalhes = data.status 
+    ? `Status do ofício nº ${oficio.numero} alterado para '${data.status}'.`
+    : `Ofício nº ${oficio.numero} atualizado.`
+
   await addHistorico({
       acao: 'Edição de Ofício',
-      detalhes: `Ofício nº ${oficio.numero} atualizado.`,
+      detalhes: detalhes,
   });
 
   revalidatePath(`/oficios/${id}`);
