@@ -1,4 +1,3 @@
-
 // src/lib/oficios.actions.ts
 'use server';
 
@@ -26,7 +25,7 @@ import {
   NumeracaoConfig,
 } from './oficios';
 import { revalidatePath } from 'next/cache';
-import webpush from 'web-push';
+// A lógica de web-push foi removida daqui, pois será gerenciada por uma Firebase Function.
 
 
 const OFICIOS_COLLECTION = 'oficios';
@@ -35,51 +34,8 @@ const CONFIG_COLLECTION = 'config';
 const NUMERACAO_DOC_ID = 'numeracao';
 const PUSH_SUBSCRIPTIONS_COLLECTION = 'pushSubscriptions';
 
-// --- Configuração do Web Push ---
-// As chaves VAPID devem ser variáveis de ambiente em produção
-const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 
-if (vapidPublicKey && vapidPrivateKey) {
-    webpush.setVapidDetails(
-        'mailto:your-email@example.com', // Substitua pelo seu email
-        vapidPublicKey,
-        vapidPrivateKey
-    );
-}
-
-
-// --- Funções de Notificação ---
-
-async function sendPushNotification(title: string, body: string) {
-    if (!vapidPublicKey || !vapidPrivateKey) {
-        console.warn("VAPID keys not configured. Skipping push notification.");
-        return;
-    }
-    
-    try {
-        const subscriptionsSnapshot = await getDocs(collection(db, PUSH_SUBSCRIPTIONS_COLLECTION));
-        const subscriptions = subscriptionsSnapshot.docs.map(doc => doc.data().subscription);
-
-        const payload = JSON.stringify({ title, body });
-
-        for (const sub of subscriptions) {
-            try {
-                await webpush.sendNotification(sub, payload);
-            } catch (error: any) {
-                 if (error.statusCode === 410 || error.statusCode === 404) {
-                    console.log('Subscription has expired or is no longer valid: ', error.endpoint);
-                    // TODO: Remover a inscrição do banco de dados
-                 } else {
-                    console.error('Error sending notification to', error.endpoint, ':', error.body);
-                 }
-            }
-        }
-
-    } catch (error) {
-        console.error("Error sending push notifications:", error);
-    }
-}
+// A função sendPushNotification foi removida. Uma Firebase Function cuidará disso.
 
 
 // --- Funções de Escrita ---
@@ -117,8 +73,8 @@ export async function createOficio(data: {
     detalhes: `Ofício nº ${numero} criado com status 'Aguardando Envio'.`,
   });
 
-  // Enviar notificação push
-  await sendPushNotification('Novo Ofício Criado', `O ofício nº ${numero} está aguardando envio.`);
+  // A chamada para sendPushNotification foi removida.
+  // A Firebase Function será acionada automaticamente pela criação do documento.
 
   revalidatePath('/oficios');
   revalidatePath('/');
@@ -142,10 +98,8 @@ export async function updateOficio(
     ? `Status do ofício nº ${oficio.numero} alterado para '${data.status}'.`
     : `Ofício nº ${oficio.numero} atualizado.`;
   
-  if (data.status === 'Enviado' && oficio.status !== 'Enviado') {
-      // Enviar notificação push
-      await sendPushNotification('Ofício Enviado!', `O ofício nº ${oficio.numero} foi enviado para ${oficio.destinatario}.`);
-  }
+  // A chamada para sendPushNotification foi removida.
+  // A Firebase Function será acionada automaticamente pela atualização do documento.
 
   await addHistorico({
     acao: 'Edição de Ofício',
@@ -177,6 +131,7 @@ export async function deleteOficio(id: string) {
 
   revalidatePath('/oficios');
   revalidatePath('/');
+  router.refresh();
 }
 
 
