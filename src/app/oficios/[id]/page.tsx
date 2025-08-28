@@ -17,7 +17,8 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { deleteOficio, getOficioById, getUltimoOficio, Oficio, updateOficio, statusList, Status } from "@/lib/oficios";
+import { getOficioById, getUltimoOficio, Oficio, statusList, Status } from "@/lib/oficios";
+import { deleteOficio, updateOficio } from "@/lib/oficios.actions";
 import { FileEdit, User, ArrowLeft, Trash2, ChevronDown, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import {
@@ -38,11 +39,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
 const statusColors: Record<Status, string> = {
-    "Rascunho": "bg-gray-400",
     "Aguardando Envio": "bg-yellow-500",
     "Enviado": "bg-blue-500",
-    "Respondido": "bg-green-500",
-    "Arquivado": "bg-purple-500",
 };
 
 
@@ -138,7 +136,7 @@ export default function OficioDetalhesPage() {
             <Terminal className="h-4 w-4" />
             <AlertTitle>Erro de Conexão</AlertTitle>
             <AlertDescription>
-                <p className="mb-2">Não foi possível carregar os dados. Verifique sua conexão com a internet ou as configurações do Firebase.</p>
+                Não foi possível carregar os dados. Verifique sua conexão com a internet ou as configurações do Firebase.
             </AlertDescription>
           </Alert>
         </main>

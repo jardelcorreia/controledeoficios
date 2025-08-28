@@ -25,7 +25,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { createOficio, getProximoNumeroOficio } from "@/lib/oficios";
+import { getProximoNumeroOficio } from "@/lib/oficios";
+import { createOficio } from "@/lib/oficios.actions";
 import { useEffect, useState, useTransition } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 

@@ -32,7 +32,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, useParams } from "next/navigation";
-import { getOficioById, updateOficio, Oficio, statusList, Status } from "@/lib/oficios";
+import { getOficioById, Oficio, statusList, Status } from "@/lib/oficios";
+import { updateOficio } from "@/lib/oficios.actions";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -62,7 +63,7 @@ export default function EditarOficioPage() {
       assunto: "",
       destinatario: "",
       responsavel: "",
-      status: "Rascunho"
+      status: "Aguardando Envio"
     },
   });
 

@@ -1,32 +1,19 @@
 // src/lib/oficios.ts
-
 import { db } from '@/lib/firebase';
 import {
   collection,
   getDocs,
   doc,
   getDoc,
-  addDoc,
-  updateDoc,
   query,
   orderBy,
   limit,
-  writeBatch,
   where,
-  setDoc,
-  deleteDoc,
 } from 'firebase/firestore';
-import { revalidatePath } from 'next/cache';
 
-export const statusList = [
-    "Rascunho",
-    "Aguardando Envio",
-    "Enviado",
-    "Respondido",
-    "Arquivado"
-] as const;
+export const statusList = ["Aguardando Envio", "Enviado"] as const;
 
-export type Status = typeof statusList[number];
+export type Status = (typeof statusList)[number];
 
 export type Oficio = {
   id: string;
@@ -77,24 +64,26 @@ export async function getOficiosRecentes(count: number): Promise<Oficio[]> {
 }
 
 export async function getUltimoOficio(): Promise<Oficio | null> {
-    const q = query(
-        collection(db, OFICIOS_COLLECTION),
-        orderBy('numeroSequencial', 'desc'),
-        limit(1)
-    );
-    const querySnapshot = await getDocs(q);
-    if(querySnapshot.empty){
-        return null;
-    }
-    const doc = querySnapshot.docs[0];
-    return { id: doc.id, ...doc.data() } as Oficio;
+  const q = query(
+    collection(db, OFICIOS_COLLECTION),
+    orderBy('numeroSequencial', 'desc'),
+    limit(1)
+  );
+  const querySnapshot = await getDocs(q);
+  if (querySnapshot.empty) {
+    return null;
+  }
+  const doc = querySnapshot.docs[0];
+  return { id: doc.id, ...doc.data() } as Oficio;
 }
-
 
 // --- Lógica de Numeração ---
 
-async function getProximoNumeroSequencial(ano: number, numeroInicial: number): Promise<number> {
-   const q = query(
+export async function getProximoNumeroSequencial(
+  ano: number,
+  numeroInicial: number
+): Promise<number> {
+  const q = query(
     collection(db, OFICIOS_COLLECTION),
     where('ano', '==', ano),
     orderBy('numeroSequencial', 'desc'),
@@ -107,144 +96,58 @@ async function getProximoNumeroSequencial(ano: number, numeroInicial: number): P
   }
 
   const ultimoOficio = querySnapshot.docs[0].data() as Oficio;
-  
+
   const proximoNumero = ultimoOficio.numeroSequencial + 1;
 
   return Math.max(proximoNumero, numeroInicial);
 }
 
-async function getNumeroFormatado(numeroSequencial: number, ano: number, prefixo?: string, sufixo?: string) {
-    const numeroFormatado = numeroSequencial.toString().padStart(3, '0');
-    const partePrefixo = `${prefixo || 'OF'}-${numeroFormatado}/${ano}`;
-    const parteSufixo = sufixo ? `-${sufixo}` : '';
-    return `${partePrefixo}${parteSufixo}`;
+export async function getNumeroFormatado(
+  numeroSequencial: number,
+  ano: number,
+  prefixo?: string,
+  sufixo?: string
+) {
+  const numeroFormatado = numeroSequencial.toString().padStart(3, '0');
+  const partePrefixo = `${prefixo || 'OF'}-${numeroFormatado}/${ano}`;
+  const parteSufixo = sufixo ? `-${sufixo}` : '';
+  return `${partePrefixo}${parteSufixo}`;
 }
-
 
 export async function getProximoNumeroOficio(): Promise<string> {
-    const { anoBase, prefixo, sufixo, numeroInicial } = await getNumeracaoConfig();
-    const proximoNumero = await getProximoNumeroSequencial(anoBase, numeroInicial);
-    return getNumeroFormatado(proximoNumero, anoBase, prefixo, sufixo);
-}
-
-
-// --- Funções de Escrita ---
-
-export async function createOficio(data: {
-  assunto: string;
-  destinatario: string;
-  responsavel: string;
-}) {
   const { anoBase, prefixo, sufixo, numeroInicial } = await getNumeracaoConfig();
-  const numeroSequencial = await getProximoNumeroSequencial(anoBase, numeroInicial);
-  const numero = await getNumeroFormatado(numeroSequencial, anoBase, prefixo, sufixo);
-
-  const newOficio: Omit<Oficio, 'id'> = {
-    ...data,
-    numero,
-    numeroSequencial,
-    ano: anoBase,
-    data: new Date().toISOString(),
-    status: 'Rascunho'
-  };
-
-  const docRef = await addDoc(collection(db, OFICIOS_COLLECTION), newOficio);
-
-  await addHistorico({
-      acao: 'Criação de Ofício',
-      detalhes: `Ofício nº ${numero} criado com status 'Rascunho'.`,
-  });
-
-  revalidatePath('/oficios');
-  revalidatePath('/');
-  return docRef.id;
-}
-
-export async function updateOficio(
-  id: string,
-  data: Partial<Pick<Oficio, 'assunto' | 'destinatario' | 'responsavel' | 'status'>>
-) {
-  const docRef = doc(db, OFICIOS_COLLECTION, id);
-  const oficio = await getOficioById(id);
-
-  if (!oficio) throw new Error("Ofício não encontrado");
-
-  await updateDoc(docRef, data);
-
-  const detalhes = data.status 
-    ? `Status do ofício nº ${oficio.numero} alterado para '${data.status}'.`
-    : `Ofício nº ${oficio.numero} atualizado.`
-
-  await addHistorico({
-      acao: 'Edição de Ofício',
-      detalhes: detalhes,
-  });
-
-  revalidatePath(`/oficios/${id}`);
-  revalidatePath(`/oficios/${id}/editar`);
-  revalidatePath('/oficios');
-  revalidatePath('/');
-}
-
-export async function deleteOficio(id: string) {
-    const oficio = await getOficioById(id);
-    if (!oficio) throw new Error("Ofício não encontrado para exclusão");
-    
-    const ultimoOficio = await getUltimoOficio();
-    if (!ultimoOficio || oficio.id !== ultimoOficio.id) {
-        throw new Error("Apenas o último ofício pode ser excluído.");
-    }
-
-
-    const docRef = doc(db, OFICIOS_COLLECTION, id);
-    await deleteDoc(docRef);
-
-    await addHistorico({
-        acao: "Exclusão de Ofício",
-        detalhes: `Ofício nº ${oficio.numero} excluído.`
-    });
-
-    revalidatePath('/oficios');
-    revalidatePath('/');
+  const proximoNumero = await getProximoNumeroSequencial(anoBase, numeroInicial);
+  return getNumeroFormatado(proximoNumero, anoBase, prefixo, sufixo);
 }
 
 // --- Configurações de Numeração ---
 
 export type NumeracaoConfig = {
-    prefixo?: string;
-    sufixo?: string;
-    anoBase: number;
-    numeroInicial: number;
-}
+  prefixo?: string;
+  sufixo?: string;
+  anoBase: number;
+  numeroInicial: number;
+};
 
 const CONFIG_COLLECTION = 'config';
 const NUMERACAO_DOC_ID = 'numeracao';
 
-export async function saveNumeracaoConfig(config: Omit<NumeracaoConfig, 'id'>) {
-    const docRef = doc(db, CONFIG_COLLECTION, NUMERACAO_DOC_ID);
-    await setDoc(docRef, config);
-    revalidatePath('/configuracoes');
-    revalidatePath('/');
-    revalidatePath('/oficios/novo');
-}
-
 export async function getNumeracaoConfig(): Promise<NumeracaoConfig> {
-    const docRef = doc(db, CONFIG_COLLECTION, NUMERACAO_DOC_ID);
-    const docSnap = await getDoc(docRef);
+  const docRef = doc(db, CONFIG_COLLECTION, NUMERACAO_DOC_ID);
+  const docSnap = await getDoc(docRef);
 
-    if(docSnap.exists()){
-        return docSnap.data() as NumeracaoConfig;
-    }
+  if (docSnap.exists()) {
+    return docSnap.data() as NumeracaoConfig;
+  }
 
-    // Default config
-    return {
-        prefixo: 'OF',
-        sufixo: 'GAB',
-        anoBase: new Date().getFullYear(),
-        numeroInicial: 1
-    }
+  // Default config
+  return {
+    prefixo: 'OF',
+    sufixo: 'GAB',
+    anoBase: new Date().getFullYear(),
+    numeroInicial: 1,
+  };
 }
-
 
 // --- Histórico ---
 export type Historico = {
@@ -256,16 +159,10 @@ export type Historico = {
 
 const HISTORICO_COLLECTION = 'historico';
 
-export async function addHistorico(data: Omit<Historico, 'id' | 'data'>) {
-    await addDoc(collection(db, HISTORICO_COLLECTION), {
-        ...data,
-        data: new Date().toISOString(),
-    });
-    revalidatePath('/historico');
-}
-
 export async function getHistorico(): Promise<Historico[]> {
-    const q = query(collection(db, HISTORICO_COLLECTION), orderBy('data', 'desc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({id: doc.id, ...doc.data() } as Historico));
+  const q = query(collection(db, HISTORICO_COLLECTION), orderBy('data', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(
+    (doc) => ({ id: doc.id, ...doc.data() } as Historico)
+  );
 }

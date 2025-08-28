@@ -11,7 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { deleteOficio, getOficios, Oficio, Status } from "@/lib/oficios";
+import { getOficios, Oficio, Status } from "@/lib/oficios";
+import { deleteOficio } from "@/lib/oficios.actions";
 import { PlusCircle, MoreHorizontal, FileEdit, Eye, Terminal, Trash2 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -45,11 +46,8 @@ import { useToast } from "@/hooks/use-toast";
 
 
 const statusColors: Record<Status, string> = {
-    "Rascunho": "bg-gray-400",
     "Aguardando Envio": "bg-yellow-500",
     "Enviado": "bg-blue-500",
-    "Respondido": "bg-green-500",
-    "Arquivado": "bg-purple-500",
 };
 
 export default function OficiosPage() {
@@ -107,7 +105,7 @@ export default function OficiosPage() {
                            Erro ao carregar dados
                         </AlertTitle>
                         <AlertDescription>
-                           <p>Não foi possível carregar os dados. Verifique sua conexão ou a configuração do Firestore.</p>
+                           Não foi possível carregar os dados. Verifique sua conexão ou a configuração do Firestore.
                         </AlertDescription>
                     </Alert>
                  </main>
