@@ -40,7 +40,7 @@ const formSchema = z.object({
 });
 
 // Chave pública VAPID - Substitua por suas chaves geradas
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "BEeIAPi2yCgY46z17aM1Hk3goj5L0t9a_ePZXV2s74Y_m4Q1FPDaT89zVLF0MUnY0n2aB2ARy3gS_8dZoB2Tz-k";
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -77,6 +77,12 @@ export default function ConfiguracoesPage() {
     if (!("Notification" in window) || !("serviceWorker" in navigator)) {
       toast({ title: "Erro", description: "Este navegador não suporta notificações push.", variant: "destructive"});
       return;
+    }
+
+    if (!VAPID_PUBLIC_KEY) {
+        toast({ title: "Erro de Configuração", description: "A chave pública VAPID para notificações não está configurada.", variant: "destructive"});
+        console.error("VAPID public key is not set in environment variables.");
+        return;
     }
 
     if (Notification.permission === "granted") {
