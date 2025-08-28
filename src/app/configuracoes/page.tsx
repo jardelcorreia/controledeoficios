@@ -25,7 +25,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { getNumeracaoConfig, NumeracaoConfig } from "@/lib/oficios";
-import { saveNumeracaoConfig } from "@/lib/oficios.actions";
+import { saveNumeracaoConfig, savePushSubscription } from "@/lib/oficios.actions";
 import { useEffect, useTransition, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -39,12 +39,33 @@ const formSchema = z.object({
   numeroInicial: z.coerce.number().min(1),
 });
 
+// Chave pública VAPID - Substitua por suas chaves geradas
+const VAPID_PUBLIC_KEY = "BPEyLWa6M13jDk-1lB2k2BAlmN5AJH6c_x9pY2Ua3jZ-o_6t5Z6j-4z3Jq_qf8k_7v9X9eLwR8qQ5sI";
+
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, "+")
+    .replace(/_/g, "/");
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+
 export default function ConfiguracoesPage() {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [notificationPermission, setNotificationPermission] = useState("default");
+  const [isSubscribing, setIsSubscribing] = useState(false);
+
 
   useEffect(() => {
     if ("Notification" in window) {
@@ -68,21 +89,35 @@ export default function ConfiguracoesPage() {
         return;
     }
 
+    setIsSubscribing(true);
+
     try {
       const permission = await Notification.requestPermission();
       setNotificationPermission(permission);
 
       if (permission === "granted") {
-        const registration = await navigator.serviceWorker.register('/sw.js');
-        // TODO: Enviar a inscrição (registration.pushManager.subscribe) para o servidor
-        console.log('Service Worker registrado:', registration);
-        toast({ title: "Sucesso!", description: "Você receberá notificações importantes."});
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        });
+
+        // Enviar a inscrição para o servidor
+        const result = await savePushSubscription(subscription);
+
+        if (result.success) {
+            toast({ title: "Sucesso!", description: "Você receberá notificações importantes."});
+        } else {
+             throw new Error(result.error || "Falha ao salvar inscrição.");
+        }
       } else {
         toast({ title: "Permissão negada", description: "Você não receberá notificações.", variant: "destructive"});
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Erro ao solicitar permissão de notificação:", err);
-      toast({ title: "Erro", description: "Não foi possível ativar as notificações.", variant: "destructive"});
+      toast({ title: "Erro", description: err.message || "Não foi possível ativar as notificações.", variant: "destructive"});
+    } finally {
+      setIsSubscribing(false);
     }
   };
 
@@ -304,8 +339,8 @@ export default function ConfiguracoesPage() {
                 </div>
             </CardContent>
             <CardFooter className="border-t px-6 py-4">
-                <Button onClick={handleNotificationPermission} disabled={notificationPermission === 'granted' || notificationPermission === 'denied'}>
-                    {notificationPermission === 'granted' ? "Notificações Ativadas" : "Ativar Notificações"}
+                <Button onClick={handleNotificationPermission} disabled={notificationPermission === 'granted' || notificationPermission === 'denied' || isSubscribing}>
+                    {isSubscribing ? "Ativando..." : notificationPermission === 'granted' ? "Notificações Ativadas" : "Ativar Notificações"}
                 </Button>
             </CardFooter>
         </Card>
@@ -314,5 +349,3 @@ export default function ConfiguracoesPage() {
     </div>
   );
 }
-
-    

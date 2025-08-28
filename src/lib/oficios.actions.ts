@@ -9,6 +9,7 @@ import {
   updateDoc,
   setDoc,
   deleteDoc,
+  serverTimestamp,
 } from 'firebase/firestore';
 import {
   getNumeracaoConfig,
@@ -28,6 +29,7 @@ const OFICIOS_COLLECTION = 'oficios';
 const HISTORICO_COLLECTION = 'historico';
 const CONFIG_COLLECTION = 'config';
 const NUMERACAO_DOC_ID = 'numeracao';
+const PUSH_SUBSCRIPTIONS_COLLECTION = 'pushSubscriptions';
 
 
 // --- Funções de Escrita ---
@@ -65,6 +67,8 @@ export async function createOficio(data: {
     detalhes: `Ofício nº ${numero} criado com status 'Aguardando Envio'.`,
   });
 
+  // TODO: Trigger push notification here in the future
+
   revalidatePath('/oficios');
   revalidatePath('/');
   return docRef.id;
@@ -86,6 +90,11 @@ export async function updateOficio(
   const detalhes = data.status
     ? `Status do ofício nº ${oficio.numero} alterado para '${data.status}'.`
     : `Ofício nº ${oficio.numero} atualizado.`;
+  
+  if (data.status === 'Enviado' && oficio.status !== 'Enviado') {
+      // TODO: Trigger push notification here in the future
+  }
+
 
   await addHistorico({
     acao: 'Edição de Ofício',
@@ -135,4 +144,18 @@ export async function addHistorico(data: Omit<Historico, 'id' | 'data'>) {
     data: new Date().toISOString(),
   });
   revalidatePath('/historico');
+}
+
+export async function savePushSubscription(subscription: object) {
+  try {
+    const docRef = await addDoc(collection(db, PUSH_SUBSCRIPTIONS_COLLECTION), {
+      subscription: JSON.parse(JSON.stringify(subscription)), // Ensure it's a plain object
+      createdAt: serverTimestamp(),
+    });
+    console.log('Push subscription saved:', docRef.id);
+    return { success: true };
+  } catch (error) {
+    console.error('Error saving push subscription:', error);
+    return { success: false, error: 'Failed to save subscription.' };
+  }
 }
