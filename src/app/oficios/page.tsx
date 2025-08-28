@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { getOficios, Oficio, Status } from "@/lib/oficios";
 import { deleteOficio } from "@/lib/oficios.actions";
-import { PlusCircle, MoreHorizontal, FileEdit, Eye, Terminal, Trash2 } from "lucide-react";
+import { PlusCircle, MoreHorizontal, FileEdit, Eye, Terminal, Trash2, Calendar, User } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -28,6 +28,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import {
   AlertDialog,
@@ -151,78 +152,145 @@ export default function OficiosPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[120px]">Número</TableHead>
-                        <TableHead className="w-[100px] hidden sm:table-cell">Status</TableHead>
-                        <TableHead>Assunto</TableHead>
-                        <TableHead className="hidden md:table-cell">Destinatário</TableHead>
-                        <TableHead className="hidden lg:table-cell">Responsável</TableHead>
-                        <TableHead className="hidden sm:table-cell w-[120px]">Data</TableHead>
-                        <TableHead>
-                          <span className="sr-only">Ações</span>
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {oficios.map((oficio) => (
-                        <TableRow key={oficio.id}>
-                          <TableCell className="font-medium">{oficio.numero}</TableCell>
-                          <TableCell className="hidden sm:table-cell">
-                            <Badge className={`${statusColors[oficio.status]} text-white hover:${statusColors[oficio.status]}`}>
-                                {oficio.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="max-w-[200px] sm:max-w-[250px] truncate">{oficio.assunto}</TableCell>
-                          <TableCell className="hidden md:table-cell">
-                            {oficio.destinatario}
-                          </TableCell>
-                          <TableCell className="hidden lg:table-cell">
-                            {oficio.responsavel}
-                          </TableCell>
-                          <TableCell className="hidden sm:table-cell">
-                            {new Date(oficio.data).toLocaleDateString("pt-BR", {
-                              timeZone: "UTC",
-                            })}
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                  <span className="sr-only">Abrir menu</span>
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem asChild>
-                                  <Link href={`/oficios/${oficio.id}`}>
-                                    <Eye className="mr-2 h-4 w-4" />
-                                    Visualizar
-                                  </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                  <Link href={`/oficios/${oficio.id}/editar`}>
-                                    <FileEdit className="mr-2 h-4 w-4" />
-                                    Editar
-                                  </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                    onClick={() => setOficioToDelete(oficio)} 
-                                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                                    disabled={oficio.id !== ultimoOficioId}
-                                >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Excluir
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
+                  {/* Tabela para Desktop */}
+                  <div className="hidden md:block">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[120px]">Número</TableHead>
+                          <TableHead className="w-[100px] hidden sm:table-cell">Status</TableHead>
+                          <TableHead>Assunto</TableHead>
+                          <TableHead className="hidden md:table-cell">Destinatário</TableHead>
+                          <TableHead className="hidden lg:table-cell">Responsável</TableHead>
+                          <TableHead className="hidden sm:table-cell w-[120px]">Data</TableHead>
+                          <TableHead>
+                            <span className="sr-only">Ações</span>
+                          </TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {oficios.map((oficio) => (
+                          <TableRow key={oficio.id}>
+                            <TableCell className="font-medium">{oficio.numero}</TableCell>
+                            <TableCell className="hidden sm:table-cell">
+                              <Badge className={`${statusColors[oficio.status]} text-white hover:${statusColors[oficio.status]}`}>
+                                  {oficio.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="max-w-[200px] sm:max-w-[250px] truncate">{oficio.assunto}</TableCell>
+                            <TableCell className="hidden md:table-cell">
+                              {oficio.destinatario}
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              {oficio.responsavel}
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell">
+                              {new Date(oficio.data).toLocaleDateString("pt-BR", {
+                                timeZone: "UTC",
+                              })}
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Abrir menu</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem asChild>
+                                    <Link href={`/oficios/${oficio.id}`}>
+                                      <Eye className="mr-2 h-4 w-4" />
+                                      Visualizar
+                                    </Link>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem asChild>
+                                    <Link href={`/oficios/${oficio.id}/editar`}>
+                                      <FileEdit className="mr-2 h-4 w-4" />
+                                      Editar
+                                    </Link>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                      onClick={() => setOficioToDelete(oficio)} 
+                                      className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                                      disabled={oficio.id !== ultimoOficioId}
+                                  >
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      Excluir
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                   {/* Cards para Mobile */}
+                  <div className="md:hidden space-y-4">
+                     {oficios.map((oficio) => (
+                        <Card key={oficio.id} className="flex flex-col">
+                           <CardHeader className="flex flex-row items-start justify-between pb-2">
+                                <div>
+                                    <CardTitle className="text-lg">{oficio.numero}</CardTitle>
+                                    <Badge className={`${statusColors[oficio.status]} text-white hover:${statusColors[oficio.status]} mt-1`}>
+                                        {oficio.status}
+                                    </Badge>
+                                </div>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                        <span className="sr-only">Abrir menu</span>
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                    <DropdownMenuItem asChild>
+                                        <Link href={`/oficios/${oficio.id}`}>
+                                        <Eye className="mr-2 h-4 w-4" />
+                                        Visualizar
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <Link href={`/oficios/${oficio.id}/editar`}>
+                                        <FileEdit className="mr-2 h-4 w-4" />
+                                        Editar
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem 
+                                        onClick={() => setOficioToDelete(oficio)} 
+                                        className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                                        disabled={oficio.id !== ultimoOficioId}
+                                    >
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Excluir
+                                    </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                           </CardHeader>
+                           <CardContent className="flex-1 space-y-2">
+                              <p className="font-semibold">{oficio.assunto}</p>
+                              <p className="text-sm text-muted-foreground">Destinatário: {oficio.destinatario}</p>
+                           </CardContent>
+                           <CardFooter className="flex justify-between text-xs text-muted-foreground border-t pt-4">
+                                <div className="flex items-center">
+                                    <User className="mr-1.5 h-3 w-3" />
+                                    <span>{oficio.responsavel}</span>
+                                </div>
+                                <div className="flex items-center">
+                                    <Calendar className="mr-1.5 h-3 w-3" />
+                                     <span>
+                                        {new Date(oficio.data).toLocaleDateString("pt-BR", { timeZone: "UTC" })}
+                                     </span>
+                                </div>
+                           </CardFooter>
+                        </Card>
+                     ))}
+                  </div>
+
                 </CardContent>
               </Card>
             </main>
