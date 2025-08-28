@@ -233,7 +233,7 @@ export default function OficioDetalhesPage() {
                 <span>Responsável: {oficio.responsavel}</span>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center items-start gap-4">
                  <Badge className={`${statusColors[oficio.status]} text-white hover:${statusColors[oficio.status]}`}>
                     Status: {oficio.status}
                 </Badge>
