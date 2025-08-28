@@ -53,7 +53,7 @@ export default function ConfiguracoesPage() {
   }, []);
 
   const handleNotificationPermission = async () => {
-    if (!("Notification" in window)) {
+    if (!("Notification" in window) || !("serviceWorker" in navigator)) {
       toast({ title: "Erro", description: "Este navegador não suporta notificações push.", variant: "destructive"});
       return;
     }
@@ -314,3 +314,5 @@ export default function ConfiguracoesPage() {
     </div>
   );
 }
+
+    
