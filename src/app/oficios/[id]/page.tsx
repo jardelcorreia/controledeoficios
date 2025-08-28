@@ -86,6 +86,7 @@ export default function OficioDetalhesPage() {
           description: `O ofício nº ${oficio.numero} foi removido do sistema.`,
         });
         router.push("/oficios");
+        router.refresh(); // Força a recarga dos dados
       } catch (error) {
         toast({
           title: "Erro ao excluir",
