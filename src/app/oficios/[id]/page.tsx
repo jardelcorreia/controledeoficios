@@ -102,10 +102,19 @@ export default function OficioDetalhesPage() {
           try {
               await updateOficio(oficio.id, { status: newStatus });
               setOficio(prev => prev ? {...prev, status: newStatus} : null);
-              toast({
-                  title: "Status Atualizado!",
-                  description: `O status do ofício foi alterado para "${newStatus}".`
-              });
+              
+              if (newStatus === "Enviado") {
+                 toast({
+                  title: "Ofício Enviado!",
+                  description: `O ofício nº ${oficio.numero} foi marcado como enviado.`
+                });
+              } else {
+                toast({
+                    title: "Status Atualizado!",
+                    description: `O status do ofício foi alterado para "${newStatus}".`
+                });
+              }
+
           } catch(e) {
               toast({
                 title: "Erro ao alterar status",

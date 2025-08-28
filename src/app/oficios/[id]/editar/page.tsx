@@ -147,9 +147,10 @@ export default function EditarOficioPage() {
     startTransition(async () => {
       try {
         await updateOficio(id, values);
+        const foiEnviado = values.status === "Enviado" && oficio?.status !== "Enviado";
         toast({
-          title: "Ofício Atualizado!",
-          description: `O ofício nº ${oficio?.numero} foi atualizado com sucesso.`,
+          title: foiEnviado ? "Ofício Enviado!" : "Ofício Atualizado!",
+          description: `O ofício nº ${oficio?.numero} foi ${foiEnviado ? 'enviado' : 'atualizado'} com sucesso.`,
         });
         router.push(`/oficios/${oficio?.id}`);
       } catch (error) {
