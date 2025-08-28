@@ -131,7 +131,6 @@ export async function deleteOficio(id: string) {
 
   revalidatePath('/oficios');
   revalidatePath('/');
-  router.refresh();
 }
 
 
