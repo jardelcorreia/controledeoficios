@@ -10,26 +10,73 @@ import {
   setDoc,
   deleteDoc,
   serverTimestamp,
+  getDocs,
 } from 'firebase/firestore';
 import {
   getNumeracaoConfig,
-  getProximoNumeroOficio,
   getProximoNumeroSequencial,
   getNumeroFormatado,
   getOficioById,
   getUltimoOficio,
   Oficio,
-  Status,
-  NumeracaoConfig,
   Historico,
+  NumeracaoConfig,
 } from './oficios';
 import { revalidatePath } from 'next/cache';
+import webpush from 'web-push';
+
 
 const OFICIOS_COLLECTION = 'oficios';
 const HISTORICO_COLLECTION = 'historico';
 const CONFIG_COLLECTION = 'config';
 const NUMERACAO_DOC_ID = 'numeracao';
 const PUSH_SUBSCRIPTIONS_COLLECTION = 'pushSubscriptions';
+
+// --- Configuração do Web Push ---
+// As chaves VAPID devem ser variáveis de ambiente em produção
+const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "BPEyLWa6M13jDk-1lB2k2BAlmN5AJH6c_x9pY2Ua3jZ-o_6t5Z6j-4z3Jq_qf8k_7v9X9eLwR8qQ5sI";
+const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "4-C0Y9nUm3D_p32d8Z-J4aRj-3n4a-9Z8j-1c2a3b4d5e6f";
+
+if (vapidPublicKey && vapidPrivateKey) {
+    webpush.setVapidDetails(
+        'mailto:your-email@example.com', // Substitua pelo seu email
+        vapidPublicKey,
+        vapidPrivateKey
+    );
+}
+
+
+// --- Funções de Notificação ---
+
+async function sendPushNotification(title: string, body: string) {
+    if (!vapidPublicKey || !vapidPrivateKey) {
+        console.warn("VAPID keys not configured. Skipping push notification.");
+        return;
+    }
+    
+    try {
+        const subscriptionsSnapshot = await getDocs(collection(db, PUSH_SUBSCRIPTIONS_COLLECTION));
+        const subscriptions = subscriptionsSnapshot.docs.map(doc => doc.data().subscription);
+
+        const payload = JSON.stringify({ title, body });
+
+        for (const sub of subscriptions) {
+            try {
+                await webpush.sendNotification(sub, payload);
+            } catch (error: any) {
+                 if (error.statusCode === 410 || error.statusCode === 404) {
+                    console.log('Subscription has expired or is no longer valid: ', error.endpoint);
+                    // TODO: Remover a inscrição do banco de dados
+                 } else {
+                    console.error('Error sending notification to', error.endpoint, ':', error.body);
+                 }
+            }
+        }
+
+    } catch (error) {
+        console.error("Error sending push notifications:", error);
+    }
+}
 
 
 // --- Funções de Escrita ---
@@ -67,7 +114,8 @@ export async function createOficio(data: {
     detalhes: `Ofício nº ${numero} criado com status 'Aguardando Envio'.`,
   });
 
-  // TODO: Trigger push notification here in the future
+  // Enviar notificação push
+  await sendPushNotification('Novo Ofício Criado', `O ofício nº ${numero} está aguardando envio.`);
 
   revalidatePath('/oficios');
   revalidatePath('/');
@@ -92,9 +140,9 @@ export async function updateOficio(
     : `Ofício nº ${oficio.numero} atualizado.`;
   
   if (data.status === 'Enviado' && oficio.status !== 'Enviado') {
-      // TODO: Trigger push notification here in the future
+      // Enviar notificação push
+      await sendPushNotification('Ofício Enviado!', `O ofício nº ${oficio.numero} foi enviado para ${oficio.destinatario}.`);
   }
-
 
   await addHistorico({
     acao: 'Edição de Ofício',
@@ -148,11 +196,18 @@ export async function addHistorico(data: Omit<Historico, 'id' | 'data'>) {
 
 export async function savePushSubscription(subscription: object) {
   try {
-    const docRef = await addDoc(collection(db, PUSH_SUBSCRIPTIONS_COLLECTION), {
-      subscription: JSON.parse(JSON.stringify(subscription)), // Ensure it's a plain object
-      createdAt: serverTimestamp(),
-    });
-    console.log('Push subscription saved:', docRef.id);
+    // Verificação simples para evitar duplicatas, embora uma verificação mais robusta possa ser necessária
+    const q = query(collection(db, PUSH_SUBSCRIPTIONS_COLLECTION), where("subscription.endpoint", "==", (subscription as any).endpoint));
+    const existing = await getDocs(q);
+    if (existing.empty) {
+        const docRef = await addDoc(collection(db, PUSH_SUBSCRIPTIONS_COLLECTION), {
+          subscription: JSON.parse(JSON.stringify(subscription)), // Ensure it's a plain object
+          createdAt: serverTimestamp(),
+        });
+        console.log('Push subscription saved:', docRef.id);
+    } else {
+        console.log("Push subscription already exists.");
+    }
     return { success: true };
   } catch (error) {
     console.error('Error saving push subscription:', error);
