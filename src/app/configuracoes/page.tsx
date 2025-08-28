@@ -29,7 +29,7 @@ import { saveNumeracaoConfig } from "@/lib/oficios.actions";
 import { useEffect, useTransition, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal } from "lucide-react";
+import { Terminal, BellRing } from "lucide-react";
 
 
 const formSchema = z.object({
@@ -44,6 +44,48 @@ export default function ConfiguracoesPage() {
   const [isPending, startTransition] = useTransition();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [notificationPermission, setNotificationPermission] = useState("default");
+
+  useEffect(() => {
+    if ("Notification" in window) {
+      setNotificationPermission(Notification.permission);
+    }
+  }, []);
+
+  const handleNotificationPermission = async () => {
+    if (!("Notification" in window)) {
+      toast({ title: "Erro", description: "Este navegador não suporta notificações push.", variant: "destructive"});
+      return;
+    }
+
+    if (Notification.permission === "granted") {
+        toast({ title: "Notificações já ativadas", description: "Você já permitiu o envio de notificações."});
+        return;
+    }
+
+    if (Notification.permission === "denied") {
+        toast({ title: "Permissão bloqueada", description: "Você bloqueou as notificações. Altere nas configurações do seu navegador.", variant: "destructive"});
+        return;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+
+      if (permission === "granted") {
+        const registration = await navigator.serviceWorker.register('/sw.js');
+        // TODO: Enviar a inscrição (registration.pushManager.subscribe) para o servidor
+        console.log('Service Worker registrado:', registration);
+        toast({ title: "Sucesso!", description: "Você receberá notificações importantes."});
+      } else {
+        toast({ title: "Permissão negada", description: "Você não receberá notificações.", variant: "destructive"});
+      }
+    } catch (err) {
+      console.error("Erro ao solicitar permissão de notificação:", err);
+      toast({ title: "Erro", description: "Não foi possível ativar as notificações.", variant: "destructive"});
+    }
+  };
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -154,7 +196,7 @@ export default function ConfiguracoesPage() {
         title="Configurações"
         description="Ajuste as configurações gerais do sistema."
       />
-      <main className="flex-1 p-4 sm:p-6">
+      <main className="flex-1 p-4 sm:p-6 space-y-6">
         <Card className="max-w-2xl mx-auto">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -240,6 +282,34 @@ export default function ConfiguracoesPage() {
             </form>
           </Form>
         </Card>
+
+        <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+                <CardTitle>Notificações Push</CardTitle>
+                <CardDescription>
+                    Receba alertas sobre novos ofícios e atualizações importantes diretamente no seu dispositivo.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                 <div className="flex items-center space-x-2">
+                    <BellRing className="h-5 w-5 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                        Status atual:{" "}
+                        <span className="font-semibold">
+                            {notificationPermission === 'granted' && "Ativadas"}
+                            {notificationPermission === 'denied' && "Bloqueadas"}
+                            {notificationPermission === 'default' && "Não solicitado"}
+                        </span>
+                    </p>
+                </div>
+            </CardContent>
+            <CardFooter className="border-t px-6 py-4">
+                <Button onClick={handleNotificationPermission} disabled={notificationPermission === 'granted' || notificationPermission === 'denied'}>
+                    {notificationPermission === 'granted' ? "Notificações Ativadas" : "Ativar Notificações"}
+                </Button>
+            </CardFooter>
+        </Card>
+
       </main>
     </div>
   );
