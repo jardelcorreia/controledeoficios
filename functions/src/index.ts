@@ -17,15 +17,15 @@ admin.initializeApp();
 
 const db = admin.firestore();
 
-// Configura as chaves VAPID a partir das variáveis de ambiente das funções
-// Use: firebase functions:config:set vapid.public_key="..." vapid.private_key="..."
-const vapidConfig = functions.config().vapid;
+// Use as variáveis de ambiente para as chaves VAPID
+const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || functions.config().vapid?.public_key;
+const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || functions.config().vapid?.private_key;
 
-if (vapidConfig && vapidConfig.public_key && vapidConfig.private_key) {
+if (vapidPublicKey && vapidPrivateKey) {
   webpush.setVapidDetails(
     "mailto:jardel.lc@gmail.com",
-    vapidConfig.public_key,
-    vapidConfig.private_key
+    vapidPublicKey,
+    vapidPrivateKey
   );
 } else {
   functions.logger.warn(
@@ -41,7 +41,7 @@ export const sendOficioNotification = functions
   .firestore.document("oficios/{oficioId}")
   .onWrite(async (change, context) => {
     // Se as chaves VAPID não estiverem configuradas, a função não prossegue.
-    if (!vapidConfig || !vapidConfig.public_key || !vapidConfig.private_key) {
+    if (!vapidPublicKey || !vapidPrivateKey) {
       functions.logger.error(
         "VAPID keys are not set. Cannot send notification."
       );
