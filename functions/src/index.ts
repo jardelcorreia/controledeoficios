@@ -1,3 +1,4 @@
+
 /**
  * Import function triggers from their respective submodules:
  *
@@ -103,7 +104,7 @@ export const sendOficioNotification = functions
         functions.logger.info("Nenhuma inscrição encontrada para notificar.");
         return null;
       }
-      
+
       // Mapeia e filtra para garantir que apenas inscrições válidas sejam usadas.
       const subscriptions = subscriptionsSnapshot.docs
         .map((doc) => doc.data()?.subscription)
@@ -111,7 +112,9 @@ export const sendOficioNotification = functions
 
 
       if (subscriptions.length === 0) {
-        functions.logger.warn("Documentos de inscrição encontrados, mas nenhum continha um objeto 'subscription' válido.");
+        functions.logger.warn(
+          "Documentos de inscrição encontrados, mas nenhum continha um objeto 'subscription' válido."
+        );
         return null;
       }
 

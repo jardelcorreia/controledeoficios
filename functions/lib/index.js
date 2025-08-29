@@ -120,7 +120,14 @@ exports.sendOficioNotification = functions
             functions.logger.info("Nenhuma inscrição encontrada para notificar.");
             return null;
         }
-        const subscriptions = subscriptionsSnapshot.docs.map((doc) => doc.data().subscription);
+        // Mapeia e filtra para garantir que apenas inscrições válidas sejam usadas.
+        const subscriptions = subscriptionsSnapshot.docs
+            .map((doc) => { var _a; return (_a = doc.data()) === null || _a === void 0 ? void 0 : _a.subscription; })
+            .filter((sub) => !!sub);
+        if (subscriptions.length === 0) {
+            functions.logger.warn("Documentos de inscrição encontrados, mas nenhum continha um objeto 'subscription' válido.");
+            return null;
+        }
         functions.logger.info(`Enviando notificação para ${subscriptions.length} inscritos.`);
         // Prepara todas as promessas de envio de notificação.
         const sendPromises = subscriptions.map((sub) => webpush.sendNotification(sub, JSON.stringify(notificationPayload)));
