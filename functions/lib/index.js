@@ -53,8 +53,7 @@ const db = admin.firestore();
 // firebase functions:config:set vapid.private_key="YOUR_PRIVATE_KEY"
 const vapidConfig = functions.config().vapid;
 if (vapidConfig && vapidConfig.public_key && vapidConfig.private_key) {
-    webpush.setVapidDetails("mailto:jardel.lc@gmail.com", // Substitua pelo seu email de contato
-    vapidConfig.public_key, vapidConfig.private_key);
+    webpush.setVapidDetails("mailto:jardel.lc@gmail.com", vapidConfig.public_key, vapidConfig.private_key);
 }
 else {
     functions.logger.warn("VAPID keys not configured. Push notifications will be disabled.");
@@ -64,7 +63,7 @@ else {
  * Envia notificações push para os usuários inscritos.
  */
 exports.sendOficioNotification = functions
-    .region("southamerica-east1") // Especifique a região mais próxima
+    .region("southamerica-east1")
     .firestore.document("oficios/{oficioId}")
     .onWrite(async (change, context) => {
     // Verifica se as chaves VAPID estão configuradas antes de prosseguir
@@ -83,15 +82,16 @@ exports.sendOficioNotification = functions
             notification: {
                 title: "Novo Ofício Criado!",
                 body: `O ofício nº ${dataAfter.numero} foi criado e está aguardando envio.`,
-                icon: "/icons/icon-192x192.png", // Caminho para o ícone
+                icon: "/icons/icon-192x192.png",
                 data: {
-                    url: `/oficios/${oficioId}`, // URL para abrir ao clicar na notificação
+                    url: `/oficios/${oficioId}`,
                 },
             },
         };
     }
+    else if (
     // Caso 2: Ofício atualizado para "Enviado"
-    if (change.before.exists &&
+    change.before.exists &&
         change.after.exists &&
         (dataBefore === null || dataBefore === void 0 ? void 0 : dataBefore.status) !== "Enviado" &&
         (dataAfter === null || dataAfter === void 0 ? void 0 : dataAfter.status) === "Enviado") {
