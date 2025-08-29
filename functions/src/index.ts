@@ -23,7 +23,7 @@ const vapidConfig = functions.config().vapid;
 
 if (vapidConfig && vapidConfig.public_key && vapidConfig.private_key) {
   webpush.setVapidDetails(
-    "mailto:your-email@example.com",
+    "mailto:jardel.lc@gmail.com",
     vapidConfig.public_key,
     vapidConfig.private_key
   );
@@ -38,7 +38,7 @@ if (vapidConfig && vapidConfig.public_key && vapidConfig.private_key) {
  * Envia notificações push para os usuários inscritos.
  */
 export const sendOficioNotification = functions
-  .region("southamerica-east1") // Especifique a região mais próxima
+  .region("southamerica-east1")
   .firestore.document("oficios/{oficioId}")
   .onWrite(async (change, context) => {
     // Verifica se as chaves VAPID estão configuradas antes de prosseguir
@@ -62,16 +62,15 @@ export const sendOficioNotification = functions
         notification: {
           title: "Novo Ofício Criado!",
           body: `O ofício nº ${dataAfter.numero} foi criado e está aguardando envio.`,
-          icon: "/icons/icon-192x192.png", // Caminho para o ícone
+          icon: "/icons/icon-192x192.png",
           data: {
-            url: `/oficios/${oficioId}`, // URL para abrir ao clicar na notificação
+            url: `/oficios/${oficioId}`,
           },
         },
       };
     }
-
     // Caso 2: Ofício atualizado para "Enviado"
-    if (
+    else if (
       change.before.exists &&
       change.after.exists &&
       dataBefore?.status !== "Enviado" &&

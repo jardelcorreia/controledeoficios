@@ -53,7 +53,7 @@ const db = admin.firestore();
 // firebase functions:config:set vapid.private_key="YOUR_PRIVATE_KEY"
 const vapidConfig = functions.config().vapid;
 if (vapidConfig && vapidConfig.public_key && vapidConfig.private_key) {
-    webpush.setVapidDetails("mailto:your-email@example.com", // Substitua pelo seu email de contato
+    webpush.setVapidDetails("mailto:jardel.lc@gmail.com", // Substitua pelo seu email de contato
     vapidConfig.public_key, vapidConfig.private_key);
 }
 else {
