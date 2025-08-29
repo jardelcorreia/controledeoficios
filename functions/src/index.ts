@@ -66,9 +66,8 @@ export const sendOficioNotification = functions
           },
         },
       };
-    }
-    // Caso 2: Ofício atualizado para "Enviado".
-    else if (
+    } else if (
+      // Caso 2: Ofício atualizado para "Enviado".
       change.before.exists &&
       change.after.exists &&
       dataBefore?.status !== "Enviado" &&
@@ -99,12 +98,12 @@ export const sendOficioNotification = functions
       const subscriptionsSnapshot = await db
         .collection("pushSubscriptions")
         .get();
-        
+
       if (subscriptionsSnapshot.empty) {
         functions.logger.info("Nenhuma inscrição encontrada para notificar.");
         return null;
       }
-      
+
       const subscriptions = subscriptionsSnapshot.docs.map((doc) =>
         doc.data().subscription
       );
@@ -123,9 +122,10 @@ export const sendOficioNotification = functions
 
       functions.logger.info("Notificações enviadas com sucesso!");
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       functions.logger.error("Erro ao enviar notificações push:", error);
       // Aqui você pode adicionar lógica para limpar inscrições inválidas se necessário.
-      return { error: `Falha ao enviar notificações: ${error.message}` };
+      return { error: `Falha ao enviar notificações: ${errorMessage}` };
     }
   });

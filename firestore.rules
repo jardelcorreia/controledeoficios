@@ -1,17 +1,36 @@
 
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Permite acesso de leitura e escrita para as coleções da aplicação.
-    // ATENÇÃO: Para produção, implemente regras de segurança mais restritivas.
-    match /oficios/{document=**} {
-      allow read, write: if true;
+
+    // Regra geral: Apenas usuários autenticados podem acessar os dados.
+    function isAuthenticated() {
+      return request.auth != null;
     }
-    match /config/{document=**} {
-      allow read, write: if true;
+
+    // Oficios: Usuários autenticados podem ler e escrever, mas não deletar.
+    // A lógica de deleção é controlada pela Server Action para garantir integridade.
+    match /oficios/{oficioId} {
+      allow read, create, update: if isAuthenticated();
+      allow delete: if false; // Deleção controlada pelo backend.
     }
-    match /historico/{document=**} {
-      allow read, write: if true;
+
+    // Histórico: Apenas pode ser criado pelo sistema (via server actions).
+    match /historico/{logId} {
+      allow read, create: if isAuthenticated();
+      allow update, delete: if false; // Histórico é imutável.
+    }
+
+    // Config: Usuários autenticados podem ler e escrever.
+    match /config/{configId} {
+       allow read, write: if isAuthenticated();
+    }
+
+    // Push Subscriptions: Usuários autenticados podem criar e deletar suas próprias inscrições.
+    // A função de backend (admin) pode ler todas para enviar notificações.
+    match /pushSubscriptions/{subscriptionId} {
+      allow read, write: if isAuthenticated();
     }
   }
 }
