@@ -40,6 +40,7 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var _a, _b;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendOficioNotification = void 0;
 const functions = __importStar(require("firebase-functions"));
@@ -48,11 +49,11 @@ const webpush = __importStar(require("web-push"));
 // Inicializa o Firebase Admin SDK. Isso deve ser feito apenas uma vez.
 admin.initializeApp();
 const db = admin.firestore();
-// Configura as chaves VAPID a partir das variáveis de ambiente das funções
-// Use: firebase functions:config:set vapid.public_key="..." vapid.private_key="..."
-const vapidConfig = functions.config().vapid;
-if (vapidConfig && vapidConfig.public_key && vapidConfig.private_key) {
-    webpush.setVapidDetails("mailto:jardel.lc@gmail.com", vapidConfig.public_key, vapidConfig.private_key);
+// Use as variáveis de ambiente para as chaves VAPID
+const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ((_a = functions.config().vapid) === null || _a === void 0 ? void 0 : _a.public_key);
+const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || ((_b = functions.config().vapid) === null || _b === void 0 ? void 0 : _b.private_key);
+if (vapidPublicKey && vapidPrivateKey) {
+    webpush.setVapidDetails("mailto:jardel.lc@gmail.com", vapidPublicKey, vapidPrivateKey);
 }
 else {
     functions.logger.warn("VAPID keys not configured. Push notifications will be disabled.");
@@ -65,7 +66,7 @@ exports.sendOficioNotification = functions
     .firestore.document("oficios/{oficioId}")
     .onWrite(async (change, context) => {
     // Se as chaves VAPID não estiverem configuradas, a função não prossegue.
-    if (!vapidConfig || !vapidConfig.public_key || !vapidConfig.private_key) {
+    if (!vapidPublicKey || !vapidPrivateKey) {
         functions.logger.error("VAPID keys are not set. Cannot send notification.");
         return null;
     }
