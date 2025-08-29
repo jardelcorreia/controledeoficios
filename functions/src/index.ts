@@ -23,12 +23,14 @@ const vapidConfig = functions.config().vapid;
 
 if (vapidConfig && vapidConfig.public_key && vapidConfig.private_key) {
   webpush.setVapidDetails(
-    "mailto:your-email@example.com", // Substitua pelo seu email de contato
+    "mailto:your-email@example.com",
     vapidConfig.public_key,
     vapidConfig.private_key
   );
 } else {
-  functions.logger.warn("VAPID keys not configured. Push notifications will be disabled.");
+  functions.logger.warn(
+    "VAPID keys not configured. Push notifications will be disabled."
+  );
 }
 
 /**
@@ -41,7 +43,9 @@ export const sendOficioNotification = functions
   .onWrite(async (change, context) => {
     // Verifica se as chaves VAPID estão configuradas antes de prosseguir
     if (!vapidConfig || !vapidConfig.public_key || !vapidConfig.private_key) {
-      functions.logger.error("VAPID keys are not set. Cannot send notification.");
+      functions.logger.error(
+        "VAPID keys are not set. Cannot send notification."
+      );
       return null;
     }
 
