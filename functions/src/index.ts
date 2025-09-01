@@ -8,10 +8,6 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-// Import and configure dotenv
-import * as dotenv from "dotenv";
-dotenv.config();
-
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import * as webpush from "web-push";
@@ -22,7 +18,7 @@ admin.initializeApp();
 
 const db = admin.firestore();
 
-// Use as variáveis de ambiente carregadas pelo dotenv
+// As chaves VAPID são lidas das variáveis de ambiente injetadas pelo ambiente de deploy
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 
@@ -34,7 +30,7 @@ if (vapidPublicKey && vapidPrivateKey) {
   );
 } else {
   functions.logger.warn(
-    "VAPID keys not configured. Push notifications will be disabled. Check your .env file in the functions directory."
+    "VAPID keys not configured in environment. Push notifications will be disabled."
   );
 }
 
