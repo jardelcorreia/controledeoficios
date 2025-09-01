@@ -1,4 +1,6 @@
 
+"use client";
+
 import PageHeader from "@/components/PageHeader";
 import {
   Table,
@@ -8,22 +10,73 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getHistorico } from "@/lib/oficios";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { getHistorico, Historico } from "@/lib/oficios";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
+const PAGE_SIZE = 15;
 
-export default async function HistoricoPage() {
-    let historico = [];
-    let error = null;
+export default function HistoricoPage() {
+    const [historico, setHistorico] = useState<Historico[]>([]);
+    const [lastVisible, setLastVisible] = useState<string | null>(null);
+    const [hasMore, setHasMore] = useState(true);
+    const [loading, setLoading] = useState(true);
+    const [isLoadMorePending, startLoadMoreTransition] = useTransition();
+    const [error, setError] = useState<Error | null>(null);
 
-    try {
-        historico = await getHistorico();
-    } catch (e: any) {
-        console.error("Erro ao carregar histórico:", e);
-        error = e;
-    }
+    useEffect(() => {
+        setLoading(true);
+        getHistorico(PAGE_SIZE)
+            .then(({ historico: initialHistorico, lastVisible: newLastVisible }) => {
+                setHistorico(initialHistorico);
+                setLastVisible(newLastVisible);
+                setHasMore(initialHistorico.length === PAGE_SIZE);
+                setLoading(false);
+            })
+            .catch((e: any) => {
+                console.error("Erro ao carregar histórico:", e);
+                setError(e);
+                setLoading(false);
+            });
+    }, []);
+
+    const handleLoadMore = () => {
+      if (!lastVisible || !hasMore) return;
+      
+      startLoadMoreTransition(() => {
+          getHistorico(PAGE_SIZE, lastVisible)
+              .then(({ historico: newHistorico, lastVisible: newLastVisible }) => {
+                  setHistorico(prev => [...prev, ...newHistorico]);
+                  setLastVisible(newLastVisible);
+                  setHasMore(newHistorico.length === PAGE_SIZE);
+              })
+              .catch((e: any) => {
+                  console.error("Erro ao carregar mais histórico:", e);
+                  setError(e);
+              });
+      });
+    };
+
+    const renderSkeleton = () => (
+      <TableRow>
+          <TableCell className="font-medium">
+              <Skeleton className="h-5 w-24" />
+              <div className="md:hidden mt-1">
+                <Skeleton className="h-4 w-32" />
+              </div>
+          </TableCell>
+          <TableCell className="hidden md:table-cell">
+              <Skeleton className="h-5 w-40" />
+          </TableCell>
+          <TableCell>
+              <Skeleton className="h-5 w-full" />
+          </TableCell>
+      </TableRow>
+  );
 
     return (
       <div className="flex flex-col h-full">
@@ -57,7 +110,8 @@ export default async function HistoricoPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {historico.map((item) => (
+                  {loading && Array.from({ length: 5 }).map((_, i) => renderSkeleton())}
+                  {!loading && historico.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">
                         <div>{item.acao}</div>
@@ -69,13 +123,13 @@ export default async function HistoricoPage() {
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
                         {new Date(item.data).toLocaleString("pt-BR", {
-                          timeZone: "America/Sao_Paulo", // Ajuste para o seu fuso horário
+                          timeZone: "America/Sao_Paulo",
                         })}
                       </TableCell>
                       <TableCell>{item.detalhes}</TableCell>
                     </TableRow>
                   ))}
-                   {historico.length === 0 && !error && (
+                   {!loading && historico.length === 0 && !error && (
                         <TableRow>
                             <TableCell colSpan={3} className="text-center">
                                 Nenhum registro de histórico encontrado.
@@ -85,6 +139,13 @@ export default async function HistoricoPage() {
                 </TableBody>
               </Table>
             </CardContent>
+             {hasMore && !loading && (
+                <CardFooter className="flex justify-center border-t pt-4">
+                    <Button onClick={handleLoadMore} disabled={isLoadMorePending}>
+                        {isLoadMorePending ? "Carregando..." : "Carregar Mais"}
+                    </Button>
+                </CardFooter>
+            )}
           </Card>
         </main>
       </div>

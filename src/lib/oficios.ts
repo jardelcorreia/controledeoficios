@@ -1,3 +1,4 @@
+
 // src/lib/oficios.ts
 import { db } from '@/lib/firebase';
 import {
@@ -9,6 +10,9 @@ import {
   orderBy,
   limit,
   where,
+  startAfter,
+  DocumentData,
+  QueryDocumentSnapshot,
 } from 'firebase/firestore';
 
 export const statusList = ["Aguardando Envio", "Enviado"] as const;
@@ -159,10 +163,38 @@ export type Historico = {
 
 const HISTORICO_COLLECTION = 'historico';
 
-export async function getHistorico(): Promise<Historico[]> {
-  const q = query(collection(db, HISTORICO_COLLECTION), orderBy('data', 'desc'));
+export async function getHistorico(
+  pageSize: number,
+  lastVisibleId?: string | null
+): Promise<{ historico: Historico[], lastVisible: string | null }> {
+  const historicoCollection = collection(db, HISTORICO_COLLECTION);
+  let q;
+
+  if (lastVisibleId) {
+    const lastDocRef = doc(db, HISTORICO_COLLECTION, lastVisibleId);
+    const lastDocSnap = await getDoc(lastDocRef);
+    if (!lastDocSnap.exists()) {
+      // Se o documento cursor não for encontrado, retorna vazio
+      return { historico: [], lastVisible: null };
+    }
+    q = query(
+      historicoCollection,
+      orderBy('data', 'desc'),
+      startAfter(lastDocSnap),
+      limit(pageSize)
+    );
+  } else {
+    // Primeira página
+    q = query(historicoCollection, orderBy('data', 'desc'), limit(pageSize));
+  }
+
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(
+
+  const historicoData = snapshot.docs.map(
     (doc) => ({ id: doc.id, ...doc.data() } as Historico)
   );
+
+  const newLastVisible = snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1].id : null;
+
+  return { historico: historicoData, lastVisible: newLastVisible };
 }
