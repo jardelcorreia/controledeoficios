@@ -44,8 +44,6 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState, useTransition } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
-
 
 const statusColors: Record<Status, string> = {
     "Aguardando Envio": "bg-yellow-500",
@@ -59,8 +57,6 @@ export default function OficiosPage() {
     const [isDeletePending, startDeleteTransition] = useTransition();
     const [oficioToDelete, setOficioToDelete] = useState<Oficio | null>(null);
     const { toast } = useToast();
-    const router = useRouter();
-
 
     useEffect(() => {
         getOficios()
@@ -75,12 +71,16 @@ export default function OficiosPage() {
         startDeleteTransition(async () => {
             try {
                 await deleteOficio(oficioToDelete.id);
+                
+                // Remove o ofício da lista local para atualização imediata da UI
+                setOficios(prevOficios => prevOficios.filter(o => o.id !== oficioToDelete.id));
+
                 toast({
                     title: "Ofício Excluído!",
                     description: `O ofício nº ${oficioToDelete.numero} foi removido com sucesso.`,
                 });
                 setOficioToDelete(null);
-                router.refresh(); // Força a recarga dos dados
+
             } catch (error) {
                  toast({
                     title: "Erro ao excluir",
