@@ -151,14 +151,16 @@ export async function addHistorico(data: Omit<Historico, 'id' | 'data'>) {
   revalidatePath('/historico');
 }
 
-export async function savePushSubscription(subscription: object) {
+export async function savePushSubscription(subscription: PushSubscription) {
   try {
+    const subscriptionObject = JSON.parse(JSON.stringify(subscription));
     // Verificação simples para evitar duplicatas, embora uma verificação mais robusta possa ser necessária
-    const q = query(collection(db, PUSH_SUBSCRIPTIONS_COLLECTION), where("subscription.endpoint", "==", (subscription as any).endpoint));
+    const q = query(collection(db, PUSH_SUBSCRIPTIONS_COLLECTION), where("subscription.endpoint", "==", subscriptionObject.endpoint));
     const existing = await getDocs(q);
+
     if (existing.empty) {
         const docRef = await addDoc(collection(db, PUSH_SUBSCRIPTIONS_COLLECTION), {
-          subscription: JSON.parse(JSON.stringify(subscription)), // Ensure it's a plain object
+          subscription: subscriptionObject,
           createdAt: serverTimestamp(),
         });
         console.log('Push subscription saved:', docRef.id);
@@ -168,6 +170,7 @@ export async function savePushSubscription(subscription: object) {
     return { success: true };
   } catch (error) {
     console.error('Error saving push subscription:', error);
-    return { success: false, error: 'Failed to save subscription.' };
+    const errorMessage = error instanceof Error ? error.message : "Failed to save subscription.";
+    return { success: false, error: errorMessage };
   }
 }
