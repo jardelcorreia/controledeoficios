@@ -30,6 +30,7 @@ import { useEffect, useTransition, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal, BellRing } from "lucide-react";
+import { getVapidKeys } from "@/lib/firebase";
 
 
 const formSchema = z.object({
@@ -39,8 +40,6 @@ const formSchema = z.object({
   numeroInicial: z.coerce.number().min(1),
 });
 
-// Chave pública VAPID - Substitua por suas chaves geradas
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -79,9 +78,11 @@ export default function ConfiguracoesPage() {
       return;
     }
 
+    const VAPID_PUBLIC_KEY = getVapidKeys().publicKey;
+
     if (!VAPID_PUBLIC_KEY) {
-        toast({ title: "Erro de Configuração", description: "A chave pública VAPID para notificações não está configurada.", variant: "destructive"});
-        console.error("VAPID public key is not set in environment variables.");
+        toast({ title: "Erro de Configuração", description: "A chave pública VAPID para notificações não pôde ser gerada.", variant: "destructive"});
+        console.error("VAPID public key could not be generated.");
         return;
     }
 
