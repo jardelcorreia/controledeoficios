@@ -1,3 +1,4 @@
+
 // src/lib/oficios.actions.ts
 'use server';
 
@@ -10,9 +11,6 @@ import {
   setDoc,
   deleteDoc,
   serverTimestamp,
-  getDocs,
-  query,
-  where
 } from 'firebase/firestore';
 import {
   getNumeracaoConfig,
@@ -25,7 +23,7 @@ import {
   NumeracaoConfig,
 } from './oficios';
 import { revalidatePath } from 'next/cache';
-// A lógica de web-push foi removida daqui, pois será gerenciada por uma Firebase Function.
+import crypto from 'crypto';
 
 
 const OFICIOS_COLLECTION = 'oficios';
@@ -33,9 +31,6 @@ const HISTORICO_COLLECTION = 'historico';
 const CONFIG_COLLECTION = 'config';
 const NUMERACAO_DOC_ID = 'numeracao';
 const PUSH_SUBSCRIPTIONS_COLLECTION = 'pushSubscriptions';
-
-
-// A função sendPushNotification foi removida. Uma Firebase Function cuidará disso.
 
 
 // --- Funções de Escrita ---
@@ -73,9 +68,6 @@ export async function createOficio(data: {
     detalhes: `Ofício nº ${numero} criado com status 'Aguardando Envio'.`,
   });
 
-  // A chamada para sendPushNotification foi removida.
-  // A Firebase Function será acionada automaticamente pela criação do documento.
-
   revalidatePath('/oficios');
   revalidatePath('/');
   return docRef.id;
@@ -98,9 +90,6 @@ export async function updateOficio(
     ? `Status do ofício nº ${oficio.numero} alterado para '${data.status}'.`
     : `Ofício nº ${oficio.numero} atualizado.`;
   
-  // A chamada para sendPushNotification foi removida.
-  // A Firebase Function será acionada automaticamente pela atualização do documento.
-
   await addHistorico({
     acao: 'Edição de Ofício',
     detalhes: detalhes,
@@ -153,21 +142,26 @@ export async function addHistorico(data: Omit<Historico, 'id' | 'data'>) {
 
 export async function savePushSubscription(subscription: PushSubscription) {
   try {
+    // Garante que o objeto de inscrição é compatível com o Firestore
     const subscriptionObject = JSON.parse(JSON.stringify(subscription));
-    // Verificação simples para evitar duplicatas, embora uma verificação mais robusta possa ser necessária
-    const q = query(collection(db, PUSH_SUBSCRIPTIONS_COLLECTION), where("subscription.endpoint", "==", subscriptionObject.endpoint));
-    const existing = await getDocs(q);
 
-    if (existing.empty) {
-        const docRef = await addDoc(collection(db, PUSH_SUBSCRIPTIONS_COLLECTION), {
-          subscription: subscriptionObject,
-          createdAt: serverTimestamp(),
-        });
-        console.log('Push subscription saved:', docRef.id);
-    } else {
-        console.log("Push subscription already exists.");
+    if (!subscriptionObject.endpoint) {
+       return { success: false, error: 'Endpoint da inscrição está faltando.' };
     }
+
+    // Cria um ID de documento único e determinístico a partir do endpoint
+    const docId = crypto.createHash('sha256').update(subscriptionObject.endpoint).digest('hex');
+    const docRef = doc(db, PUSH_SUBSCRIPTIONS_COLLECTION, docId);
+    
+    // Usa setDoc para criar ou sobrescrever a inscrição, evitando duplicatas
+    await setDoc(docRef, {
+        subscription: subscriptionObject,
+        createdAt: serverTimestamp(),
+    });
+    
+    console.log('Push subscription saved or updated with ID:', docId);
     return { success: true };
+
   } catch (error) {
     console.error('Error saving push subscription:', error);
     const errorMessage = error instanceof Error ? error.message : "Failed to save subscription.";
