@@ -19,7 +19,7 @@ const db = admin.firestore();
 
 // As chaves VAPID devem ser passadas como variáveis de ambiente para a função
 // no momento do deploy. Isso é mais seguro do que versioná-las.
-const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
+const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 
 if (vapidPublicKey && vapidPrivateKey) {

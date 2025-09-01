@@ -30,7 +30,7 @@ import { useEffect, useTransition, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal, BellRing } from "lucide-react";
-import { getVapidKeys } from "@/lib/firebase";
+import { VAPID_PUBLIC_KEY } from "@/lib/firebase";
 
 
 const formSchema = z.object({
@@ -78,11 +78,9 @@ export default function ConfiguracoesPage() {
       return;
     }
 
-    const VAPID_PUBLIC_KEY = getVapidKeys().publicKey;
-
     if (!VAPID_PUBLIC_KEY) {
-        toast({ title: "Erro de Configuração", description: "A chave pública VAPID para notificações não pôde ser gerada.", variant: "destructive"});
-        console.error("VAPID public key could not be generated.");
+        toast({ title: "Erro de Configuração", description: "A chave pública VAPID para notificações não está definida.", variant: "destructive"});
+        console.error("VAPID public key is not defined.");
         return;
     }
 

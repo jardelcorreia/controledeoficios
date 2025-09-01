@@ -1,7 +1,6 @@
 // @/lib/firebase.ts
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, initializeFirestore } from "firebase/firestore";
-import webpush from "web-push";
 
 const firebaseConfig = {
   projectId: "controle-de-ofcios-pd89y",
@@ -12,25 +11,6 @@ const firebaseConfig = {
   messagingSenderId: "79560888151",
 };
 
-// Singleton to store VAPID keys
-const vapidKeysSingleton = (() => {
-  let instance: { publicKey: string; privateKey: string; };
-
-  function createInstance() {
-    console.log("Generating new VAPID keys...");
-    const keys = webpush.generateVAPIDKeys();
-    return keys;
-  }
-
-  return {
-    getInstance: function () {
-      if (!instance) {
-        instance = createInstance();
-      }
-      return instance;
-    },
-  };
-})();
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
@@ -38,8 +18,7 @@ const db = initializeFirestore(app, {
   ignoreUndefinedProperties: true,
 });
 
-const getVapidKeys = () => {
-    return vapidKeysSingleton.getInstance();
-}
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
-export { app, db, getVapidKeys };
+
+export { app, db, VAPID_PUBLIC_KEY };
