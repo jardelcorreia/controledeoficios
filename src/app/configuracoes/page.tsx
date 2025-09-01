@@ -29,7 +29,7 @@ import { saveNumeracaoConfig, savePushSubscription } from "@/lib/oficios.actions
 import { useEffect, useTransition, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, BellRing } from "lucide-react";
+import { Terminal, BellRing, Download } from "lucide-react";
 import { VAPID_PUBLIC_KEY } from "@/lib/firebase";
 
 
@@ -64,13 +64,41 @@ export default function ConfiguracoesPage() {
   const [error, setError] = useState<Error | null>(null);
   const [notificationPermission, setNotificationPermission] = useState("default");
   const [isSubscribing, setIsSubscribing] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
 
 
   useEffect(() => {
     if ("Notification" in window) {
       setNotificationPermission(Notification.permission);
     }
+
+    const handleBeforeInstallPrompt = (e: Event) => {
+        e.preventDefault();
+        setInstallPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+        window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+
   }, []);
+
+  const handleInstallClick = async () => {
+    if (!installPrompt) {
+      return;
+    }
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === 'accepted') {
+       toast({ title: "Instalado!", description: "O aplicativo foi adicionado à sua tela inicial."});
+    } else {
+       toast({ title: "Instalação cancelada", description: "Você pode instalar o aplicativo a qualquer momento."});
+    }
+    setInstallPrompt(null);
+  };
+
 
   const handleNotificationPermission = async () => {
     if (!("Notification" in window) || !("serviceWorker" in navigator)) {
@@ -350,6 +378,23 @@ export default function ConfiguracoesPage() {
                 </Button>
             </CardFooter>
         </Card>
+
+         {installPrompt && (
+            <Card className="max-w-2xl mx-auto">
+                <CardHeader>
+                    <CardTitle>Instalar Aplicativo</CardTitle>
+                    <CardDescription>
+                        Instale o aplicativo em seu dispositivo para um acesso mais rápido e uma experiência offline.
+                    </CardDescription>
+                </CardHeader>
+                <CardFooter className="border-t px-6 py-4">
+                    <Button onClick={handleInstallClick}>
+                        <Download className="mr-2 h-4 w-4" />
+                        Instalar Aplicativo
+                    </Button>
+                </CardFooter>
+            </Card>
+        )}
 
       </main>
     </div>
