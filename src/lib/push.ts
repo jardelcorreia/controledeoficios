@@ -45,8 +45,9 @@ export async function initializePushNotifications() {
 
   try {
     // 1. Registrar o Service Worker
-    console.log('📝 Registrando Service Worker...');
-    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+    const swPath = '/firebase-messaging-sw.js';
+    console.log(`📝 Registrando Service Worker em: ${swPath}`);
+    const registration = await navigator.serviceWorker.register(swPath, {
       scope: '/'
     });
     
@@ -79,6 +80,8 @@ export async function initializePushNotifications() {
 
     if (subscription) {
       console.log('✅ Subscrição existente encontrada:', subscription);
+      // Opcional: reenviar para o servidor para garantir sincronia
+      await savePushSubscription(subscription);
       return subscription;
     }
 
@@ -125,7 +128,7 @@ export async function initializePushNotifications() {
       });
     }
     
-    throw error;
+    throw err; // Re-lança o erro para ser capturado no componente
   }
 }
 
