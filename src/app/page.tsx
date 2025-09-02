@@ -17,7 +17,7 @@ const statusColors: Record<Status, string> = {
 async function DashboardPage() {
     let proximoNumero = null;
     let oficiosRecentes = [];
-    let error = null;
+    let error: Error | null = null;
 
     try {
         // Usando Promise.all para carregar dados em paralelo
@@ -25,10 +25,10 @@ async function DashboardPage() {
             getProximoNumeroOficio(),
             getOficiosRecentes(5)
         ]);
-    } catch (e: any) {
+    } catch (e: unknown) {
         // Captura o erro para exibição
         console.error("Erro ao carregar dados do dashboard:", e);
-        error = e;
+        error = e instanceof Error ? e : new Error("Ocorreu um erro desconhecido");
     }
 
     return (

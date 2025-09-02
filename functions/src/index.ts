@@ -24,17 +24,19 @@ const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 
 // Adiciona log para verificar se as chaves estão sendo carregadas no ambiente da função
 if (vapidPublicKey && vapidPrivateKey) {
-    functions.logger.info("VAPID keys loaded successfully from environment variables.");
-    webpush.setVapidDetails(
-      "mailto:jardel.lc@gmail.com", // Substitua pelo seu e-mail de contato
-      vapidPublicKey,
-      vapidPrivateKey
-    );
+  functions.logger.info("VAPID keys loaded successfully from environment variables.");
+  webpush.setVapidDetails(
+    "mailto:jardel.lc@gmail.com", // Substitua pelo seu e-mail de contato
+    vapidPublicKey,
+    vapidPrivateKey
+  );
 } else {
-    functions.logger.error("VAPID keys not configured in Firebase Functions environment. Push notifications will be disabled.", {
-        hasPublicKey: !!vapidPublicKey,
-        hasPrivateKey: !!vapidPrivateKey,
-    });
+  functions.logger.error(
+    "VAPID keys not configured in Firebase Functions environment. Push notifications will be disabled.", 
+    {
+    hasPublicKey: !!vapidPublicKey,
+    hasPrivateKey: !!vapidPrivateKey,
+  });
 }
 
 

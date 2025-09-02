@@ -87,7 +87,7 @@ export default function OficioDetalhesPage() {
         });
         router.push("/oficios");
         router.refresh(); // Força a recarga dos dados
-      } catch (error) {
+      } catch (err) {
         toast({
           title: "Erro ao excluir",
           description: "Não foi possível excluir o ofício. Tente novamente.",
@@ -116,7 +116,7 @@ export default function OficioDetalhesPage() {
                 });
               }
 
-          } catch(e) {
+          } catch(err) {
               toast({
                 title: "Erro ao alterar status",
                 description: "Não foi possível alterar o status. Tente novamente.",

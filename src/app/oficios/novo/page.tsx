@@ -58,13 +58,13 @@ export default function NovoOficioPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     startTransition(async () => {
       try {
-        const novoOficioId = await createOficio(values);
+        await createOficio(values);
         toast({
           title: "Ofício Criado!",
           description: `O ofício nº ${proximoNumero} foi salvo com sucesso.`,
         });
         router.push("/oficios");
-      } catch (error) {
+      } catch (err) {
          toast({
           title: "Erro ao criar ofício",
           description: "Não foi possível criar o ofício. Verifique as configurações e tente novamente.",

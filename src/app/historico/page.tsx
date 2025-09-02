@@ -37,9 +37,9 @@ export default function HistoricoPage() {
                 setHasMore(initialHistorico.length === PAGE_SIZE);
                 setLoading(false);
             })
-            .catch((e: any) => {
+            .catch((e: unknown) => {
                 console.error("Erro ao carregar histórico:", e);
-                setError(e);
+                setError(e instanceof Error ? e : new Error("Ocorreu um erro desconhecido"));
                 setLoading(false);
             });
     }, []);
@@ -54,9 +54,9 @@ export default function HistoricoPage() {
                   setLastVisible(newLastVisible);
                   setHasMore(newHistorico.length === PAGE_SIZE);
               })
-              .catch((e: any) => {
+              .catch((e: unknown) => {
                   console.error("Erro ao carregar mais histórico:", e);
-                  setError(e);
+                  setError(e instanceof Error ? e : new Error("Ocorreu um erro desconhecido"));
               });
       });
     };
@@ -110,7 +110,7 @@ export default function HistoricoPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {loading && Array.from({ length: 5 }).map((_, i) => renderSkeleton())}
+                  {loading && Array.from({ length: 5 }).map((_, i) => <TableRow key={i}>{renderSkeleton()}</TableRow>)}
                   {!loading && historico.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">

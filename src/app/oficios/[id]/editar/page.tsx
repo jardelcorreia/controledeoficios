@@ -153,7 +153,7 @@ export default function EditarOficioPage() {
           description: `O ofício nº ${oficio?.numero} foi ${foiEnviado ? 'enviado' : 'atualizado'} com sucesso.`,
         });
         router.push(`/oficios/${oficio?.id}`);
-      } catch (error) {
+      } catch (err) {
          toast({
           title: "Erro ao atualizar ofício",
           description: "Não foi possível salvar as alterações. Tente novamente.",

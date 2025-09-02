@@ -24,7 +24,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
-import { getNumeracaoConfig, NumeracaoConfig } from "@/lib/oficios";
+import { getNumeracaoConfig } from "@/lib/oficios";
 import { saveNumeracaoConfig, savePushSubscription } from "@/lib/oficios.actions";
 import { useEffect, useTransition, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -64,7 +64,7 @@ export default function ConfiguracoesPage() {
   const [error, setError] = useState<Error | null>(null);
   const [notificationPermission, setNotificationPermission] = useState("default");
   const [isSubscribing, setIsSubscribing] = useState(false);
-  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
 
 
   useEffect(() => {
@@ -89,8 +89,8 @@ export default function ConfiguracoesPage() {
     if (!installPrompt) {
       return;
     }
-    installPrompt.prompt();
-    const { outcome } = await installPrompt.userChoice;
+    (installPrompt as any).prompt();
+    const { outcome } = await (installPrompt as any).userChoice;
     if (outcome === 'accepted') {
        toast({ title: "Instalado!", description: "O aplicativo foi adicionado à sua tela inicial."});
     } else {
@@ -156,9 +156,10 @@ export default function ConfiguracoesPage() {
         console.warn("Notification permission denied by user.");
         toast({ title: "Permissão negada", description: "Você não receberá notificações.", variant: "destructive"});
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error during notification setup:", err);
-      toast({ title: "Erro", description: err.message || "Não foi possível ativar as notificações.", variant: "destructive"});
+      const message = err instanceof Error ? err.message : "Não foi possível ativar as notificações.";
+      toast({ title: "Erro", description: message, variant: "destructive"});
     } finally {
       setIsSubscribing(false);
     }
@@ -197,7 +198,7 @@ export default function ConfiguracoesPage() {
           title: "Configurações Salvas!",
           description: "As configurações de numeração foram atualizadas.",
         });
-      } catch (error) {
+      } catch (err) {
         toast({
           title: "Erro ao salvar",
           description: "Não foi possível salvar as configurações.",

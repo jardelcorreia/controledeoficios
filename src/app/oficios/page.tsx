@@ -81,7 +81,7 @@ export default function OficiosPage() {
                 });
                 setOficioToDelete(null);
 
-            } catch (error) {
+            } catch (err) {
                  toast({
                     title: "Erro ao excluir",
                     description: "Não foi possível excluir o ofício. Tente novamente.",

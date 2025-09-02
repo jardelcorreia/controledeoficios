@@ -11,8 +11,6 @@ import {
   limit,
   where,
   startAfter,
-  DocumentData,
-  QueryDocumentSnapshot,
 } from 'firebase/firestore';
 
 export const statusList = ["Aguardando Envio", "Enviado"] as const;
@@ -77,8 +75,8 @@ export async function getUltimoOficio(): Promise<Oficio | null> {
   if (querySnapshot.empty) {
     return null;
   }
-  const doc = querySnapshot.docs[0];
-  return { id: doc.id, ...doc.data() } as Oficio;
+  const docData = querySnapshot.docs[0];
+  return { id: docData.id, ...docData.data() } as Oficio;
 }
 
 // --- Lógica de Numeração ---
