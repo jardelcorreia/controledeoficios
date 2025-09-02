@@ -1,22 +1,34 @@
-// Import and configure the Firebase SDK
-// This is required for the service worker to handle messages.
+// Import a modular SDK
 import { initializeApp } from "firebase/app";
-import { getMessaging } from "firebase/messaging/sw";
+import { getMessaging, onBackgroundMessage } from "firebase/messaging/sw";
 
-// Your web app's Firebase configuration
 const firebaseConfig = {
-  projectId: "controle-de-ofcios-pd89y",
-  appId: "1:79560888151:web:2a707a8a44c4cb4284f812",
-  storageBucket: "controle-de-ofcios-pd89y.firebasestorage.app",
-  apiKey: self.location.search.split('apiKey=')[1].split('&')[0],
+  apiKey: "AIzaSyAwwgWBTAwaEISWj4zYh6sPi0ufixevHnU", // A chave precisa estar aqui diretamente.
   authDomain: "controle-de-ofcios-pd89y.firebaseapp.com",
+  projectId: "controle-de-ofcios-pd89y",
+  storageBucket: "controle-de-ofcios-pd89y.firebasestorage.app",
   messagingSenderId: "79560888151",
+  appId: "1:79560888151:web:2a707a8a44c4cb4284f812",
 };
 
 const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
 
-// The service worker is intentionally left blank after this.
-// Firebase SDK handles the rest.
-// You can add custom logic here for handling background notifications if needed.
-// For example: onBackgroundMessage(messaging, (payload) => { ... });
+onBackgroundMessage(messaging, (payload) => {
+  console.log(
+    "[firebase-messaging-sw.js] Received background message ",
+    payload
+  );
+
+  if (!payload.notification) {
+    return;
+  }
+  
+  const notificationTitle = payload.notification.title || "Novo Ofício";
+  const notificationOptions = {
+    body: payload.notification.body || "Um novo ofício foi adicionado.",
+    icon: payload.notification.icon || "/icons/icon-192x192.png",
+  };
+
+  self.registration.showNotification(notificationTitle, notificationOptions);
+});

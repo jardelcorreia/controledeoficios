@@ -7,7 +7,6 @@ import { app } from "./firebase";
 
 // Esta deve ser a MESMA chave que você está usando no backend
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-const FIREBASE_API_KEY = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
 
 
 export async function initializePushNotifications() {
@@ -24,8 +23,7 @@ export async function initializePushNotifications() {
   }
 
   try {
-     const swPath = `/firebase-messaging-sw.js?apiKey=${FIREBASE_API_KEY}`;
-     const registration = await navigator.serviceWorker.register(swPath);
+     const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
      console.log('Service Worker registrado:', registration);
     
     await navigator.serviceWorker.ready;
