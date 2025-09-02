@@ -11,6 +11,9 @@ import {
   setDoc,
   deleteDoc,
   serverTimestamp,
+  query,
+  where,
+  getDocs,
 } from 'firebase/firestore';
 import {
   getNumeracaoConfig,
@@ -140,26 +143,29 @@ export async function addHistorico(data: Omit<Historico, 'id' | 'data'>) {
   revalidatePath('/historico');
 }
 
-export async function savePushSubscription(subscription: PushSubscription) {
+export async function savePushSubscription(subscription: { token: string }) {
   try {
-    // Garante que o objeto de inscrição é compatível com o Firestore
-    const subscriptionObject = JSON.parse(JSON.stringify(subscription));
-
-    if (!subscriptionObject.endpoint) {
-       return { success: false, error: 'Endpoint da inscrição está faltando.' };
+    if (!subscription.token) {
+      return { success: false, error: 'Token de inscrição está faltando.' };
     }
 
-    // Cria um ID de documento único e determinístico a partir do endpoint
-    const docId = crypto.createHash('sha256').update(subscriptionObject.endpoint).digest('hex');
-    const docRef = doc(db, PUSH_SUBSCRIPTIONS_COLLECTION, docId);
-    
-    // Usa setDoc para criar ou sobrescrever a inscrição, evitando duplicatas
+    // Verifica se o token já existe
+    const q = query(collection(db, PUSH_SUBSCRIPTIONS_COLLECTION), where("token", "==", subscription.token));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+        console.log('Token já existe no Firestore. Nenhuma ação necessária.');
+        return { success: true, message: "Token já existe." };
+    }
+
+    // Se não existir, cria um novo documento
+    const docRef = doc(collection(db, PUSH_SUBSCRIPTIONS_COLLECTION));
     await setDoc(docRef, {
-        subscription: subscriptionObject,
-        createdAt: serverTimestamp(),
+      token: subscription.token,
+      createdAt: serverTimestamp(),
     });
     
-    console.log('Push subscription saved or updated with ID:', docId);
+    console.log('Push subscription token saved with ID:', docRef.id);
     return { success: true };
 
   } catch (error) {

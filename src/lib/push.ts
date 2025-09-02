@@ -2,37 +2,19 @@
 'use client'
 
 import { savePushSubscription } from "./oficios.actions";
+import { getMessaging, getToken } from "firebase/messaging";
+import { app } from "./firebase";
 
 // Esta deve ser a MESMA chave que você está usando no backend
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
-
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
-}
 
 export async function initializePushNotifications() {
   console.log('=== INICIANDO SETUP DE PUSH NOTIFICATIONS ===');
   
-  // Verificações básicas
-  if (!('serviceWorker' in navigator)) {
-    console.error('Service Worker não é suportado neste navegador');
-    throw new Error('Service Worker não suportado');
-  }
-
-  if (!('PushManager' in window)) {
-    console.error('Push messaging não é suportado neste navegador');
-    throw new Error('Push messaging não suportado');
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+    console.error('Service Worker ou Push Messaging não é suportado neste navegador');
+    throw new Error('Push Notifications não são suportadas.');
   }
 
   if (!VAPID_PUBLIC_KEY) {
@@ -40,95 +22,45 @@ export async function initializePushNotifications() {
     throw new Error('VAPID key não configurada');
   }
 
-  console.log('✅ Verificações básicas passou');
-  console.log('VAPID Public Key:', VAPID_PUBLIC_KEY.substring(0, 20) + '...');
-
   try {
-    // 1. Registrar o Service Worker
-    const swPath = '/firebase-messaging-sw.js';
-    console.log(`📝 Registrando Service Worker em: ${swPath}`);
-    const registration = await navigator.serviceWorker.register(swPath, {
-      scope: '/'
-    });
+     const swPath = '/firebase-messaging-sw.js';
+     const registration = await navigator.serviceWorker.register(swPath);
+     console.log('Service Worker registrado:', registration);
     
-    console.log('✅ Service Worker registrado:', registration);
-
-    // 2. Aguardar o Service Worker estar pronto
-    console.log('⏳ Aguardando Service Worker estar pronto...');
     await navigator.serviceWorker.ready;
-    console.log('✅ Service Worker pronto');
+    console.log('Service Worker pronto.');
 
-    // 3. Verificar permissão de notificação
-    console.log('🔔 Verificando permissão de notificação...');
-    let permission = Notification.permission;
-    
-    if (permission === 'default') {
-      console.log('📋 Solicitando permissão de notificação...');
-      permission = await Notification.requestPermission();
-    }
-
+    const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
-      console.error('❌ Permissão de notificação negada:', permission);
-      throw new Error('Permissão de notificação negada');
+      throw new Error('Permissão de notificação negada.');
     }
+    console.log('Permissão de notificação concedida.');
 
-    console.log('✅ Permissão de notificação concedida');
-
-    // 4. Verificar se já existe uma subscrição
-    console.log('🔍 Verificando subscrição existente...');
-    let subscription = await registration.pushManager.getSubscription();
-
-    if (subscription) {
-      console.log('✅ Subscrição existente encontrada:', subscription);
-      // Opcional: reenviar para o servidor para garantir sincronia
-      await savePushSubscription(subscription);
-      return subscription;
-    }
-
-    // 5. Criar nova subscrição
-    console.log('🆕 Criando nova subscrição...');
+    const messaging = getMessaging(app);
+    console.log('Solicitando token FCM...');
     
-    const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
-    subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey
+    const currentToken = await getToken(messaging, {
+        vapidKey: VAPID_PUBLIC_KEY,
+        serviceWorkerRegistration: registration,
     });
 
-    console.log('✅ Nova subscrição criada:', subscription);
-
-    // 6. Salvar subscrição no servidor via Server Action
-    console.log('💾 Salvando subscrição no servidor...');
-    const result = await savePushSubscription(subscription);
-
-    if (!result.success) {
-      throw new Error(result.error || 'Falha ao salvar a inscrição no servidor.');
+    if (currentToken) {
+        console.log('Token FCM recebido:', currentToken);
+        console.log('Salvando token no servidor...');
+        
+        await savePushSubscription({ token: currentToken });
+        
+        console.log('🎉 Push notifications configurado com sucesso!');
+        return currentToken;
+    } else {
+        console.warn('Não foi possível obter o token. O usuário precisa conceder permissão.');
+        throw new Error('Falha ao obter o token de notificação.');
     }
-
-    console.log('✅ Subscrição salva no servidor');
-    console.log('🎉 Push notifications configurado com sucesso!');
-
-    return subscription;
 
   } catch (error: unknown) {
     const err = error as Error;
     console.error('❌ Erro ao configurar push notifications:', err);
-    
-    // Logging detalhado do erro
-    if (err.name === 'NotSupportedError') {
-      console.error('Push messaging não é suportado neste dispositivo/navegador');
-    } else if (err.name === 'NotAllowedError') {
-      console.error('Usuário negou a permissão de notificação');
-    } else if (err.name === 'AbortError') {
-      console.error('Operação foi abortada - Push Service Error');
-    } else {
-      console.error('Erro detalhado:', {
-        name: err.name,
-        message: err.message,
-        stack: err.stack
-      });
-    }
-    
-    throw err; // Re-lança o erro para ser capturado no componente
+    throw err;
   }
 }
 
@@ -154,7 +86,7 @@ export async function testNotification() {
   }
 }
 
-// Função para debugar problemas
+
 export async function debugPushSetup() {
   console.log('=== DEBUG PUSH SETUP ===');
   console.log('Service Worker suportado:', 'serviceWorker' in navigator);
@@ -169,16 +101,10 @@ export async function debugPushSetup() {
     try {
       const registration = await navigator.serviceWorker.getRegistration();
       console.log('SW Registration:', registration);
-      
-      if (registration?.pushManager) {
-        const subscription = await registration.pushManager.getSubscription();
-        console.log('Subscription existente:', subscription);
-        
-        if (subscription) {
-          console.log('Endpoint:', subscription.endpoint);
-          console.log('Keys:', subscription.keys);
-        }
+      if(registration){
+        console.log('SW Scope:', registration.scope);
       }
+
     } catch (error: unknown) {
       console.error('Erro no debug:', error);
     }

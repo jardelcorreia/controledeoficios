@@ -10,35 +10,12 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import * as webpush from "web-push";
 
 // Inicializa o Firebase Admin SDK. Isso deve ser feito apenas uma vez.
 admin.initializeApp();
 
 const db = admin.firestore();
-
-// As chaves VAPID são lidas das variáveis de ambiente do ambiente da função.
-// Elas devem ser definidas no seu ambiente de nuvem (ex: via apphosting.yaml).
-const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
-
-// Adiciona log para verificar se as chaves estão sendo carregadas no ambiente da função
-if (vapidPublicKey && vapidPrivateKey) {
-  functions.logger.info("VAPID keys loaded successfully from environment variables.");
-  webpush.setVapidDetails(
-    "mailto:jardel.lc@gmail.com", // Substitua pelo seu e-mail de contato
-    vapidPublicKey,
-    vapidPrivateKey
-  );
-} else {
-  functions.logger.error(
-    "VAPID keys not configured in Firebase Functions environment. Push notifications will be disabled.",
-    {
-      hasPublicKey: !!vapidPublicKey,
-      hasPrivateKey: !!vapidPrivateKey,
-    });
-}
-
+const messaging = admin.messaging();
 
 /**
  * Função acionada na criação ou atualização de um ofício para enviar notificações.
@@ -47,14 +24,6 @@ export const sendOficioNotification = functions
   .region("southamerica-east1")
   .firestore.document("oficios/{oficioId}")
   .onWrite(async (change, context) => {
-    // Se as chaves VAPID não estiverem configuradas, a função não prossegue.
-    if (!vapidPublicKey || !vapidPrivateKey) {
-      functions.logger.error(
-        "VAPID keys are not set. Cannot send notification."
-      );
-      return null;
-    }
-
     const oficioId = context.params.oficioId;
     const dataAfter = change.after.data();
     const dataBefore = change.before.data();
@@ -68,11 +37,15 @@ export const sendOficioNotification = functions
         notification: {
           title: "Novo Ofício Criado!",
           body: `O ofício nº ${dataAfter.numero} foi criado e aguarda envio.`,
-          icon: "/icons/icon-192x192.png",
-          data: {
-            url: `/oficios/${oficioId}`,
-          },
         },
+        webpush: {
+            fcm_options: {
+                link: `/oficios/${oficioId}`
+            },
+            notification: {
+                icon: "/icons/icon-192x192.png",
+            }
+        }
       };
     } else if (
       // Caso 2: Ofício atualizado para "Enviado".
@@ -86,11 +59,15 @@ export const sendOficioNotification = functions
         notification: {
           title: "Ofício Enviado!",
           body: `O ofício nº ${dataAfter.numero} foi enviado para ${dataAfter.destinatario}.`,
-          icon: "/icons/icon-192x192.png",
-          data: {
-            url: `/oficios/${oficioId}`,
-          },
         },
+        webpush: {
+            fcm_options: {
+                link: `/oficios/${oficioId}`
+            },
+            notification: {
+                icon: "/icons/icon-192x192.png",
+            }
+        }
       };
     }
 
@@ -112,43 +89,51 @@ export const sendOficioNotification = functions
       }
 
       // Mapeia e filtra para garantir que apenas inscrições válidas sejam usadas.
-      const subscriptions = subscriptionsSnapshot.docs
-        .map((doc) => doc.data()?.subscription)
-        .filter((sub): sub is webpush.PushSubscription => !!sub);
+      const tokens = subscriptionsSnapshot.docs
+        .map((doc) => doc.data()?.token)
+        .filter((token): token is string => !!token);
 
 
-      if (subscriptions.length === 0) {
+      if (tokens.length === 0) {
         functions.logger.warn(
-          "Documentos de inscrição encontrados, mas nenhum continha um objeto 'subscription' válido."
+          "Documentos de inscrição encontrados, mas nenhum continha um 'token' válido."
         );
         return null;
       }
 
       functions.logger.info(
-        `Enviando notificação para ${subscriptions.length} inscritos.`
+        `Enviando notificação para ${tokens.length} inscritos.`
       );
 
-      // Prepara todas as promessas de envio de notificação.
-      const sendPromises = subscriptions.map((sub) =>
-        webpush.sendNotification(sub, JSON.stringify(notificationPayload)).catch((error) => {
-          functions.logger.error(`Failed to send notification to endpoint: ${sub.endpoint}`, error);
-          // Opcional: Lógica para remover inscrições inválidas (ex: erro 410 Gone)
-          if (error.statusCode === 410) {
-            functions.logger.info(`Subscription ${sub.endpoint} is gone. Consider removing it.`);
-            // Você pode adicionar código aqui para remover a inscrição do Firestore.
+      // Envia a notificação para todos os tokens
+      const response = await messaging.sendEachForMulticast({
+        tokens: tokens,
+        ...notificationPayload
+      });
+
+      functions.logger.info(`Notificações enviadas: ${response.successCount} com sucesso, ${response.failureCount} falharam.`);
+
+      // Limpeza de tokens inválidos
+      response.responses.forEach(async (result, index) => {
+        const token = tokens[index];
+        if (!result.success) {
+          functions.logger.error(`Falha ao enviar para o token: ${token}`, result.error);
+          if (
+            result.error.code === 'messaging/invalid-registration-token' ||
+            result.error.code === 'messaging/registration-token-not-registered'
+          ) {
+            functions.logger.info(`Removendo token inválido: ${token}`);
+            const subToDeleteQuery = db.collection('pushSubscriptions').where('token', '==', token);
+            const subToDeleteSnapshot = await subToDeleteQuery.get();
+            subToDeleteSnapshot.forEach(doc => doc.ref.delete());
           }
-        })
-      );
-
-      // Aguarda o envio de todas as notificações.
-      await Promise.all(sendPromises);
-
-      functions.logger.info("Notificações enviadas com sucesso!");
-      return { success: true };
+        }
+      });
+      
+      return { success: true, ...response };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       functions.logger.error("Erro ao enviar notificações push:", error);
-      // Aqui você pode adicionar lógica para limpar inscrições inválidas se necessário.
       return { error: `Falha ao enviar notificações: ${errorMessage}` };
     }
   });
