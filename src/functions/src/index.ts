@@ -18,7 +18,7 @@ admin.initializeApp();
 const db = admin.firestore();
 
 // As chaves VAPID são lidas das variáveis de ambiente do ambiente da função.
-// Elas devem ser definidas no seu ambiente de nuvem (ex: via Google Cloud Console ou CLI).
+// Elas devem ser definidas no seu ambiente de nuvem (ex: via apphosting.yaml).
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 
