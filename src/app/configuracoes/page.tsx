@@ -106,6 +106,7 @@ export default function ConfiguracoesPage() {
       return;
     }
 
+    console.log("VAPID_PUBLIC_KEY being used on client:", VAPID_PUBLIC_KEY);
     if (!VAPID_PUBLIC_KEY) {
         toast({ title: "Erro de Configuração", description: "A chave pública VAPID para notificações não está definida.", variant: "destructive"});
         console.error("VAPID public key is not defined.");
@@ -129,26 +130,34 @@ export default function ConfiguracoesPage() {
       setNotificationPermission(permission);
 
       if (permission === "granted") {
+        console.log("Notification permission granted. Registering service worker...");
         await navigator.serviceWorker.register('/sw.js');
         const registration = await navigator.serviceWorker.ready;
+        console.log("Service Worker is ready. Subscribing push manager...");
+        
         const subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
         });
 
+        console.log("Push subscription successful:", subscription);
+        
         // Enviar a inscrição para o servidor
         const result = await savePushSubscription(subscription);
 
         if (result.success) {
+            console.log("Push subscription saved on server.");
             toast({ title: "Sucesso!", description: "Você receberá notificações importantes."});
         } else {
+             console.error("Failed to save push subscription on server:", result.error);
              throw new Error(result.error || "Falha ao salvar inscrição.");
         }
       } else {
+        console.warn("Notification permission denied by user.");
         toast({ title: "Permissão negada", description: "Você não receberá notificações.", variant: "destructive"});
       }
     } catch (err: any) {
-      console.error("Erro ao solicitar permissão de notificação:", err);
+      console.error("Error during notification setup:", err);
       toast({ title: "Erro", description: err.message || "Não foi possível ativar as notificações.", variant: "destructive"});
     } finally {
       setIsSubscribing(false);
