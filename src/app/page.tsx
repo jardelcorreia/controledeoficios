@@ -9,6 +9,8 @@ import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 
+export const dynamic = 'force-dynamic';
+
 const statusColors: Record<Status, string> = {
     "Aguardando Envio": "bg-yellow-500",
     "Enviado": "bg-blue-500",
