@@ -29,7 +29,7 @@ import { saveNumeracaoConfig } from "@/lib/oficios.actions";
 import { useEffect, useTransition, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, BellRing, Download } from "lucide-react";
+import { Terminal, BellRing, Download, ShareSquare } from "lucide-react";
 import { initializePushNotifications, debugPushSetup } from "@/lib/push";
 
 
@@ -49,9 +49,22 @@ export default function ConfiguracoesPage() {
   const [notificationPermission, setNotificationPermission] = useState("default");
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
+  const [isIos, setIsIos] = useState(false);
+  const [showIosInstallCard, setShowIosInstallCard] = useState(false);
 
 
   useEffect(() => {
+    // Detecção de iOS
+    const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    setIsIos(isIosDevice);
+
+    // Verificar se já está em modo standalone no iOS
+    const isInStandaloneMode = 'standalone' in window.navigator && (window.navigator as any).standalone;
+    
+    if (isIosDevice && !isInStandaloneMode) {
+      setShowIosInstallCard(true);
+    }
+    
     if ("Notification" in window) {
       setNotificationPermission(Notification.permission);
     }
@@ -346,6 +359,26 @@ export default function ConfiguracoesPage() {
                     </Button>
                 </CardFooter>
             </Card>
+        )}
+        
+        {showIosInstallCard && (
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle>Instalar no iPhone</CardTitle>
+              <CardDescription>
+                Para instalar o aplicativo em seu dispositivo, siga estes passos:
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center text-center space-y-2">
+              <p className="text-sm">
+                1. Toque no ícone de <strong>Compartilhar</strong> na barra de ferramentas do Safari.
+              </p>
+               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-share-2 h-8 w-8 text-primary"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
+               <p className="text-sm">
+                2. Role para baixo e selecione <strong>"Adicionar à Tela de Início"</strong>.
+              </p>
+            </CardContent>
+          </Card>
         )}
 
       </main>
