@@ -8,34 +8,33 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
+// Import and configure dotenv
+import * as dotenv from "dotenv";
+dotenv.config();
+
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import * as webpush from "web-push";
+
 
 // Inicializa o Firebase Admin SDK. Isso deve ser feito apenas uma vez.
 admin.initializeApp();
 
 const db = admin.firestore();
 
-// Carrega as chaves VAPID a partir das variáveis de ambiente da função.
-// Essas variáveis são definidas no `apphosting.yaml` ou através do console do Firebase/gcloud CLI.
+// Use as variáveis de ambiente carregadas pelo dotenv
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 
-// Adiciona log para verificar se as chaves estão sendo carregadas no ambiente da função
 if (vapidPublicKey && vapidPrivateKey) {
-  functions.logger.info("VAPID keys loaded successfully.");
   webpush.setVapidDetails(
-    "mailto:jardel.lc@gmail.com", // Substitua pelo seu e-mail de contato
+    "mailto:jardel.lc@gmail.com",
     vapidPublicKey,
     vapidPrivateKey
   );
 } else {
-  functions.logger.error(
-    "VAPID keys not configured in environment. Push notifications will be disabled.", {
-      hasPublicKey: !!vapidPublicKey,
-      hasPrivateKey: !!vapidPrivateKey
-    }
+  functions.logger.warn(
+    "VAPID keys not configured. Push notifications will be disabled. Check your .env file in the functions directory."
   );
 }
 
@@ -130,11 +129,11 @@ export const sendOficioNotification = functions
 
       // Prepara todas as promessas de envio de notificação.
       const sendPromises = subscriptions.map((sub) =>
-        webpush.sendNotification(sub, JSON.stringify(notificationPayload)).catch(error => {
+        webpush.sendNotification(sub, JSON.stringify(notificationPayload)).catch((error) => {
           functions.logger.error(`Failed to send notification to endpoint: ${sub.endpoint}`, error);
           // Opcional: Lógica para remover inscrições inválidas (ex: erro 410 Gone)
           if (error.statusCode === 410) {
-             functions.logger.info(`Subscription ${sub.endpoint} is gone. Consider removing it.`);
+            functions.logger.info(`Subscription ${sub.endpoint} is gone. Consider removing it.`);
           }
         })
       );

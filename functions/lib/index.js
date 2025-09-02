@@ -40,7 +40,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var _a, _b;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendOficioNotification = void 0;
 const functions = __importStar(require("firebase-functions"));
@@ -49,14 +48,21 @@ const webpush = __importStar(require("web-push"));
 // Inicializa o Firebase Admin SDK. Isso deve ser feito apenas uma vez.
 admin.initializeApp();
 const db = admin.firestore();
-// Use as variáveis de ambiente para as chaves VAPID
-const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ((_a = functions.config().vapid) === null || _a === void 0 ? void 0 : _a.public_key);
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || ((_b = functions.config().vapid) === null || _b === void 0 ? void 0 : _b.private_key);
+// Carrega as chaves VAPID a partir das variáveis de ambiente da função.
+// Essas variáveis são definidas no `apphosting.yaml` ou através do console do Firebase/gcloud CLI.
+const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+// Adiciona log para verificar se as chaves estão sendo carregadas no ambiente da função
 if (vapidPublicKey && vapidPrivateKey) {
-    webpush.setVapidDetails("mailto:jardel.lc@gmail.com", vapidPublicKey, vapidPrivateKey);
+    functions.logger.info("VAPID keys loaded successfully.");
+    webpush.setVapidDetails("mailto:jardel.lc@gmail.com", // Substitua pelo seu e-mail de contato
+    vapidPublicKey, vapidPrivateKey);
 }
 else {
-    functions.logger.warn("VAPID keys not configured. Push notifications will be disabled.");
+    functions.logger.error("VAPID keys not configured in environment. Push notifications will be disabled.", {
+        hasPublicKey: !!vapidPublicKey,
+        hasPrivateKey: !!vapidPrivateKey,
+    });
 }
 /**
  * Função acionada na criação ou atualização de um ofício para enviar notificações.
@@ -131,7 +137,13 @@ exports.sendOficioNotification = functions
         }
         functions.logger.info(`Enviando notificação para ${subscriptions.length} inscritos.`);
         // Prepara todas as promessas de envio de notificação.
-        const sendPromises = subscriptions.map((sub) => webpush.sendNotification(sub, JSON.stringify(notificationPayload)));
+        const sendPromises = subscriptions.map((sub) => webpush.sendNotification(sub, JSON.stringify(notificationPayload)).catch((error) => {
+            functions.logger.error(`Failed to send notification to endpoint: ${sub.endpoint}`, error);
+            // Opcional: Lógica para remover inscrições inválidas (ex: erro 410 Gone)
+            if (error.statusCode === 410) {
+                functions.logger.info(`Subscription ${sub.endpoint} is gone. Consider removing it.`);
+            }
+        }));
         // Aguarda o envio de todas as notificações.
         await Promise.all(sendPromises);
         functions.logger.info("Notificações enviadas com sucesso!");
