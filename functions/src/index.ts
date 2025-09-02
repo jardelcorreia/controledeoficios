@@ -8,35 +8,36 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-// Import and configure dotenv
-import * as dotenv from "dotenv";
-dotenv.config();
-
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import * as webpush from "web-push";
-
 
 // Inicializa o Firebase Admin SDK. Isso deve ser feito apenas uma vez.
 admin.initializeApp();
 
 const db = admin.firestore();
 
-// Use as variáveis de ambiente carregadas pelo dotenv
+// As variáveis de ambiente são agora definidas no ambiente da função (via CLI ou console)
+// e não através de um arquivo .env no código-fonte.
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 
+
+// Adiciona log para verificar se as chaves estão sendo carregadas no ambiente da função
 if (vapidPublicKey && vapidPrivateKey) {
-  webpush.setVapidDetails(
-    "mailto:jardel.lc@gmail.com",
-    vapidPublicKey,
-    vapidPrivateKey
-  );
+    functions.logger.info("VAPID keys loaded successfully.");
+    webpush.setVapidDetails(
+      "mailto:jardel.lc@gmail.com", // Substitua pelo seu e-mail de contato
+      vapidPublicKey,
+      vapidPrivateKey
+    );
 } else {
-  functions.logger.warn(
-    "VAPID keys not configured. Push notifications will be disabled. Check your .env file in the functions directory."
-  );
+    functions.logger.error("VAPID keys not configured in environment. Push notifications will be disabled.", {
+        hasPublicKey: !!vapidPublicKey,
+        hasPrivateKey: !!vapidPrivateKey,
+    });
 }
+
 
 /**
  * Função acionada na criação ou atualização de um ofício para enviar notificações.
