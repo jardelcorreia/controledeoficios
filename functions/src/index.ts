@@ -1,4 +1,3 @@
-
 /**
  * Import function triggers from their respective submodules:
  *
@@ -32,11 +31,11 @@ if (vapidPublicKey && vapidPrivateKey) {
   );
 } else {
   functions.logger.error(
-    "VAPID keys not configured in Firebase Functions environment. Push notifications will be disabled.", 
+    "VAPID keys not configured in Firebase Functions environment. Push notifications will be disabled.",
     {
-    hasPublicKey: !!vapidPublicKey,
-    hasPrivateKey: !!vapidPrivateKey,
-  });
+      hasPublicKey: !!vapidPublicKey,
+      hasPrivateKey: !!vapidPrivateKey,
+    });
 }
 
 

@@ -48,18 +48,18 @@ const webpush = __importStar(require("web-push"));
 // Inicializa o Firebase Admin SDK. Isso deve ser feito apenas uma vez.
 admin.initializeApp();
 const db = admin.firestore();
-// Carrega as chaves VAPID a partir das variáveis de ambiente da função.
-// Essas variáveis são definidas no `apphosting.yaml` ou através do console do Firebase/gcloud CLI.
+// As chaves VAPID são lidas das variáveis de ambiente do ambiente da função.
+// Elas devem ser definidas no seu ambiente de nuvem (ex: via apphosting.yaml).
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 // Adiciona log para verificar se as chaves estão sendo carregadas no ambiente da função
 if (vapidPublicKey && vapidPrivateKey) {
-    functions.logger.info("VAPID keys loaded successfully.");
+    functions.logger.info("VAPID keys loaded successfully from environment variables.");
     webpush.setVapidDetails("mailto:jardel.lc@gmail.com", // Substitua pelo seu e-mail de contato
     vapidPublicKey, vapidPrivateKey);
 }
 else {
-    functions.logger.error("VAPID keys not configured in environment. Push notifications will be disabled.", {
+    functions.logger.error("VAPID keys not configured in Firebase Functions environment. Push notifications will be disabled.", {
         hasPublicKey: !!vapidPublicKey,
         hasPrivateKey: !!vapidPrivateKey,
     });
@@ -119,7 +119,6 @@ exports.sendOficioNotification = functions
     }
     try {
         // Busca todas as inscrições de push no Firestore.
-        // O SDK Admin ignora as regras de segurança por padrão.
         const subscriptionsSnapshot = await db
             .collection("pushSubscriptions")
             .get();
@@ -142,6 +141,7 @@ exports.sendOficioNotification = functions
             // Opcional: Lógica para remover inscrições inválidas (ex: erro 410 Gone)
             if (error.statusCode === 410) {
                 functions.logger.info(`Subscription ${sub.endpoint} is gone. Consider removing it.`);
+                // Você pode adicionar código aqui para remover a inscrição do Firestore.
             }
         }));
         // Aguarda o envio de todas as notificações.

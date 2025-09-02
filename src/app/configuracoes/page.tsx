@@ -89,8 +89,9 @@ export default function ConfiguracoesPage() {
     if (!installPrompt) {
       return;
     }
-    (installPrompt as any).prompt();
-    const { outcome } = await (installPrompt as any).userChoice;
+    const promptEvent = installPrompt as any;
+    promptEvent.prompt();
+    const { outcome } = await promptEvent.userChoice;
     if (outcome === 'accepted') {
        toast({ title: "Instalado!", description: "O aplicativo foi adicionado à sua tela inicial."});
     } else {
@@ -131,7 +132,7 @@ export default function ConfiguracoesPage() {
 
       if (permission === "granted") {
         console.log("Notification permission granted. Registering service worker...");
-        await navigator.serviceWorker.register('/sw.js');
+        await navigator.serviceWorker.register('/firebase-messaging-sw.js');
         const registration = await navigator.serviceWorker.ready;
         console.log("Service Worker is ready. Subscribing push manager...");
         
