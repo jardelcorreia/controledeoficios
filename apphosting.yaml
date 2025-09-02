@@ -6,6 +6,6 @@ runConfig:
   # more instances in response to increased traffic.
   maxInstances: 1
   # The following env variables are available to your app.
-  # env:
-  # - variable: VAPID_PRIVATE_KEY
-  #   value: your-private-vapid-key
+  env:
+    - variable: VAPID_PRIVATE_KEY
+      value: YOUR_VAPID_PRIVATE_KEY_HERE
