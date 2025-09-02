@@ -8,35 +8,35 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-// Import and configure dotenv
-import * as dotenv from "dotenv";
-dotenv.config();
-
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import * as webpush from "web-push";
-
 
 // Inicializa o Firebase Admin SDK. Isso deve ser feito apenas uma vez.
 admin.initializeApp();
 
 const db = admin.firestore();
 
-// Use as variáveis de ambiente carregadas pelo dotenv
+// As chaves VAPID são lidas das variáveis de ambiente do ambiente da função.
+// Elas devem ser definidas no seu ambiente de nuvem (ex: via Google Cloud Console ou CLI).
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 
+// Adiciona log para verificar se as chaves estão sendo carregadas no ambiente da função
 if (vapidPublicKey && vapidPrivateKey) {
-  webpush.setVapidDetails(
-    "mailto:jardel.lc@gmail.com",
-    vapidPublicKey,
-    vapidPrivateKey
-  );
+    functions.logger.info("VAPID keys loaded successfully from environment variables.");
+    webpush.setVapidDetails(
+      "mailto:jardel.lc@gmail.com", // Substitua pelo seu e-mail de contato
+      vapidPublicKey,
+      vapidPrivateKey
+    );
 } else {
-  functions.logger.warn(
-    "VAPID keys not configured. Push notifications will be disabled. Check your .env file in the functions directory."
-  );
+    functions.logger.error("VAPID keys not configured in Firebase Functions environment. Push notifications will be disabled.", {
+        hasPublicKey: !!vapidPublicKey,
+        hasPrivateKey: !!vapidPrivateKey,
+    });
 }
+
 
 /**
  * Função acionada na criação ou atualização de um ofício para enviar notificações.
@@ -100,7 +100,6 @@ export const sendOficioNotification = functions
 
     try {
       // Busca todas as inscrições de push no Firestore.
-      // O SDK Admin ignora as regras de segurança por padrão.
       const subscriptionsSnapshot = await db
         .collection("pushSubscriptions")
         .get();
@@ -129,7 +128,14 @@ export const sendOficioNotification = functions
 
       // Prepara todas as promessas de envio de notificação.
       const sendPromises = subscriptions.map((sub) =>
-        webpush.sendNotification(sub, JSON.stringify(notificationPayload))
+        webpush.sendNotification(sub, JSON.stringify(notificationPayload)).catch((error) => {
+          functions.logger.error(`Failed to send notification to endpoint: ${sub.endpoint}`, error);
+          // Opcional: Lógica para remover inscrições inválidas (ex: erro 410 Gone)
+          if (error.statusCode === 410) {
+            functions.logger.info(`Subscription ${sub.endpoint} is gone. Consider removing it.`);
+            // Você pode adicionar código aqui para remover a inscrição do Firestore.
+          }
+        })
       );
 
       // Aguarda o envio de todas as notificações.
