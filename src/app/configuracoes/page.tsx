@@ -25,12 +25,12 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { getNumeracaoConfig } from "@/lib/oficios";
-import { saveNumeracaoConfig, savePushSubscription } from "@/lib/oficios.actions";
+import { saveNumeracaoConfig } from "@/lib/oficios.actions";
 import { useEffect, useTransition, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal, BellRing, Download } from "lucide-react";
-import { VAPID_PUBLIC_KEY } from "@/lib/firebase";
+import { initializePushNotifications, debugPushSetup } from "@/lib/push";
 
 
 const formSchema = z.object({
@@ -39,22 +39,6 @@ const formSchema = z.object({
   anoBase: z.coerce.number().min(2000).max(2100),
   numeroInicial: z.coerce.number().min(1),
 });
-
-
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, "+")
-    .replace(/_/g, "/");
-
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
-}
 
 
 export default function ConfiguracoesPage() {
@@ -79,6 +63,9 @@ export default function ConfiguracoesPage() {
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
+    // Run debug on page load
+    debugPushSetup();
+
     return () => {
         window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
@@ -102,67 +89,21 @@ export default function ConfiguracoesPage() {
 
 
   const handleNotificationPermission = async () => {
-    if (!("Notification" in window) || !("serviceWorker" in navigator)) {
-      toast({ title: "Erro", description: "Este navegador não suporta notificações push.", variant: "destructive"});
-      return;
-    }
-
-    console.log("VAPID_PUBLIC_KEY being used on client:", VAPID_PUBLIC_KEY);
-    if (!VAPID_PUBLIC_KEY) {
-        toast({ title: "Erro de Configuração", description: "A chave pública VAPID para notificações não está definida.", variant: "destructive"});
-        console.error("VAPID public key is not defined.");
-        return;
-    }
-
-    if (Notification.permission === "granted") {
-        toast({ title: "Notificações já ativadas", description: "Você já permitiu o envio de notificações."});
-        return;
-    }
-
-    if (Notification.permission === "denied") {
-        toast({ title: "Permissão bloqueada", description: "Você bloqueou as notificações. Altere nas configurações do seu navegador.", variant: "destructive"});
-        return;
-    }
-
     setIsSubscribing(true);
-
     try {
-      const permission = await Notification.requestPermission();
-      setNotificationPermission(permission);
-
-      if (permission === "granted") {
-        console.log("Notification permission granted. Registering service worker...");
-        await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-        const registration = await navigator.serviceWorker.ready;
-        console.log("Service Worker is ready. Subscribing push manager...");
-        
-        const subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-        });
-
-        console.log("Push subscription successful:", subscription);
-        
-        // Enviar a inscrição para o servidor
-        const result = await savePushSubscription(subscription);
-
-        if (result.success) {
-            console.log("Push subscription saved on server.");
-            toast({ title: "Sucesso!", description: "Você receberá notificações importantes."});
-        } else {
-             console.error("Failed to save push subscription on server:", result.error);
-             throw new Error(result.error || "Falha ao salvar inscrição.");
-        }
-      } else {
-        console.warn("Notification permission denied by user.");
-        toast({ title: "Permissão negada", description: "Você não receberá notificações.", variant: "destructive"});
-      }
+      await initializePushNotifications();
+      toast({ title: "Sucesso!", description: "As notificações foram ativadas." });
+      setNotificationPermission("granted");
     } catch (err: unknown) {
-      console.error("Error during notification setup:", err);
-      const message = err instanceof Error ? err.message : "Não foi possível ativar as notificações.";
-      toast({ title: "Erro", description: message, variant: "destructive"});
+      const message = err instanceof Error ? err.message : "Ocorreu um erro desconhecido";
+      console.error('Erro ao ativar notificações:', err);
+      toast({ 
+        title: "Erro ao ativar notificações", 
+        description: message,
+        variant: "destructive"
+      });
     } finally {
-      setIsSubscribing(false);
+        setIsSubscribing(false);
     }
   };
 
@@ -184,9 +125,9 @@ export default function ConfiguracoesPage() {
           form.reset(config);
         }
         setLoading(false);
-    }).catch(err => {
+    }).catch((err: unknown) => {
         console.error("Erro ao carregar configurações:", err);
-        setError(err);
+        setError(err instanceof Error ? err : new Error("Ocorreu um erro desconhecido"));
         setLoading(false);
     });
   }, [form]);
