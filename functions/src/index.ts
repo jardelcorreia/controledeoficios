@@ -17,22 +17,23 @@ admin.initializeApp();
 
 const db = admin.firestore();
 
-// As variáveis de ambiente são agora definidas no ambiente da função (via CLI ou console)
-// e não através de um arquivo .env no código-fonte.
-const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
-
+// Carrega as chaves VAPID a partir da configuração de ambiente do Firebase Functions.
+// Para definir essas variáveis, use a Firebase CLI:
+// firebase functions:config:set vapid.public_key="SUA_CHAVE_PUBLICA_VAPID"
+// firebase functions:config:set vapid.private_key="SUA_CHAVE_PRIVADA_VAPID"
+const vapidPublicKey = functions.config().vapid?.public_key;
+const vapidPrivateKey = functions.config().vapid?.private_key;
 
 // Adiciona log para verificar se as chaves estão sendo carregadas no ambiente da função
 if (vapidPublicKey && vapidPrivateKey) {
-    functions.logger.info("VAPID keys loaded successfully.");
+    functions.logger.info("VAPID keys loaded successfully from functions.config().");
     webpush.setVapidDetails(
       "mailto:jardel.lc@gmail.com", // Substitua pelo seu e-mail de contato
       vapidPublicKey,
       vapidPrivateKey
     );
 } else {
-    functions.logger.error("VAPID keys not configured in environment. Push notifications will be disabled.", {
+    functions.logger.error("VAPID keys not configured in Firebase Functions environment. Push notifications will be disabled. Use 'firebase functions:config:set' to set them.", {
         hasPublicKey: !!vapidPublicKey,
         hasPrivateKey: !!vapidPrivateKey,
     });
