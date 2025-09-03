@@ -18,7 +18,7 @@ export async function initializePushNotifications(messaging: Messaging | null) {
     }
     
     // Constrói a URL do Service Worker com os parâmetros de configuração
-    const swUrl = `/firebase-messaging-sw.js?apiKey=${firebaseConfig.apiKey}&authDomain=${firebaseConfig.authDomain}&projectId=${firebaseConfig.projectId}&storageBucket=${firebaseConfig.storageBucket}&messagingSenderId=${firebaseConfig.messagingSenderId}&appId=${firebaseConfig.appId}&measurementId=${firebaseConfig.measurementId}`;
+    const swUrl = `/firebase-messaging-sw.js?apiKey=${encodeURIComponent(firebaseConfig.apiKey!)}&authDomain=${encodeURIComponent(firebaseConfig.authDomain!)}&projectId=${encodeURIComponent(firebaseConfig.projectId!)}&storageBucket=${encodeURIComponent(firebaseConfig.storageBucket!)}&messagingSenderId=${encodeURIComponent(firebaseConfig.messagingSenderId!)}&appId=${encodeURIComponent(firebaseConfig.appId!)}&measurementId=${encodeURIComponent(firebaseConfig.measurementId!)}`;
 
     // Registra o Service Worker. O navegador vai buscar e executar este script.
     const registration = await navigator.serviceWorker.register(swUrl);
@@ -48,7 +48,7 @@ export async function initializePushNotifications(messaging: Messaging | null) {
     console.error('❌ Erro ao configurar push notifications:', error);
     if (error instanceof Error) {
         if (error.name === 'AbortError' || error.message.includes('push service error')) {
-            throw new Error('Serviço de push temporariamente indisponível. Tente novamente em alguns minutos.');
+            throw new Error('O serviço de push do navegador falhou. Isso pode ser um problema temporário com os servidores do Google ou um problema de configuração do projeto.');
         }
         if (error.message.includes('ServiceWorker script evaluation failed')) {
             throw new Error('Falha ao executar o script do Service Worker. Verifique o console do Service Worker para mais detalhes.');
