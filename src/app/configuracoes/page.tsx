@@ -31,6 +31,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal, BellRing, Download, ShareSquare } from "lucide-react";
 import { initializePushNotifications, debugPushSetup } from "@/lib/push";
+import { app, messaging } from "@/lib/firebase";
 
 
 const formSchema = z.object({
@@ -104,7 +105,8 @@ export default function ConfiguracoesPage() {
   const handleNotificationPermission = async () => {
     setIsSubscribing(true);
     try {
-      await initializePushNotifications();
+      const messagingInstance = messaging(app);
+      await initializePushNotifications(messagingInstance);
       toast({ title: "Sucesso!", description: "As notificações foram ativadas." });
       setNotificationPermission("granted");
     } catch (err: unknown) {

@@ -1,34 +1,21 @@
-
 'use client';
 
 import { savePushSubscription } from './oficios.actions';
-import { getMessaging, getToken } from 'firebase/messaging';
-import { app } from './firebase';
+import { getToken, type Messaging } from 'firebase/messaging';
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
-// Função para converter a VAPID key para o formato Uint8Array
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding)
-    .replace(/\-/g, "+")
-    .replace(/_/g, "/");
-
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
-}
-
-export async function initializePushNotifications() {
+export async function initializePushNotifications(messaging: Messaging | null) {
   console.log('=== INICIANDO SETUP DE PUSH NOTIFICATIONS ===');
 
   if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) {
     console.error('Service Worker ou Push Messaging não é suportado neste navegador');
     throw new Error('Push Notifications não são suportadas.');
+  }
+
+  if (!messaging) {
+      console.error('Firebase Messaging não inicializado.');
+      throw new Error('Firebase Messaging não inicializado.');
   }
 
   if (!VAPID_PUBLIC_KEY) {
@@ -42,9 +29,6 @@ export async function initializePushNotifications() {
       throw new Error('Permissão de notificação negada.');
     }
     console.log('Permissão de notificação concedida.');
-    
-    // Obtém a referência ao Firebase Messaging
-    const messaging = getMessaging(app);
     
     // Tenta obter o token
     console.log('Solicitando token FCM...');

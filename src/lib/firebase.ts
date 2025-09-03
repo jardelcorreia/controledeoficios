@@ -1,7 +1,7 @@
-
 // @/lib/firebase.ts
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { initializeFirestore } from "firebase/firestore";
+import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
+import { getFirestore, initializeFirestore } from "firebase/firestore";
+import { getMessaging } from "firebase/messaging";
 
 const firebaseConfig = {
   projectId: "controle-de-ofcios-pd89y",
@@ -19,5 +19,9 @@ const db = initializeFirestore(app, {
   ignoreUndefinedProperties: true,
 });
 
+// Initialize Firebase Cloud Messaging and get a reference to the service
+const messaging = (app: FirebaseApp) =>
+  typeof window !== "undefined" ? getMessaging(app) : null;
 
-export { app, db };
+
+export { app, db, messaging };
