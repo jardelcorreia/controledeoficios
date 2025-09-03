@@ -144,12 +144,13 @@ export async function savePushSubscription(token: string) {
       throw new Error('Token de inscrição está faltando.');
     }
     // Usa o próprio token como ID do documento para evitar duplicatas.
+    // Isso é mais eficiente do que consultar primeiro.
     const docRef = doc(db, PUSH_SUBSCRIPTIONS_COLLECTION, token);
     await setDoc(docRef, {
       token: token,
-      createdAt: serverTimestamp(),
+      createdAt: serverTimestamp(), // Ajuda a limpar tokens antigos no futuro
     });
-    console.log('Token FCM salvo com sucesso no Firestore.');
+    console.log('Token FCM salvo com sucesso no Firestore:', token);
     return { success: true };
   } catch (error) {
     console.error('Erro ao salvar token de inscrição no Firestore:', error);
