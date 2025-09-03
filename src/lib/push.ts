@@ -1,3 +1,4 @@
+
 'use client';
 
 import { savePushSubscription } from './oficios.actions';
@@ -40,9 +41,9 @@ async function retryWithExponentialBackoff<T>(
       if (!shouldRetry) {
         throw err;
       }
-
-      console.log(`Tentativa ${attempt} falhou. Tentando novamente em ${delayTime}ms...`);
+      
       const delayTime = baseDelay * Math.pow(2, attempt - 1);
+      console.log(`Tentativa ${attempt} falhou. Tentando novamente em ${delayTime}ms...`);
       await delay(delayTime);
     }
   }
@@ -75,7 +76,7 @@ export async function initializePushNotifications(messaging: Messaging | null) {
   }
 
   try {
-    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' });
+    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
     console.log('Service Worker registrado com sucesso:', registration);
 
 
