@@ -30,7 +30,7 @@ import { useEffect, useTransition, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal, BellRing, Download, ShareSquare } from "lucide-react";
-import { initializePushNotifications, debugPushSetup } from "@/lib/push";
+import { initializePushNotifications } from "@/lib/push";
 import { app, messaging } from "@/lib/firebase";
 
 
@@ -76,9 +76,6 @@ export default function ConfiguracoesPage() {
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    // Run debug on page load
-    debugPushSetup();
 
     return () => {
         window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
