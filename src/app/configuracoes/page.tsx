@@ -349,7 +349,7 @@ export default function ConfiguracoesPage() {
                 <CardHeader>
                     <CardTitle>Instalar Aplicativo</CardTitle>
                     <CardDescription>
-                        Instale o aplicativo em seu dispositivo para um acesso mais rápido e uma experiência offline.
+                        Instale o aplicativo em seu dispositivo para um acesso mais rápido.
                     </CardDescription>
                 </CardHeader>
                 <CardFooter className="border-t px-6 py-4">
