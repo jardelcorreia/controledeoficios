@@ -7,10 +7,26 @@ import { app } from './firebase';
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
+// Função para converter a VAPID key para o formato Uint8Array
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, "+")
+    .replace(/_/g, "/");
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
 export async function initializePushNotifications() {
   console.log('=== INICIANDO SETUP DE PUSH NOTIFICATIONS ===');
 
-  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) {
     console.error('Service Worker ou Push Messaging não é suportado neste navegador');
     throw new Error('Push Notifications não são suportadas.');
   }
@@ -21,71 +37,50 @@ export async function initializePushNotifications() {
   }
 
   try {
-    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-    console.log('Service Worker registrado:', registration);
-
-    await navigator.serviceWorker.ready;
-    console.log('Service Worker pronto.');
-
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
       throw new Error('Permissão de notificação negada.');
     }
     console.log('Permissão de notificação concedida.');
-
+    
+    // Obtém a referência ao Firebase Messaging
     const messaging = getMessaging(app);
+    
+    // Tenta obter o token
     console.log('Solicitando token FCM...');
-
     const currentToken = await getToken(messaging, {
       vapidKey: VAPID_PUBLIC_KEY,
-      serviceWorkerRegistration: registration,
     });
 
     if (currentToken) {
       console.log('Token FCM recebido:', currentToken);
       console.log('Salvando token no servidor...');
 
-      await savePushSubscription({ token: currentToken });
+      const result = await savePushSubscription({ token: currentToken });
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Falha ao salvar a inscrição no servidor.');
+      }
 
       console.log('🎉 Push notifications configurado com sucesso!');
       return currentToken;
     } else {
-      console.warn('Não foi possível obter o token. O usuário precisa conceder permissão.');
+      console.warn('Não foi possível obter o token. O usuário precisa conceder permissão novamente.');
       throw new Error('Falha ao obter o token de notificação.');
     }
   } catch (error: unknown) {
     const err = error as Error;
     console.error('❌ Erro ao configurar push notifications:', err.message, err);
 
-    if (err.name === 'AbortError') {
-      console.error('Operação foi abortada - Push Service Error');
+    if (err.name === 'AbortError' || err.message.includes('push service error')) {
+       console.error('Operação foi abortada - Push Service Error');
+       throw new Error('Operação foi abortada - Push Service Error');
     }
     
     throw err;
   }
 }
 
-// Função para testar se as notificações estão funcionando
-export async function testNotification() {
-  try {
-    const registration = await navigator.serviceWorker.getRegistration();
-    if (!registration) {
-      throw new Error('Service Worker não registrado');
-    }
-
-    await registration.showNotification('Teste de Notificação', {
-      body: 'Esta é uma notificação de teste!',
-      icon: '/icons/icon-192x192.png',
-      badge: '/icons/icon-96x96.png',
-      vibrate: [200, 100, 200],
-    });
-
-    console.log('✅ Notificação de teste enviada');
-  } catch (error: unknown) {
-    console.error('❌ Erro ao enviar notificação de teste:', error);
-    throw error;
-  }
-}
 
 export async function debugPushSetup() {
   console.log('=== DEBUG PUSH SETUP ===');
@@ -103,6 +98,7 @@ export async function debugPushSetup() {
       console.log('SW Registration:', registration);
       if (registration) {
         console.log('SW Scope:', registration.scope);
+        console.log('SW Ativo:', !!registration.active);
       }
     } catch (error: unknown) {
       console.error('Erro no debug:', error);
