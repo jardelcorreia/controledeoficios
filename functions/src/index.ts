@@ -10,7 +10,7 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import type { DocumentReference, WriteResult } from "firebase-admin/firestore";
+import type { WriteResult } from "firebase-admin/firestore";
 
 // Inicializa o Firebase Admin SDK. Isso deve ser feito apenas uma vez.
 admin.initializeApp();

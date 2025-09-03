@@ -58,23 +58,21 @@ exports.sendOficioNotification = functions
     const oficioId = context.params.oficioId;
     const dataAfter = change.after.data();
     const dataBefore = change.before.data();
-    // Base para o payload da notificação
-    let notificationPayload = null;
+    let notification;
+    let webpush;
     // Caso 1: Novo ofício criado.
     if (!change.before.exists && change.after.exists && dataAfter) {
         functions.logger.info(`Novo ofício criado: ${oficioId}`, dataAfter);
-        notificationPayload = {
-            notification: {
-                title: "Novo Ofício Criado!",
-                body: `O ofício nº ${dataAfter.numero} foi criado e aguarda envio.`,
+        notification = {
+            title: "Novo Ofício Criado!",
+            body: `O ofício nº ${dataAfter.numero} foi criado e aguarda envio.`,
+        };
+        webpush = {
+            fcmOptions: {
+                link: `/oficios/${oficioId}`,
             },
-            webpush: {
-                fcmOptions: {
-                    link: `/oficios/${oficioId}`,
-                },
-                notification: {
-                    icon: "/icons/icon-192x192.png",
-                },
+            notification: {
+                icon: "/icons/icon-192x192.png",
             },
         };
     }
@@ -85,23 +83,21 @@ exports.sendOficioNotification = functions
         (dataBefore === null || dataBefore === void 0 ? void 0 : dataBefore.status) !== "Enviado" &&
         (dataAfter === null || dataAfter === void 0 ? void 0 : dataAfter.status) === "Enviado") {
         functions.logger.info(`Ofício enviado: ${oficioId}`, dataAfter);
-        notificationPayload = {
-            notification: {
-                title: "Ofício Enviado!",
-                body: `O ofício nº ${dataAfter.numero} foi enviado para ${dataAfter.destinatario}.`,
+        notification = {
+            title: "Ofício Enviado!",
+            body: `O ofício nº ${dataAfter.numero} foi enviado para ${dataAfter.destinatario}.`,
+        };
+        webpush = {
+            fcmOptions: {
+                link: `/oficios/${oficioId}`,
             },
-            webpush: {
-                fcmOptions: {
-                    link: `/oficios/${oficioId}`,
-                },
-                notification: {
-                    icon: "/icons/icon-192x192.png",
-                },
+            notification: {
+                icon: "/icons/icon-192x192.png",
             },
         };
     }
     // Se nenhuma condição de notificação foi atendida, encerra a execução.
-    if (!notificationPayload) {
+    if (!notification) {
         functions.logger.info("Nenhuma condição de notificação atendida.");
         return null;
     }
@@ -123,7 +119,11 @@ exports.sendOficioNotification = functions
             return null;
         }
         functions.logger.info(`Enviando notificação para ${tokens.length} inscritos.`);
-        const message = Object.assign(Object.assign({}, notificationPayload), { tokens });
+        const message = {
+            notification,
+            webpush,
+            tokens,
+        };
         // Envia a notificação para todos os tokens
         const response = await messaging.sendEachForMulticast(message);
         functions.logger.info(`Notificações enviadas: ${response.successCount} com sucesso, ${response.failureCount} falharam.`);
