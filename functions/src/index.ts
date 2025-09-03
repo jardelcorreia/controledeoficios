@@ -100,7 +100,7 @@ export const sendoficionotification = onDocumentWritten(
       logger.info(
         `Notificações enviadas: ${response.successCount} com sucesso, ${response.failureCount} falharam.`
       );
-      
+
       // Limpeza de tokens inválidos (opcional, mas boa prática)
       const tokensToDelete: Promise<FirebaseFirestore.WriteResult>[] = [];
       response.responses.forEach(async (result, index) => {
@@ -115,7 +115,7 @@ export const sendoficionotification = onDocumentWritten(
             logger.info(`Agendando remoção do token inválido: ${token}`);
             const subToDeleteQuery = await db.collection("pushSubscriptions").where("token", "==", token).get();
             subToDeleteQuery.forEach((doc) => {
-                tokensToDelete.push(doc.ref.delete());
+              tokensToDelete.push(doc.ref.delete());
             });
           }
         }

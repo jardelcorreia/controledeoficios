@@ -33,28 +33,27 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendOficioNotification = void 0;
-const functions = __importStar(require("firebase-functions"));
+exports.sendoficionotification = void 0;
 const admin = __importStar(require("firebase-admin"));
+const logger = __importStar(require("firebase-functions/logger"));
+const firestore_1 = require("firebase-functions/v2/firestore");
 // Inicializa o Firebase Admin SDK. Isso deve ser feito apenas uma vez.
 admin.initializeApp();
 const db = admin.firestore();
 const messaging = admin.messaging();
 /**
- * Função acionada na criação ou atualização de um ofício para enviar notificações.
+ * Função v2 acionada na criação ou atualização de um ofício para enviar notificações.
  */
-exports.sendOficioNotification = functions
-    .region("southamerica-east1")
-    .firestore.document("oficios/{oficioId}")
-    .onWrite(async (change, context) => {
-    const oficioId = context.params.oficioId;
-    const dataAfter = change.after.data();
-    const dataBefore = change.before.data();
+exports.sendoficionotification = (0, firestore_1.onDocumentWritten)("oficios/{oficioId}", async (event) => {
+    var _a, _b, _c, _d, _e, _f;
+    const oficioId = event.params.oficioId;
+    const dataAfter = (_a = event.data) === null || _a === void 0 ? void 0 : _a.after.data();
+    const dataBefore = (_b = event.data) === null || _b === void 0 ? void 0 : _b.before.data();
     let notification;
     let webpush;
     // Caso 1: Novo ofício criado.
-    if (!change.before.exists && change.after.exists && dataAfter) {
-        functions.logger.info(`Novo ofício criado: ${oficioId}`, dataAfter);
+    if (!((_c = event.data) === null || _c === void 0 ? void 0 : _c.before.exists) && ((_d = event.data) === null || _d === void 0 ? void 0 : _d.after.exists) && dataAfter) {
+        logger.info(`Novo ofício criado: ${oficioId}`, dataAfter);
         notification = {
             title: "Novo Ofício Criado!",
             body: `O ofício nº ${dataAfter.numero} foi criado e aguarda envio.`,
@@ -70,11 +69,11 @@ exports.sendOficioNotification = functions
     }
     else if (
     // Caso 2: Ofício atualizado para "Enviado".
-    change.before.exists &&
-        change.after.exists &&
+    ((_e = event.data) === null || _e === void 0 ? void 0 : _e.before.exists) &&
+        ((_f = event.data) === null || _f === void 0 ? void 0 : _f.after.exists) &&
         (dataBefore === null || dataBefore === void 0 ? void 0 : dataBefore.status) !== "Enviado" &&
         (dataAfter === null || dataAfter === void 0 ? void 0 : dataAfter.status) === "Enviado") {
-        functions.logger.info(`Ofício enviado: ${oficioId}`, dataAfter);
+        logger.info(`Ofício enviado: ${oficioId}`, dataAfter);
         notification = {
             title: "Ofício Enviado!",
             body: `O ofício nº ${dataAfter.numero} foi enviado para ${dataAfter.destinatario}.`,
@@ -90,7 +89,7 @@ exports.sendOficioNotification = functions
     }
     // Se nenhuma condição de notificação foi atendida, encerra a execução.
     if (!notification) {
-        functions.logger.info("Nenhuma condição de notificação atendida.");
+        logger.info("Nenhuma condição de notificação atendida.");
         return null;
     }
     try {
@@ -99,7 +98,7 @@ exports.sendOficioNotification = functions
             .collection("pushSubscriptions")
             .get();
         if (subscriptionsSnapshot.empty) {
-            functions.logger.info("Nenhuma inscrição encontrada para notificar.");
+            logger.info("Nenhuma inscrição encontrada para notificar.");
             return null;
         }
         // Mapeia e filtra para garantir que apenas inscrições válidas sejam usadas.
@@ -107,10 +106,10 @@ exports.sendOficioNotification = functions
             .map((doc) => { var _a; return (_a = doc.data()) === null || _a === void 0 ? void 0 : _a.token; })
             .filter((token) => !!token);
         if (tokens.length === 0) {
-            functions.logger.warn("Documentos de inscrição encontrados, mas nenhum continha um 'token' válido.");
+            logger.warn("Documentos de inscrição encontrados, mas nenhum continha um 'token' válido.");
             return null;
         }
-        functions.logger.info(`Enviando notificação para ${tokens.length} inscritos.`);
+        logger.info(`Enviando notificação para ${tokens.length} inscritos.`);
         const message = {
             notification,
             webpush,
@@ -118,17 +117,17 @@ exports.sendOficioNotification = functions
         };
         // Envia a notificação para todos os tokens
         const response = await messaging.sendEachForMulticast(message);
-        functions.logger.info(`Notificações enviadas: ${response.successCount} com sucesso, ${response.failureCount} falharam.`);
-        // Limpeza de tokens inválidos
+        logger.info(`Notificações enviadas: ${response.successCount} com sucesso, ${response.failureCount} falharam.`);
+        // Limpeza de tokens inválidos (opcional, mas boa prática)
         const tokensToDelete = [];
         response.responses.forEach(async (result, index) => {
             const token = tokens[index];
             if (!result.success && result.error) {
-                functions.logger.error(`Falha ao enviar para o token: ${token}`, result.error);
+                logger.error(`Falha ao enviar para o token: ${token}`, result.error);
                 const errorCode = result.error.code;
                 if (errorCode === "messaging/invalid-registration-token" ||
                     errorCode === "messaging/registration-token-not-registered") {
-                    functions.logger.info(`Agendando remoção do token inválido: ${token}`);
+                    logger.info(`Agendando remoção do token inválido: ${token}`);
                     const subToDeleteQuery = await db.collection("pushSubscriptions").where("token", "==", token).get();
                     subToDeleteQuery.forEach((doc) => {
                         tokensToDelete.push(doc.ref.delete());
@@ -141,7 +140,7 @@ exports.sendOficioNotification = functions
     }
     catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        functions.logger.error("Erro ao enviar notificações push:", error);
+        logger.error("Erro ao enviar notificações push:", error);
         return { error: `Falha ao enviar notificações: ${errorMessage}` };
     }
 });

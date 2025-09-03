@@ -2,31 +2,30 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-    // As regras de escrita para estas coleções são gerenciadas
-    // por Cloud Functions e Server Actions. Clientes não devem escrever diretamente.
-    match /oficios/{document=**} {
-      allow read: if true;
-      allow write: if false;
+
+    // Oficios: Apenas usuários autenticados podem ler e escrever.
+    match /oficios/{oficioId} {
+      allow read, write: if request.auth != null;
     }
 
-    match /historico/{document=**} {
+    // Histórico: Apenas usuários autenticados podem ler. A escrita é feita pelo servidor.
+    match /historico/{historicoId} {
+      allow read: if request.auth != null;
+      allow write: if false; // Bloqueia escrita direta pelo cliente
+    }
+
+    // Config: Permite a leitura pública da configuração de numeração,
+    // mas apenas usuários autenticados podem alterá-la.
+    match /config/{configId} {
       allow read: if true;
-      allow write: if false;
+      allow write: if request.auth != null;
     }
     
-    match /config/{document=**} {
-      allow read: if true;
-      allow write: if false;
-    }
-    
-    // Permite que qualquer cliente crie ou atualize sua própria inscrição de push.
-    // Usar o token como ID do documento (subscriptionId) é uma boa prática
-    // para evitar duplicatas. A regra permite que um cliente crie um novo
-    // documento ou sobrescreva um existente se o ID for o mesmo.
+    // Push Subscriptions: Permite que qualquer cliente crie uma inscrição.
+    // Isso é necessário para o processo de registro do token de notificação.
     match /pushSubscriptions/{subscriptionId} {
-      allow create, update: if true;
-      allow read, delete: if false; // Apenas o servidor deve ler/deletar
+      allow create: if true;
+      allow read, update, delete: if request.auth != null; // Apenas autenticados para outras operações
     }
   }
 }
