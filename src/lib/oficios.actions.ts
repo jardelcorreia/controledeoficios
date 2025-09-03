@@ -26,8 +26,6 @@ import {
   NumeracaoConfig,
 } from './oficios';
 import { revalidatePath } from 'next/cache';
-import crypto from 'crypto';
-
 
 const OFICIOS_COLLECTION = 'oficios';
 const HISTORICO_COLLECTION = 'historico';
