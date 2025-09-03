@@ -1,3 +1,4 @@
+
 /**
  * Import function triggers from their respective submodules:
  *
@@ -27,7 +28,8 @@ export const sendOficioNotification = functions
     const dataAfter = change.after.data();
     const dataBefore = change.before.data();
 
-    let notificationPayload: admin.messaging.MessagingPayload | null = null;
+    // Base para o payload da notificação
+    let notificationPayload: admin.messaging.NotificationMessagePayload | null = null;
 
     // Caso 1: Novo ofício criado.
     if (!change.before.exists && change.after.exists && dataAfter) {
@@ -104,23 +106,24 @@ export const sendOficioNotification = functions
         `Enviando notificação para ${tokens.length} inscritos.`
       );
 
+      const message: admin.messaging.MulticastMessage = {
+          ...notificationPayload,
+          tokens,
+      };
+
       // Envia a notificação para todos os tokens
-      const response = await messaging.sendEachForMulticast({
-        tokens: tokens,
-        ...notificationPayload,
-      });
+      const response = await messaging.sendEachForMulticast(message);
+
 
       functions.logger.info(
-        `Notificações enviadas: 
-        ${response.successCount} com sucesso, 
-        ${response.failureCount} falharam.`
+        `Notificações enviadas: ${response.successCount} com sucesso, ${response.failureCount} falharam.`
       );
 
       // Limpeza de tokens inválidos
-      const tokensToDelete: Promise<any>[] = [];
+      const tokensToDelete: Promise<FirebaseFirestore.WriteResult>[] = [];
       response.responses.forEach(async (result, index) => {
         const token = tokens[index];
-        if (!result.success) {
+        if (!result.success && result.error) {
           functions.logger.error(`Falha ao enviar para o token: ${token}`, result.error);
           const errorCode = result.error.code;
           if (
@@ -128,10 +131,10 @@ export const sendOficioNotification = functions
             errorCode === "messaging/registration-token-not-registered"
           ) {
             functions.logger.info(`Agendando remoção do token inválido: ${token}`);
-            const subToDeleteQuery = db.collection("pushSubscriptions").where("token", "==", token).get();
-            tokensToDelete.push(subToDeleteQuery.then((snapshot) => {
-              snapshot.forEach((doc) => doc.ref.delete());
-            }));
+            const subToDeleteQuery = await db.collection("pushSubscriptions").where("token", "==", token).get();
+            subToDeleteQuery.forEach((doc) => {
+                tokensToDelete.push(doc.ref.delete());
+            });
           }
         }
       });
