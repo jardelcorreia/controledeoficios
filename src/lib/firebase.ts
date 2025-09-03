@@ -1,27 +1,27 @@
+
 // @/lib/firebase.ts
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getFirestore, initializeFirestore } from "firebase/firestore";
 import { getMessaging } from "firebase/messaging";
 
 const firebaseConfig = {
-  projectId: "controle-de-ofcios-pd89y",
-  appId: "1:79560888151:web:2a707a8a44c4cb4284f812",
-  storageBucket: "controle-de-ofcios-pd89y.firebasestorage.app",
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: "controle-de-ofcios-pd89y.firebaseapp.com",
-  messagingSenderId: "79560888151",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
+const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = initializeFirestore(app, {
   ignoreUndefinedProperties: true,
 });
 
-// Initialize Firebase Cloud Messaging and get a reference to the service
-const messaging = (app: FirebaseApp) =>
-  typeof window !== "undefined" ? getMessaging(app) : null;
+const messaging = (appInstance: FirebaseApp) =>
+  typeof window !== "undefined" ? getMessaging(appInstance) : null;
 
 
-export { app, db, messaging };
+export { app, db, messaging, firebaseConfig };

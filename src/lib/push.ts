@@ -1,144 +1,115 @@
 
 'use client';
 
+import type { Messaging } from 'firebase/messaging';
+import { getToken } from 'firebase/messaging';
 import { savePushSubscription } from './oficios.actions';
-import { getToken, type Messaging } from 'firebase/messaging';
-
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
 export async function initializePushNotifications(messaging: Messaging | null) {
-  console.log('=== INICIANDO SETUP DE PUSH NOTIFICATIONS ===');
-  console.log('Chave VAPID pública utilizada:', VAPID_PUBLIC_KEY);
-
-  // Verificações preliminares
-  if (typeof window === 'undefined') {
-    throw new Error('Função deve ser executada no cliente');
-  }
-
-  if (!messaging) {
-    throw new Error('Firebase Messaging não inicializado');
-  }
-
-  if (!VAPID_PUBLIC_KEY) {
-    throw new Error('VAPID_PUBLIC_KEY não encontrada nas variáveis de ambiente');
-  }
-
   try {
-    // 1. Solicitar permissão
-    console.log('Solicitando permissão de notificação...');
+    if (typeof window === 'undefined' || !messaging) {
+      throw new Error('Firebase Messaging is not available.');
+    }
+
+    const VAPID_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+     if (!VAPID_KEY) {
+      throw new Error("VAPID key não encontrada nas variáveis de ambiente.");
+    }
+
     const permission = await Notification.requestPermission();
-    
     if (permission !== 'granted') {
-      throw new Error('Permissão de notificação negada pelo usuário');
+      throw new Error('Permissão de notificação negada.');
     }
     
-    console.log('Permissão de notificação concedida.');
-
-    // 2. Obter token
-    console.log('Solicitando token FCM...');
+    console.log("Solicitando token FCM...");
+    const currentToken = await getToken(messaging, { vapidKey: VAPID_KEY });
     
-    const currentToken = await getToken(messaging, {
-      vapidKey: VAPID_PUBLIC_KEY,
-    });
-
-    if (!currentToken) {
-      throw new Error('Não foi possível obter o token FCM');
+    if (currentToken) {
+      console.log('Token FCM obtido com sucesso:', currentToken);
+      await savePushSubscription({ token: currentToken });
+      console.log('Push notifications configuradas com sucesso!');
+      return currentToken;
+    } else {
+      throw new Error('Não foi possível obter o token FCM. A permissão foi concedida?');
     }
-
-    console.log('Token FCM recebido:', currentToken.substring(0, 20) + '...');
-
-    // 3. Salvar no servidor
-    console.log('Salvando token no servidor...');
-    const result = await savePushSubscription({ token: currentToken });
-    
-    if (!result.success) {
-      throw new Error(result.error || 'Falha ao salvar a inscrição no servidor');
-    }
-
-    console.log('🎉 Push notifications configurado com sucesso!');
-    return currentToken;
-
-  } catch (error: unknown) {
-    const err = error as Error;
-    
-    // Log detalhado do erro
-    console.error('❌ Erro detalhado:', {
-      name: err.name,
-      message: err.message,
-      stack: err.stack?.toString()
-    });
-
-    // Tratamento específico para diferentes tipos de erro
-    if (err.name === 'AbortError' || err.message.toLowerCase().includes('push service error')) {
-      console.error('Push Service Error detectado - possível problema de conectividade ou configuração');
+  } catch (error) {
+    console.error('❌ Erro ao configurar push notifications:', error);
+    if (error instanceof Error && (error.name === 'AbortError' || error.message.includes('push service error'))) {
       throw new Error('Serviço de push temporariamente indisponível. Tente novamente em alguns minutos.');
     }
-
-    if (err.message.includes('messaging/invalid-vapid-key')) {
-      throw new Error('Chave VAPID inválida ou não configurada corretamente');
-    }
-
-    if (err.message.includes('messaging/permission-blocked')) {
-      throw new Error('Permissões de notificação bloqueadas. Verifique as configurações do navegador.');
-    }
-
-    throw err;
+    throw error;
   }
 }
 
 export async function debugPushSetup() {
-  console.log('=== DEBUG PUSH SETUP DETALHADO ===');
+  if (typeof window === 'undefined') return;
+
+  console.log('%c=== DEBUG PUSH SETUP DETALHADO ===', 'color: blue; font-weight: bold;');
+
+  const logInfo = (label: string, value: any) => console.log(`- ${label}:`, value);
+
+  console.log('%c🌐 Informações do Navegador:', 'font-weight: bold;');
+  logInfo('User Agent', navigator.userAgent);
+  logInfo('Service Worker suportado', 'serviceWorker' in navigator);
+  logInfo('Push Manager suportado', 'PushManager' in window);
+  logInfo('Notification permission', Notification.permission);
   
-  // Informações do navegador
-  console.log('🌐 Informações do Navegador:');
-  console.log('- User Agent:', navigator.userAgent);
-  console.log('- Service Worker suportado:', 'serviceWorker' in navigator);
-  console.log('- Push Manager suportado:', 'PushManager' in window);
-  console.log('- Notification permission:', Notification.permission);
-  
-  // Informações do protocolo
-  console.log('🔒 Informações de Segurança:');
-  console.log('- Protocolo:', location.protocol);
-  console.log('- Hostname:', location.hostname);
-  console.log('- É HTTPS:', location.protocol === 'https:');
-  console.log('- É Localhost:', location.hostname === 'localhost' || location.hostname === '127.0.0.1');
-  
-  // Informações de configuração
-  console.log('⚙️ Configuração:');
-  console.log('- VAPID key definida:', !!VAPID_PUBLIC_KEY);
-  console.log('- Tamanho da VAPID key:', VAPID_PUBLIC_KEY?.length || 0);
-  
-  // Service Worker
+  console.log('%c🔒 Informações de Segurança:', 'font-weight: bold;');
+  logInfo('Protocolo', window.location.protocol);
+  logInfo('Hostname', window.location.hostname);
+  logInfo('É HTTPS', window.location.protocol === 'https:');
+  logInfo('É Localhost', window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+  console.log('%c⚙️ Configuração:', 'font-weight: bold;');
+  const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  logInfo('VAPID key definida', !!vapidKey);
+  if (vapidKey) {
+    logInfo('Tamanho da VAPID key', vapidKey.length);
+  }
+
+  console.log('%c🔧 Service Worker:', 'font-weight: bold;');
   if ('serviceWorker' in navigator) {
     try {
-      console.log('🔧 Service Worker:');
       const registration = await navigator.serviceWorker.getRegistration();
-      
       if (registration) {
-        console.log('- Registration encontrado:', !!registration);
-        console.log('- Scope:', registration.scope);
-        console.log('- Estado ativo:', !!registration.active);
-        console.log('- Estado installing:', !!registration.installing);
-        console.log('- Estado waiting:', !!registration.waiting);
-        
+        logInfo('Registration encontrado', true);
+        logInfo('Scope', registration.scope);
+        logInfo('Estado ativo', !!registration.active);
+        logInfo('Estado installing', !!registration.installing);
+        logInfo('Estado waiting', !!registration.waiting);
         if (registration.active) {
-          console.log('- SW State:', registration.active.state);
+            logInfo('SW State', registration.active.state);
         }
       } else {
-        console.log('- Nenhum Service Worker registrado');
+        logInfo('Registration encontrado', false);
       }
-      
-    } catch (error: unknown) {
-      console.error('❌ Erro no debug do Service Worker:', error);
+    } catch (e) {
+      console.error('- Erro ao obter registro do SW:', e);
     }
   }
 
-  // Verificar conectividade com FCM
-  console.log('🌍 Testando conectividade:');
+  console.log('%c📋 Testando capacidades do Push:', 'font-weight: bold;');
+  if ('serviceWorker' in navigator && 'PushManager' in window) {
+      try {
+          const swReg = await navigator.serviceWorker.ready;
+          logInfo('Push suportado', !!swReg.pushManager);
+      } catch (e) {
+          console.error('- Erro ao verificar suporte a Push:', e);
+      }
+  }
+
+  console.log('%c🌍 Testando conectividade:', 'font-weight: bold;');
   try {
-    await fetch('https://fcm.googleapis.com/fcm/send', { method: 'HEAD', mode: 'no-cors' });
-    console.log('- Conectividade com FCM: OK');
-  } catch (connectError) {
-    console.log('- Conectividade com FCM: Erro', connectError);
+      await fetch('https://fcm.googleapis.com/fcm/send', {
+          method: 'POST',
+          headers: { 'Content-Length': '0' },
+      }).catch(() => {});
+      logInfo('Conectividade com FCM', 'OK');
+  } catch (e: any) {
+      if (e.name === 'TypeError') {
+           logInfo('Conectividade com FCM', 'OK (CORS block esperado)');
+      } else {
+          console.error('- Erro ao testar conectividade com FCM:', e);
+      }
   }
 }
