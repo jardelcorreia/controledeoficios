@@ -4,6 +4,7 @@ import { savePushSubscription } from './oficios.actions';
 import { getToken, type Messaging } from 'firebase/messaging';
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+const FIREBASE_API_KEY = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
 
 // Função para aguardar um tempo determinado
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -41,8 +42,8 @@ async function retryWithExponentialBackoff<T>(
         throw err;
       }
 
-      const delayTime = baseDelay * Math.pow(2, attempt - 1);
       console.log(`Tentativa ${attempt} falhou. Tentando novamente em ${delayTime}ms...`);
+      const delayTime = baseDelay * Math.pow(2, attempt - 1);
       await delay(delayTime);
     }
   }
@@ -73,8 +74,16 @@ export async function initializePushNotifications(messaging: Messaging | null) {
   if (!VAPID_PUBLIC_KEY) {
     throw new Error('VAPID_PUBLIC_KEY não encontrada nas variáveis de ambiente');
   }
+  if (!FIREBASE_API_KEY) {
+    throw new Error('FIREBASE_API_KEY não encontrada nas variáveis de ambiente');
+  }
 
   try {
+    const swUrl = `/firebase-messaging-sw.js?apiKey=${FIREBASE_API_KEY}`;
+    const registration = await navigator.serviceWorker.register(swUrl, { scope: '/' });
+    console.log('Service Worker registrado com sucesso:', registration);
+
+
     // 1. Aguardar o Service Worker estar totalmente carregado
     console.log('Aguardando Service Worker estar pronto...');
     await navigator.serviceWorker.ready;
@@ -98,6 +107,7 @@ export async function initializePushNotifications(messaging: Messaging | null) {
     const currentToken = await retryWithExponentialBackoff(async () => {
       return await getToken(messaging, {
         vapidKey: VAPID_PUBLIC_KEY,
+        serviceWorkerRegistration: registration
       });
     });
 
@@ -125,7 +135,7 @@ export async function initializePushNotifications(messaging: Messaging | null) {
     console.error('❌ Erro detalhado:', {
       name: err.name,
       message: err.message,
-      stack: err.stack
+      stack: err.stack?.toString()
     });
 
     // Tratamento específico para diferentes tipos de erro
