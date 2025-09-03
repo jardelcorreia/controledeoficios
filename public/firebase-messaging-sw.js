@@ -1,21 +1,19 @@
-// Import the Firebase app and messaging libraries
-import { initializeApp } from 'firebase/app';
-import { getMessaging } from 'firebase/messaging/sw';
+
+// Import the Firebase scripts
+importScripts("https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js");
 
 // Your web app's Firebase configuration
+// This configuration is public and safe to be in client-side code.
 const firebaseConfig = {
-  apiKey: self.location.search.split('apiKey=')[1],
-  authDomain: "controle-de-ofcios-pd89y.firebaseapp.com",
   projectId: "controle-de-ofcios-pd89y",
+  appId: "1:79560888151:web:2a707a8a44c4cb4284f812",
   storageBucket: "controle-de-ofcios-pd89y.firebasestorage.app",
+  apiKey: "AIzaSyAwwgWBTAwaEISWj4zYh6sPi0ufixevHnU",
+  authDomain: "controle-de-ofcios-pd89y.firebaseapp.com",
   messagingSenderId: "79560888151",
-  appId: "1:79560888151:web:2a707a8a44c4cb4284f812"
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const messaging = getMessaging(app);
-
-// The service worker can be kept simple. 
-// The SDK will handle the rest.
-console.log('Firebase Messaging Service Worker initialized.');
+const app = firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging(app);

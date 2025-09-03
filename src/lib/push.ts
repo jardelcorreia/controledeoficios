@@ -4,7 +4,6 @@ import { savePushSubscription } from './oficios.actions';
 import { getToken, type Messaging } from 'firebase/messaging';
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-const FIREBASE_API_KEY = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
 
 // Função para aguardar um tempo determinado
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -74,13 +73,9 @@ export async function initializePushNotifications(messaging: Messaging | null) {
   if (!VAPID_PUBLIC_KEY) {
     throw new Error('VAPID_PUBLIC_KEY não encontrada nas variáveis de ambiente');
   }
-  if (!FIREBASE_API_KEY) {
-    throw new Error('FIREBASE_API_KEY não encontrada nas variáveis de ambiente');
-  }
 
   try {
-    const swUrl = `/firebase-messaging-sw.js?apiKey=${FIREBASE_API_KEY}`;
-    const registration = await navigator.serviceWorker.register(swUrl, { scope: '/' });
+    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' });
     console.log('Service Worker registrado com sucesso:', registration);
 
 
