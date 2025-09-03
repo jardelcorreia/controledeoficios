@@ -2,16 +2,23 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Permite acesso público total a todas as coleções, já que
+    // o aplicativo não possui sistema de autenticação no momento.
     
-    // Permite que qualquer pessoa leia e escreva em oficios, historico e pushSubscriptions
-    match /{collection}/{docId} 
-      where collection in ['oficios', 'historico', 'pushSubscriptions'] {
-      allow read, write: if true;
+    match /oficios/{oficioId} {
+      allow read, write, delete: if true;
     }
 
-    // Permite que qualquer pessoa leia e escreva no documento de configuração
-    match /config/{configId} {
-       allow read, write: if true;
+    match /historico/{docId} {
+      allow read, write: if true;
+    }
+    
+    match /config/{docId} {
+      allow read, write: if true;
+    }
+    
+    match /pushSubscriptions/{docId} {
+      allow read, write: if true;
     }
   }
 }
