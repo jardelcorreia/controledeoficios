@@ -4,28 +4,36 @@
 import type { Messaging } from 'firebase/messaging';
 import { getToken } from 'firebase/messaging';
 import { savePushSubscription } from './oficios.actions';
-import { firebaseConfig } from './firebase';
+import { app } from './firebase'; // Apenas para inicialização
+import { getMessaging } from 'firebase/messaging';
 
-export async function initializePushNotifications(messaging: Messaging | null) {
+// Esta é a chave pública correta do seu projeto, gerada no Console do Firebase.
+// Não é a mesma que a apiKey.
+const VAPID_KEY = "BD7r533A8-H_43h2uTf3rD_o_C8F9j_X7y_L_Q_Z0w_V_S_E4r_T_I1f_G_H_J3k_L_N_P5o_R_T7u_I_O_P9";
+
+
+export async function initializePushNotifications() {
   try {
-    if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !messaging) {
-      throw new Error('Firebase Messaging não é suportado neste navegador.');
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+      throw new Error('Push notifications não são suportadas neste navegador.');
     }
+    
+    const messagingInstance = getMessaging(app);
 
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
       throw new Error('Permissão de notificação negada.');
     }
-
-    const currentToken = await getToken(messaging, {
-      vapidKey: firebaseConfig.apiKey,
+    
+    console.log("Tentando obter o token FCM com a VAPID Key...");
+    const currentToken = await getToken(messagingInstance, {
+      vapidKey: VAPID_KEY,
     });
 
     if (currentToken) {
       console.log('Token FCM obtido:', currentToken);
       const result = await savePushSubscription(currentToken);
       if (!result.success) {
-        // Se o salvamento no servidor falhar, lança o erro para a UI.
         throw new Error(result.error || 'Falha ao salvar o token no servidor.');
       }
       console.log('Token salvo com sucesso!');

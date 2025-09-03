@@ -10,7 +10,7 @@ export const firebaseConfig = {
   apiKey: "AIzaSyAwwgWBTAwaEISWj4zYh6sPi0ufixevHnU",
   authDomain: "controle-de-ofcios-pd89y.firebaseapp.com",
   projectId: "controle-de-ofcios-pd89y",
-  storageBucket: "controle-de-ofcios-pd89y.appspot.com",
+  storageBucket: "controle-de-ofcios-pd89y.firebasestorage.app",
   messagingSenderId: "79560888151",
   appId: "1:79560888151:web:2a707a8a44c4cb4284f812"
 };
