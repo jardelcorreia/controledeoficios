@@ -144,31 +144,34 @@ export async function addHistorico(data: Omit<Historico, 'id' | 'data'>) {
 export async function savePushSubscription(subscription: { token: string }) {
   try {
     if (!subscription.token) {
+      console.error('Tentativa de salvar uma inscrição sem token.');
       return { success: false, error: 'Token de inscrição está faltando.' };
     }
 
-    // Verifica se o token já existe
-    const q = query(collection(db, PUSH_SUBSCRIPTIONS_COLLECTION), where("token", "==", subscription.token));
+    // Verifica se o token já existe para evitar duplicatas
+    const q = query(
+      collection(db, PUSH_SUBSCRIPTIONS_COLLECTION),
+      where('token', '==', subscription.token)
+    );
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
-        console.log('Token já existe no Firestore. Nenhuma ação necessária.');
-        return { success: true, message: "Token já existe." };
+      console.log('Token FCM já existe no Firestore. Nenhuma ação necessária.');
+      return { success: true, message: 'Token já existe.' };
     }
 
     // Se não existir, cria um novo documento
-    const docRef = doc(collection(db, PUSH_SUBSCRIPTIONS_COLLECTION));
-    await setDoc(docRef, {
+    const docRef = await addDoc(collection(db, PUSH_SUBSCRIPTIONS_COLLECTION), {
       token: subscription.token,
       createdAt: serverTimestamp(),
     });
-    
-    console.log('Push subscription token saved with ID:', docRef.id);
-    return { success: true };
 
+    console.log('Token FCM salvo com ID:', docRef.id);
+    return { success: true };
   } catch (error) {
-    console.error('Error saving push subscription:', error);
-    const errorMessage = error instanceof Error ? error.message : "Failed to save subscription.";
+    console.error('Erro ao salvar token de inscrição no Firestore:', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Falha ao salvar a inscrição.';
     return { success: false, error: errorMessage };
   }
 }

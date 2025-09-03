@@ -5,16 +5,13 @@ import { savePushSubscription } from './oficios.actions';
 import { getMessaging, getToken } from 'firebase/messaging';
 import { app } from './firebase';
 
-// Esta deve ser a MESMA chave que você está usando no backend
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
 export async function initializePushNotifications() {
   console.log('=== INICIANDO SETUP DE PUSH NOTIFICATIONS ===');
 
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
-    console.error(
-      'Service Worker ou Push Messaging não é suportado neste navegador'
-    );
+    console.error('Service Worker ou Push Messaging não é suportado neste navegador');
     throw new Error('Push Notifications não são suportadas.');
   }
 
@@ -24,9 +21,7 @@ export async function initializePushNotifications() {
   }
 
   try {
-    const registration = await navigator.serviceWorker.register(
-      '/firebase-messaging-sw.js'
-    );
+    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
     console.log('Service Worker registrado:', registration);
 
     await navigator.serviceWorker.ready;
@@ -55,14 +50,17 @@ export async function initializePushNotifications() {
       console.log('🎉 Push notifications configurado com sucesso!');
       return currentToken;
     } else {
-      console.warn(
-        'Não foi possível obter o token. O usuário precisa conceder permissão.'
-      );
+      console.warn('Não foi possível obter o token. O usuário precisa conceder permissão.');
       throw new Error('Falha ao obter o token de notificação.');
     }
   } catch (error: unknown) {
     const err = error as Error;
-    console.error('❌ Erro ao configurar push notifications:', err);
+    console.error('❌ Erro ao configurar push notifications:', err.message, err);
+
+    if (err.name === 'AbortError') {
+      console.error('Operação foi abortada - Push Service Error');
+    }
+    
     throw err;
   }
 }

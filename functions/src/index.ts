@@ -1,4 +1,3 @@
-
 /**
  * Import function triggers from their respective submodules:
  *
@@ -28,7 +27,7 @@ export const sendOficioNotification = functions
     const dataAfter = change.after.data();
     const dataBefore = change.before.data();
 
-    let notificationPayload = null;
+    let notificationPayload: admin.messaging.MessagingPayload | null = null;
 
     // Caso 1: Novo ofício criado.
     if (!change.before.exists && change.after.exists && dataAfter) {
@@ -39,13 +38,13 @@ export const sendOficioNotification = functions
           body: `O ofício nº ${dataAfter.numero} foi criado e aguarda envio.`,
         },
         webpush: {
-            fcm_options: {
-                link: `/oficios/${oficioId}`
-            },
-            notification: {
-                icon: "/icons/icon-192x192.png",
-            }
-        }
+          fcmOptions: {
+            link: `/oficios/${oficioId}`,
+          },
+          notification: {
+            icon: "/icons/icon-192x192.png",
+          },
+        },
       };
     } else if (
       // Caso 2: Ofício atualizado para "Enviado".
@@ -61,13 +60,13 @@ export const sendOficioNotification = functions
           body: `O ofício nº ${dataAfter.numero} foi enviado para ${dataAfter.destinatario}.`,
         },
         webpush: {
-            fcm_options: {
-                link: `/oficios/${oficioId}`
-            },
-            notification: {
-                icon: "/icons/icon-192x192.png",
-            }
-        }
+          fcmOptions: {
+            link: `/oficios/${oficioId}`,
+          },
+          notification: {
+            icon: "/icons/icon-192x192.png",
+          },
+        },
       };
     }
 
@@ -108,28 +107,32 @@ export const sendOficioNotification = functions
       // Envia a notificação para todos os tokens
       const response = await messaging.sendEachForMulticast({
         tokens: tokens,
-        ...notificationPayload
+        ...notificationPayload,
       });
 
       functions.logger.info(`Notificações enviadas: ${response.successCount} com sucesso, ${response.failureCount} falharam.`);
 
       // Limpeza de tokens inválidos
+      const tokensToDelete: Promise<any>[] = [];
       response.responses.forEach(async (result, index) => {
         const token = tokens[index];
         if (!result.success) {
           functions.logger.error(`Falha ao enviar para o token: ${token}`, result.error);
+          const errorCode = result.error.code;
           if (
-            result.error.code === 'messaging/invalid-registration-token' ||
-            result.error.code === 'messaging/registration-token-not-registered'
+            errorCode === "messaging/invalid-registration-token" ||
+            errorCode === "messaging/registration-token-not-registered"
           ) {
-            functions.logger.info(`Removendo token inválido: ${token}`);
-            const subToDeleteQuery = db.collection('pushSubscriptions').where('token', '==', token);
-            const subToDeleteSnapshot = await subToDeleteQuery.get();
-            subToDeleteSnapshot.forEach(doc => doc.ref.delete());
+            functions.logger.info(`Agendando remoção do token inválido: ${token}`);
+            const subToDeleteQuery = db.collection("pushSubscriptions").where("token", "==", token).get();
+            tokensToDelete.push(subToDeleteQuery.then(snapshot => {
+              snapshot.forEach(doc => doc.ref.delete());
+            }));
           }
         }
       });
-      
+      await Promise.all(tokensToDelete);
+
       return { success: true, ...response };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
