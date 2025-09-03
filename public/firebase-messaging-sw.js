@@ -1,19 +1,41 @@
 
-// Use a modular SDK
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
-import { getMessaging } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-messaging-sw.js";
+// /public/firebase-messaging-sw.js
 
-// Your web app's Firebase configuration
+// Importa os scripts do Firebase SDK usando o método correto para Service Workers
+importScripts("https://www.gstatic.com/firebasejs/10.12.3/firebase-app-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/10.12.3/firebase-messaging-compat.js");
+
+// As credenciais do seu projeto Firebase.
 const firebaseConfig = {
   apiKey: "AIzaSyAwwgWBTAwaEISWj4zYh6sPi0ufixevHnU",
   authDomain: "controle-de-ofcios-pd89y.firebaseapp.com",
   projectId: "controle-de-ofcios-pd89y",
   storageBucket: "controle-de-ofcios-pd89y.appspot.com",
-  messagingSenderId: "367123996587",
-  appId: "1:367123996587:web:8d29b2d861c8f1e29c1184",
-  measurementId: "G-9S2119M0S0"
+  messagingSenderId: "313933939634",
+  appId: "1:313933939634:web:0b7405e6080e7784013480",
+  measurementId: "G-9QKVDB3B2B"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const messaging = getMessaging(app);
+// Inicializa o app Firebase no Service Worker
+firebase.initializeApp(firebaseConfig);
+
+// Obtém uma instância do Firebase Messaging
+const messaging = firebase.messaging();
+
+// Opcional: Adiciona um manipulador de background para quando a notificação
+// é recebida enquanto o app está em segundo plano.
+messaging.onBackgroundMessage((payload) => {
+  console.log(
+    "[firebase-messaging-sw.js] Received background message ",
+    payload
+  );
+
+  // Customize notification here
+  const notificationTitle = payload.notification.title;
+  const notificationOptions = {
+    body: payload.notification.body,
+    icon: "/icons/icon-192x192.png",
+  };
+
+  self.registration.showNotification(notificationTitle, notificationOptions);
+});
