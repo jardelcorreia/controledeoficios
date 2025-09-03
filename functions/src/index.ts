@@ -10,6 +10,7 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import type { DocumentReference, WriteResult } from "firebase-admin/firestore";
 
 // Inicializa o Firebase Admin SDK. Isso deve ser feito apenas uma vez.
 admin.initializeApp();
@@ -28,24 +29,22 @@ export const sendOficioNotification = functions
     const dataAfter = change.after.data();
     const dataBefore = change.before.data();
 
-    // Base para o payload da notificação
-    let notificationPayload: admin.messaging.NotificationMessagePayload | null = null;
+    let notification: admin.messaging.Notification | undefined;
+    let webpush: admin.messaging.WebpushConfig | undefined;
 
     // Caso 1: Novo ofício criado.
     if (!change.before.exists && change.after.exists && dataAfter) {
       functions.logger.info(`Novo ofício criado: ${oficioId}`, dataAfter);
-      notificationPayload = {
-        notification: {
-          title: "Novo Ofício Criado!",
-          body: `O ofício nº ${dataAfter.numero} foi criado e aguarda envio.`,
+      notification = {
+        title: "Novo Ofício Criado!",
+        body: `O ofício nº ${dataAfter.numero} foi criado e aguarda envio.`,
+      };
+      webpush = {
+        fcmOptions: {
+          link: `/oficios/${oficioId}`,
         },
-        webpush: {
-          fcmOptions: {
-            link: `/oficios/${oficioId}`,
-          },
-          notification: {
-            icon: "/icons/icon-192x192.png",
-          },
+        notification: {
+          icon: "/icons/icon-192x192.png",
         },
       };
     } else if (
@@ -56,24 +55,22 @@ export const sendOficioNotification = functions
       dataAfter?.status === "Enviado"
     ) {
       functions.logger.info(`Ofício enviado: ${oficioId}`, dataAfter);
-      notificationPayload = {
-        notification: {
-          title: "Ofício Enviado!",
-          body: `O ofício nº ${dataAfter.numero} foi enviado para ${dataAfter.destinatario}.`,
+      notification = {
+        title: "Ofício Enviado!",
+        body: `O ofício nº ${dataAfter.numero} foi enviado para ${dataAfter.destinatario}.`,
+      };
+      webpush = {
+        fcmOptions: {
+          link: `/oficios/${oficioId}`,
         },
-        webpush: {
-          fcmOptions: {
-            link: `/oficios/${oficioId}`,
-          },
-          notification: {
-            icon: "/icons/icon-192x192.png",
-          },
+        notification: {
+          icon: "/icons/icon-192x192.png",
         },
       };
     }
 
     // Se nenhuma condição de notificação foi atendida, encerra a execução.
-    if (!notificationPayload) {
+    if (!notification) {
       functions.logger.info("Nenhuma condição de notificação atendida.");
       return null;
     }
@@ -107,8 +104,9 @@ export const sendOficioNotification = functions
       );
 
       const message: admin.messaging.MulticastMessage = {
-          ...notificationPayload,
-          tokens,
+        notification,
+        webpush,
+        tokens,
       };
 
       // Envia a notificação para todos os tokens
@@ -120,7 +118,7 @@ export const sendOficioNotification = functions
       );
 
       // Limpeza de tokens inválidos
-      const tokensToDelete: Promise<FirebaseFirestore.WriteResult>[] = [];
+      const tokensToDelete: Promise<WriteResult>[] = [];
       response.responses.forEach(async (result, index) => {
         const token = tokens[index];
         if (!result.success && result.error) {
@@ -133,7 +131,7 @@ export const sendOficioNotification = functions
             functions.logger.info(`Agendando remoção do token inválido: ${token}`);
             const subToDeleteQuery = await db.collection("pushSubscriptions").where("token", "==", token).get();
             subToDeleteQuery.forEach((doc) => {
-                tokensToDelete.push(doc.ref.delete());
+              tokensToDelete.push(doc.ref.delete());
             });
           }
         }
