@@ -129,7 +129,7 @@ export async function initializePushNotifications(messaging: Messaging | null) {
     });
 
     // Tratamento específico para diferentes tipos de erro
-    if (err.name === 'AbortError' || err.message.includes('push service error')) {
+    if (err.name === 'AbortError' || err.message.toLowerCase().includes('push service error')) {
       console.error('Push Service Error detectado - possível problema de conectividade ou configuração');
       throw new Error('Serviço de push temporariamente indisponível. Tente novamente em alguns minutos.');
     }
@@ -188,38 +188,6 @@ export async function debugPushSetup() {
         console.log('- Nenhum Service Worker registrado');
       }
       
-      // Testar se consegue registrar um SW temporário
-      console.log('📋 Testando capacidades do Push:');
-      
-      if ('PushManager' in window) {
-        try {
-          // Verificar se o Push é suportado
-          const pushSupported = 'serviceWorker' in navigator && 'PushManager' in window;
-          console.log('- Push suportado:', pushSupported);
-          
-          if (pushSupported && registration) {
-            try {
-              // Tentar criar uma subscription temporária para teste
-              const subscription = await registration.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: VAPID_PUBLIC_KEY
-              });
-              
-              console.log('- Subscription de teste criada com sucesso');
-              
-              // Limpar a subscription de teste
-              await subscription.unsubscribe();
-              console.log('- Subscription de teste removida');
-              
-            } catch (subscribeError) {
-              console.error('- Erro ao criar subscription de teste:', subscribeError);
-            }
-          }
-        } catch (pushError) {
-          console.error('- Erro ao testar Push Manager:', pushError);
-        }
-      }
-      
     } catch (error: unknown) {
       console.error('❌ Erro no debug do Service Worker:', error);
     }
@@ -228,67 +196,9 @@ export async function debugPushSetup() {
   // Verificar conectividade com FCM
   console.log('🌍 Testando conectividade:');
   try {
-    const response = await fetch('https://fcm.googleapis.com/fcm/send', { method: 'HEAD', mode: 'no-cors' });
+    await fetch('https://fcm.googleapis.com/fcm/send', { method: 'HEAD', mode: 'no-cors' });
     console.log('- Conectividade com FCM: OK');
   } catch (connectError) {
     console.log('- Conectividade com FCM: Erro', connectError);
   }
-}
-
-// Função auxiliar para resetar configurações de push
-export async function resetPushConfiguration() {
-  console.log('🔄 Resetando configuração de push...');
-  
-  try {
-    if ('serviceWorker' in navigator) {
-      const registration = await navigator.serviceWorker.getRegistration();
-      
-      if (registration && registration.pushManager) {
-        const subscription = await registration.pushManager.getSubscription();
-        
-        if (subscription) {
-          await subscription.unsubscribe();
-          console.log('✅ Subscription anterior removida');
-        }
-      }
-    }
-    
-    console.log('✅ Reset concluído');
-  } catch (error) {
-    console.error('❌ Erro durante reset:', error);
-  }
-}
-
-// Função para verificar se as configurações estão corretas
-export function validatePushConfiguration() {
-  const issues: string[] = [];
-  
-  if (!VAPID_PUBLIC_KEY) {
-    issues.push('VAPID_PUBLIC_KEY não definida');
-  }
-  
-  if (VAPID_PUBLIC_KEY && VAPID_PUBLIC_KEY.length !== 88) {
-    issues.push('VAPID_PUBLIC_KEY tem tamanho incorreto (deve ter 88 caracteres)');
-  }
-  
-  if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-    issues.push('Push notifications requerem HTTPS ou localhost');
-  }
-  
-  if (!('serviceWorker' in navigator)) {
-    issues.push('Service Worker não suportado');
-  }
-  
-  if (!('PushManager' in window)) {
-    issues.push('Push Manager não suportado');
-  }
-  
-  if (Notification.permission === 'denied') {
-    issues.push('Permissões de notificação negadas');
-  }
-  
-  return {
-    valid: issues.length === 0,
-    issues
-  };
 }
