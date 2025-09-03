@@ -115,7 +115,7 @@ export const sendOficioNotification = functions
             functions.logger.info(`Agendando remoção do token inválido: ${token}`);
             const subToDeleteQuery = await db.collection("pushSubscriptions").where("token", "==", token).get();
             subToDeleteQuery.forEach((doc) => {
-                tokensToDelete.push(doc.ref.delete());
+              tokensToDelete.push(doc.ref.delete());
             });
           }
         }

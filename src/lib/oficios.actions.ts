@@ -11,9 +11,6 @@ import {
   setDoc,
   deleteDoc,
   serverTimestamp,
-  query,
-  where,
-  getDocs,
 } from 'firebase/firestore';
 import {
   getNumeracaoConfig,
@@ -141,37 +138,24 @@ export async function addHistorico(data: Omit<Historico, 'id' | 'data'>) {
   revalidatePath('/historico');
 }
 
-export async function savePushSubscription(subscription: { token: string }) {
+export async function savePushSubscription(token: string) {
   try {
-    if (!subscription.token) {
-      console.error('Tentativa de salvar uma inscrição sem token.');
-      return { success: false, error: 'Token de inscrição está faltando.' };
+    if (!token) {
+      throw new Error('Token de inscrição está faltando.');
     }
-
-    // Verifica se o token já existe para evitar duplicatas
-    const q = query(
-      collection(db, PUSH_SUBSCRIPTIONS_COLLECTION),
-      where('token', '==', subscription.token)
-    );
-    const querySnapshot = await getDocs(q);
-
-    if (!querySnapshot.empty) {
-      console.log('Token FCM já existe no Firestore. Nenhuma ação necessária.');
-      return { success: true, message: 'Token já existe.' };
-    }
-
-    // Se não existir, cria um novo documento
-    const docRef = await addDoc(collection(db, PUSH_SUBSCRIPTIONS_COLLECTION), {
-      token: subscription.token,
+    // Usa o próprio token como ID do documento para evitar duplicatas.
+    const docRef = doc(db, PUSH_SUBSCRIPTIONS_COLLECTION, token);
+    await setDoc(docRef, {
+      token: token,
       createdAt: serverTimestamp(),
     });
-
-    console.log('Token FCM salvo com ID:', docRef.id);
+    console.log('Token FCM salvo com sucesso no Firestore.');
     return { success: true };
   } catch (error) {
     console.error('Erro ao salvar token de inscrição no Firestore:', error);
     const errorMessage =
       error instanceof Error ? error.message : 'Falha ao salvar a inscrição.';
+    // Retorna o erro para que o cliente possa tratá-lo, se necessário.
     return { success: false, error: errorMessage };
   }
 }
