@@ -2,11 +2,15 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 
+// Inicializa o Firebase Admin SDK. Isso deve ser feito apenas uma vez.
 admin.initializeApp();
 
 const db = admin.firestore();
 const messaging = admin.messaging();
 
+/**
+ * Função acionada na criação ou atualização de um ofício para enviar notificações.
+ */
 export const sendOficioNotification = functions
   .region("southamerica-east1")
   .firestore.document("oficios/{oficioId}")
@@ -15,101 +19,114 @@ export const sendOficioNotification = functions
     const dataAfter = change.after.data();
     const dataBefore = change.before.data();
 
-    let notificationTitle: string | undefined;
-    let notificationBody: string | undefined;
+    let notification;
+    let webpush;
 
-    // Novo ofício criado
+    // Caso 1: Novo ofício criado.
     if (!change.before.exists && change.after.exists && dataAfter) {
-      notificationTitle = "Novo Ofício Criado!";
-      notificationBody = `O ofício nº ${dataAfter.numero} foi criado e aguarda envio.`;
-      functions.logger.info(`Novo ofício criado: ${oficioId}`, { data: dataAfter });
-    } 
-    // Ofício atualizado para "Enviado"
-    else if (
+      functions.logger.info(`Novo ofício criado: ${oficioId}`, dataAfter);
+      notification = {
+        title: "Novo Ofício Criado!",
+        body: `O ofício nº ${dataAfter.numero} foi criado e aguarda envio.`,
+      };
+      webpush = {
+        fcmOptions: {
+          link: `/oficios/${oficioId}`,
+        },
+        notification: {
+          icon: "/icons/icon-192x192.png",
+        },
+      };
+    } else if (
+      // Caso 2: Ofício atualizado para "Enviado".
       change.before.exists &&
       change.after.exists &&
       dataBefore?.status !== "Enviado" &&
       dataAfter?.status === "Enviado"
     ) {
-      notificationTitle = "Ofício Enviado!";
-      notificationBody = `O ofício nº ${dataAfter.numero} foi enviado para ${dataAfter.destinatario}.`;
-      functions.logger.info(`Ofício enviado: ${oficioId}`, { data: dataAfter });
+      functions.logger.info(`Ofício enviado: ${oficioId}`, dataAfter);
+      notification = {
+        title: "Ofício Enviado!",
+        body: `O ofício nº ${dataAfter.numero} foi enviado para ${dataAfter.destinatario}.`,
+      };
+      webpush = {
+        fcmOptions: {
+          link: `/oficios/${oficioId}`,
+        },
+        notification: {
+          icon: "/icons/icon-192x192.png",
+        },
+      };
     }
 
-    if (!notificationTitle || !notificationBody) {
+    // Se nenhuma condição de notificação foi atendida, encerra a execução.
+    if (!notification) {
       functions.logger.info("Nenhuma condição de notificação atendida.");
       return null;
     }
 
     try {
-      const subscriptionsSnapshot = await db.collection("pushSubscriptions").get();
+      // Busca todas as inscrições de push no Firestore.
+      const subscriptionsSnapshot = await db
+        .collection("pushSubscriptions")
+        .get();
+
       if (subscriptionsSnapshot.empty) {
-        functions.logger.info("Nenhuma inscrição de push encontrada.");
+        functions.logger.info("Nenhuma inscrição encontrada para notificar.");
         return null;
       }
 
+      // Mapeia e filtra para garantir que apenas inscrições válidas sejam usadas.
       const tokens = subscriptionsSnapshot.docs
         .map((doc) => doc.data()?.token)
         .filter((token): token is string => !!token);
-      
+
       if (tokens.length === 0) {
-        functions.logger.warn("Documentos de inscrição encontrados, mas sem tokens válidos.");
+        functions.logger.warn(
+          "Documentos de inscrição encontrados, mas nenhum continha um 'token' válido."
+        );
         return null;
       }
 
-      functions.logger.info(`Enviando notificação para ${tokens.length} tokens.`);
-
-      const message: admin.messaging.MulticastMessage = {
-        tokens: tokens,
-        notification: {
-          title: notificationTitle,
-          body: notificationBody,
-        },
-        webpush: {
-          fcmOptions: {
-            link: `/oficios/${oficioId}`,
-          },
-          notification: {
-            icon: "/icons/icon-192x192.png",
-          },
-        },
+      functions.logger.info(`Enviando notificação para ${tokens.length} inscritos.`);
+      const message = {
+        notification,
+        webpush,
+        tokens,
       };
 
+      // Envia a notificação para todos os tokens
       const response = await messaging.sendEachForMulticast(message);
-      functions.logger.info(`Notificações enviadas: ${response.successCount} com sucesso, ${response.failureCount} com falha.`);
+      functions.logger.info(
+        `Notificações enviadas: ${response.successCount} com sucesso, ${response.failureCount} falharam.`
+      );
 
       // Limpeza de tokens inválidos
       const tokensToDelete: Promise<admin.firestore.WriteResult>[] = [];
-      response.responses.forEach((result, index) => {
+      response.responses.forEach(async (result, index) => {
         const token = tokens[index];
-        if (!result.success) {
-          const errorCode = result.error?.code;
+        if (!result.success && result.error) {
+          functions.logger.error(`Falha ao enviar para o token: ${token}`, result.error);
+          const errorCode = result.error.code;
           if (
             errorCode === "messaging/invalid-registration-token" ||
             errorCode === "messaging/registration-token-not-registered"
           ) {
             functions.logger.info(`Agendando remoção do token inválido: ${token}`);
-            const subToDeleteQuery = db.collection("pushSubscriptions").where("token", "==", token);
-            tokensToDelete.push(
-              subToDeleteQuery.get().then(querySnapshot => {
-                const deletePromises: Promise<admin.firestore.WriteResult>[] = [];
-                querySnapshot.forEach(doc => {
-                  deletePromises.push(doc.ref.delete());
-                });
-                return Promise.all(deletePromises).then(() => Promise.resolve()) as any;
-              })
-            );
-          } else {
-             functions.logger.error(`Falha ao enviar para ${token}`, result.error);
+            const subToDeleteQuery = await db.collection("pushSubscriptions").where("token", "==", token).get();
+            subToDeleteQuery.forEach((doc) => {
+                tokensToDelete.push(doc.ref.delete());
+            });
           }
         }
       });
+
       await Promise.all(tokensToDelete);
 
       return { success: true, ...response };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      functions.logger.error("Erro geral ao enviar notificações:", { error: errorMessage, details: error });
-      return { success: false, error: `Falha ao enviar notificações: ${errorMessage}` };
+      functions.logger.error("Erro ao enviar notificações push:", error);
+      return { error: `Falha ao enviar notificações: ${errorMessage}` };
     }
   });
