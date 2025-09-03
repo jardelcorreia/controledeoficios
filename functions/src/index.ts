@@ -110,7 +110,11 @@ export const sendOficioNotification = functions
         ...notificationPayload,
       });
 
-      functions.logger.info(`Notificações enviadas: ${response.successCount} com sucesso, ${response.failureCount} falharam.`);
+      functions.logger.info(
+        `Notificações enviadas: 
+        ${response.successCount} com sucesso, 
+        ${response.failureCount} falharam.`
+      );
 
       // Limpeza de tokens inválidos
       const tokensToDelete: Promise<any>[] = [];
