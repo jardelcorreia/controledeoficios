@@ -45,7 +45,6 @@ import { Badge } from "@/components/ui/badge";
 import { useEffect, useState, useTransition, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 
 
@@ -63,8 +62,6 @@ export default function OficiosPage() {
     const { toast } = useToast();
 
     const [searchQuery, setSearchQuery] = useState("");
-    const [statusFilter, setStatusFilter] = useState<"Todos" | Status>("Todos");
-
 
     useEffect(() => {
         setLoading(true);
@@ -77,10 +74,6 @@ export default function OficiosPage() {
     const filteredOficios = useMemo(() => {
         let oficios = allOficios;
 
-        if (statusFilter !== "Todos") {
-            oficios = oficios.filter(o => o.status === statusFilter);
-        }
-
         if (searchQuery) {
             const lowerCaseQuery = searchQuery.toLowerCase();
             oficios = oficios.filter(o => 
@@ -92,7 +85,7 @@ export default function OficiosPage() {
         }
 
         return oficios;
-    }, [allOficios, searchQuery, statusFilter]);
+    }, [allOficios, searchQuery]);
     
     const handleDelete = () => {
         if (!oficioToDelete) return;
@@ -180,16 +173,6 @@ export default function OficiosPage() {
                             </Button>
                         )}
                     </div>
-                    <Select value={statusFilter} onValueChange={(value: "Todos" | Status) => setStatusFilter(value)}>
-                        <SelectTrigger className="w-full sm:w-[180px]">
-                            <SelectValue placeholder="Filtrar por status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Todos">Todos os Status</SelectItem>
-                            <SelectItem value="Aguardando Envio">Aguardando Envio</SelectItem>
-                            <SelectItem value="Enviado">Enviado</SelectItem>
-                        </SelectContent>
-                    </Select>
                   </div>
                   
                   {loading ? (
