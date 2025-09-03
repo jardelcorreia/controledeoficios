@@ -4,17 +4,26 @@
 import type { Messaging } from 'firebase/messaging';
 import { getToken } from 'firebase/messaging';
 import { savePushSubscription } from './oficios.actions';
+import { firebaseConfig } from './firebase';
 
 export async function initializePushNotifications(messaging: Messaging | null) {
   try {
-    if (typeof window === 'undefined' || !messaging) {
-      throw new Error('Firebase Messaging is not available.');
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !messaging) {
+      throw new Error('Firebase Messaging não é suportado neste navegador.');
     }
 
     const VAPID_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-     if (!VAPID_KEY) {
+    if (!VAPID_KEY) {
       throw new Error("VAPID key não encontrada nas variáveis de ambiente.");
     }
+    
+    // Constrói a URL do Service Worker com os parâmetros de configuração
+    const swUrl = `/firebase-messaging-sw.js?apiKey=${firebaseConfig.apiKey}&authDomain=${firebaseConfig.authDomain}&projectId=${firebaseConfig.projectId}&storageBucket=${firebaseConfig.storageBucket}&messagingSenderId=${firebaseConfig.messagingSenderId}&appId=${firebaseConfig.appId}&measurementId=${firebaseConfig.measurementId}`;
+
+    // Registra o Service Worker. O navegador vai buscar e executar este script.
+    const registration = await navigator.serviceWorker.register(swUrl);
+    
+    console.log('Service Worker registrado com sucesso, escopo:', registration.scope);
 
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
@@ -22,7 +31,10 @@ export async function initializePushNotifications(messaging: Messaging | null) {
     }
     
     console.log("Solicitando token FCM...");
-    const currentToken = await getToken(messaging, { vapidKey: VAPID_KEY });
+    const currentToken = await getToken(messaging, { 
+        vapidKey: VAPID_KEY,
+        serviceWorkerRegistration: registration,
+    });
     
     if (currentToken) {
       console.log('Token FCM obtido com sucesso:', currentToken);
@@ -34,8 +46,13 @@ export async function initializePushNotifications(messaging: Messaging | null) {
     }
   } catch (error) {
     console.error('❌ Erro ao configurar push notifications:', error);
-    if (error instanceof Error && (error.name === 'AbortError' || error.message.includes('push service error'))) {
-      throw new Error('Serviço de push temporariamente indisponível. Tente novamente em alguns minutos.');
+    if (error instanceof Error) {
+        if (error.name === 'AbortError' || error.message.includes('push service error')) {
+            throw new Error('Serviço de push temporariamente indisponível. Tente novamente em alguns minutos.');
+        }
+        if (error.message.includes('ServiceWorker script evaluation failed')) {
+            throw new Error('Falha ao executar o script do Service Worker. Verifique o console do Service Worker para mais detalhes.');
+        }
     }
     throw error;
   }
