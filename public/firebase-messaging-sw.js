@@ -1,40 +1,30 @@
 
-// /public/firebase-messaging-sw.js
+// Scripts for Firebase
+importScripts('https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.15.0/firebase-messaging-compat.js');
 
-// Importa os scripts do Firebase SDK usando o método correto para Service Workers
-importScripts("https://www.gstatic.com/firebasejs/10.12.3/firebase-app-compat.js");
-importScripts("https://www.gstatic.com/firebasejs/10.12.3/firebase-messaging-compat.js");
-
-// As credenciais do seu projeto Firebase.
+// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAwwgWBTAwaEISWj4zYh6sPi0ufixevHnU",
   authDomain: "controle-de-ofcios-pd89y.firebaseapp.com",
   projectId: "controle-de-ofcios-pd89y",
   storageBucket: "controle-de-ofcios-pd89y.appspot.com",
-  messagingSenderId: "313933939634",
-  appId: "1:313933939634:web:0b7405e6080e7784013480",
-  measurementId: "G-9QKVDB3B2B"
+  messagingSenderId: "79560888151",
+  appId: "1:79560888151:web:2a707a8a44c4cb4284f812"
 };
 
-// Inicializa o app Firebase no Service Worker
-firebase.initializeApp(firebaseConfig);
+// Initialize Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging(app);
 
-// Obtém uma instância do Firebase Messaging
-const messaging = firebase.messaging();
-
-// Opcional: Adiciona um manipulador de background para quando a notificação
-// é recebida enquanto o app está em segundo plano.
+// Optional: background message handler
 messaging.onBackgroundMessage((payload) => {
-  console.log(
-    "[firebase-messaging-sw.js] Received background message ",
-    payload
-  );
+  console.log('[firebase-messaging-sw.js] Received background message ', payload);
 
-  // Customize notification here
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
     body: payload.notification.body,
-    icon: "/icons/icon-192x192.png",
+    icon: payload.notification.icon || '/icon-192x192.png'
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
