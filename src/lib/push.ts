@@ -4,7 +4,6 @@
 import type { Messaging } from 'firebase/messaging';
 import { getToken } from 'firebase/messaging';
 import { savePushSubscription } from './oficios.actions';
-import { firebaseConfig } from './firebase';
 
 export async function initializePushNotifications(messaging: Messaging | null) {
   try {
@@ -17,12 +16,7 @@ export async function initializePushNotifications(messaging: Messaging | null) {
       throw new Error("VAPID key não encontrada nas variáveis de ambiente.");
     }
     
-    // Constrói a URL do Service Worker com os parâmetros de configuração
-    const swUrl = `/firebase-messaging-sw.js?apiKey=${encodeURIComponent(firebaseConfig.apiKey!)}&authDomain=${encodeURIComponent(firebaseConfig.authDomain!)}&projectId=${encodeURIComponent(firebaseConfig.projectId!)}&storageBucket=${encodeURIComponent(firebaseConfig.storageBucket!)}&messagingSenderId=${encodeURIComponent(firebaseConfig.messagingSenderId!)}&appId=${encodeURIComponent(firebaseConfig.appId!)}&measurementId=${encodeURIComponent(firebaseConfig.measurementId!)}`;
-
-    // Registra o Service Worker. O navegador vai buscar e executar este script.
-    const registration = await navigator.serviceWorker.register(swUrl);
-    
+    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
     console.log('Service Worker registrado com sucesso, escopo:', registration.scope);
 
     const permission = await Notification.requestPermission();

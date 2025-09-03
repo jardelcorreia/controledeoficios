@@ -1,11 +1,12 @@
+
 {
   "name": "Controle de Ofícios",
   "short_name": "Ofícios",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F7FAFC",
-  "theme_color": "#718096",
-  "description": "Sistema para gerenciamento de ofícios.",
+  "background_color": "#ffffff",
+  "theme_color": "#7B96B8",
+  "gcm_sender_id": "367123996587",
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
