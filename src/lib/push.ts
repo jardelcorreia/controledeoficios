@@ -8,6 +8,8 @@ const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
 export async function initializePushNotifications(messaging: Messaging | null) {
   console.log('=== INICIANDO SETUP DE PUSH NOTIFICATIONS ===');
+  console.log('Chave VAPID pública utilizada:', VAPID_PUBLIC_KEY);
+
 
   if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) {
     console.error('Service Worker ou Push Messaging não é suportado neste navegador');
