@@ -6,50 +6,6 @@ import { getToken, type Messaging } from 'firebase/messaging';
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
-// Função para aguardar um tempo determinado
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-// Função para tentar reconectar com retry exponencial
-async function retryWithExponentialBackoff<T>(
-  fn: () => Promise<T>,
-  maxRetries: number = 3,
-  baseDelay: number = 1000
-): Promise<T> {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      const err = error as Error;
-      
-      if (attempt === maxRetries) {
-        throw err;
-      }
-
-      // Verifica se é um erro que vale a pena tentar novamente
-      const retryableErrors = [
-        'push service error',
-        'network error',
-        'timeout',
-        'connection failed',
-        'service unavailable'
-      ];
-      
-      const shouldRetry = retryableErrors.some(retryableError => 
-        err.message.toLowerCase().includes(retryableError)
-      );
-
-      if (!shouldRetry) {
-        throw err;
-      }
-      
-      const delayTime = baseDelay * Math.pow(2, attempt - 1);
-      console.log(`Tentativa ${attempt} falhou. Tentando novamente em ${delayTime}ms...`);
-      await delay(delayTime);
-    }
-  }
-  throw new Error('Máximo de tentativas excedido');
-}
-
 export async function initializePushNotifications(messaging: Messaging | null) {
   console.log('=== INICIANDO SETUP DE PUSH NOTIFICATIONS ===');
   console.log('Chave VAPID pública utilizada:', VAPID_PUBLIC_KEY);
@@ -57,14 +13,6 @@ export async function initializePushNotifications(messaging: Messaging | null) {
   // Verificações preliminares
   if (typeof window === 'undefined') {
     throw new Error('Função deve ser executada no cliente');
-  }
-
-  if (!('serviceWorker' in navigator)) {
-    throw new Error('Service Worker não é suportado neste navegador');
-  }
-
-  if (!('PushManager' in window)) {
-    throw new Error('Push Messaging não é suportado neste navegador');
   }
 
   if (!messaging) {
@@ -76,18 +24,7 @@ export async function initializePushNotifications(messaging: Messaging | null) {
   }
 
   try {
-    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-    console.log('Service Worker registrado com sucesso:', registration);
-
-
-    // 1. Aguardar o Service Worker estar totalmente carregado
-    console.log('Aguardando Service Worker estar pronto...');
-    await navigator.serviceWorker.ready;
-    
-    // 2. Pequeno delay para garantir estabilidade
-    await delay(500);
-
-    // 3. Solicitar permissão
+    // 1. Solicitar permissão
     console.log('Solicitando permissão de notificação...');
     const permission = await Notification.requestPermission();
     
@@ -97,14 +34,11 @@ export async function initializePushNotifications(messaging: Messaging | null) {
     
     console.log('Permissão de notificação concedida.');
 
-    // 4. Obter token com retry
-    console.log('Solicitando token FCM com retry...');
+    // 2. Obter token
+    console.log('Solicitando token FCM...');
     
-    const currentToken = await retryWithExponentialBackoff(async () => {
-      return await getToken(messaging, {
-        vapidKey: VAPID_PUBLIC_KEY,
-        serviceWorkerRegistration: registration
-      });
+    const currentToken = await getToken(messaging, {
+      vapidKey: VAPID_PUBLIC_KEY,
     });
 
     if (!currentToken) {
@@ -113,7 +47,7 @@ export async function initializePushNotifications(messaging: Messaging | null) {
 
     console.log('Token FCM recebido:', currentToken.substring(0, 20) + '...');
 
-    // 5. Salvar no servidor
+    // 3. Salvar no servidor
     console.log('Salvando token no servidor...');
     const result = await savePushSubscription({ token: currentToken });
     

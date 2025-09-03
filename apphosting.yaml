@@ -11,5 +11,3 @@ runConfig:
 env:
   - variable: NEXT_PUBLIC_VAPID_PUBLIC_KEY
     value: 'BMOvZxaUXFm3yDnbYMxTKKfgkLC7ErYNVBHjGWPFHeGyCHq9b5mmCPPivky-KWClfOqVY6WPS9niSXdLD8rTjrQ'
-  - variable: VAPID_PRIVATE_KEY
-    value: '2onCdcxgDtO-66jU7DUV_xCu9XdMXLR4CJ9o378o6pk'
