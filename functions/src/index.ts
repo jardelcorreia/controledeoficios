@@ -77,9 +77,15 @@ export const sendoficionotification = onDocumentWritten(
       }
 
       // Mapeia e filtra para garantir que apenas inscrições válidas sejam usadas.
-      const tokens = subscriptionsSnapshot.docs
-        .map((doc) => doc.data()?.token)
-        .filter((token): token is string => !!token);
+      // E usa um Set para garantir que cada token seja único.
+      const tokensSet = new Set(
+        subscriptionsSnapshot.docs
+          .map((doc) => doc.data()?.token)
+          .filter((token): token is string => !!token)
+      );
+      
+      const tokens = Array.from(tokensSet);
+
 
       if (tokens.length === 0) {
         logger.warn(
@@ -88,7 +94,7 @@ export const sendoficionotification = onDocumentWritten(
         return null;
       }
 
-      logger.info(`Enviando notificação para ${tokens.length} inscritos.`);
+      logger.info(`Enviando notificação para ${tokens.length} inscritos únicos.`);
       const message = {
         notification,
         webpush,
