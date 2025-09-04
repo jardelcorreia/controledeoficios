@@ -158,6 +158,9 @@ export default function ConfiguracoesPage() {
         description: message,
         variant: "destructive"
       });
+       // Mesmo se a desativação falhar, o mais provável é que o usuário queira tentar de novo.
+       // Revertemos para o estado de subscrito para que ele possa tentar novamente.
+       setSubState("SUBSCRIBED");
     } finally {
         setIsSubscribing(false);
     }
