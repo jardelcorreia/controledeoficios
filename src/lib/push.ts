@@ -19,7 +19,7 @@ async function getServiceWorkerRegistration() {
 export async function initializePushNotifications() {
   console.log("Iniciando processo de notificação push...");
   
-  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) {
     throw new Error('Push notifications não são suportadas neste navegador.');
   }
 
@@ -87,11 +87,10 @@ export async function unsubscribeFromPush() {
         return;
     }
 
-    // Extrair o token para remover do Firestore
-    // O endpoint é o identificador único da subscrição, mas o token é armazenado
-    // Em alguns casos, pode ser necessário derivar o token do endpoint
-    const token = subscription.endpoint.split('/').pop();
-
+    // A maneira mais confiável de obter o token para deletar é pegá-lo novamente
+    const messagingInstance = getMessaging(app);
+    const token = await getToken(messagingInstance, { vapidKey: VAPID_KEY });
+    
     const unsubscribed = await subscription.unsubscribe();
     if (!unsubscribed) {
         throw new Error("Falha ao cancelar a subscrição no navegador.");
@@ -102,5 +101,7 @@ export async function unsubscribeFromPush() {
     if (token) {
         await deletePushSubscription(token);
         console.log("Token removido do servidor.");
+    } else {
+        console.warn("Não foi possível obter o token para remover do servidor, mas a desinscrição no navegador foi bem-sucedida.");
     }
 }

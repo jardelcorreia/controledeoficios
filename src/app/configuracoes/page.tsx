@@ -26,7 +26,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { getNumeracaoConfig } from "@/lib/oficios";
 import { saveNumeracaoConfig } from "@/lib/oficios.actions";
-import { useEffect, useTransition, useState } from "react";
+import { useEffect, useTransition, useState, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal, BellRing, Download, ShareSquare, BellOff } from "lucide-react";
@@ -67,25 +67,28 @@ export default function ConfiguracoesPage() {
     }
     
     // Lógica robusta para verificar o estado da subscrição
-    if ("Notification" in window && "serviceWorker" in navigator) {
-       const permission = Notification.permission;
-       if (permission === 'denied') {
-          setSubState('BLOCKED');
-       } else if (permission === 'granted') {
-          // Se a permissão já foi dada, verificamos a subscrição
-          isSubscribed().then(subscribed => {
-            setSubState(subscribed ? 'SUBSCRIBED' : 'UNSUBSCRIBED');
-          }).catch(() => {
-            // Se a verificação falhar, assumimos que não está subscrito
-            setSubState('UNSUBSCRIBED');
-          });
-       } else {
-          // Se a permissão for 'default', o usuário ainda não decidiu.
-          setSubState('UNSUBSCRIBED');
-       }
-    } else {
-       // Se o navegador não suporta notificações, consideramos "bloqueado"
-       setSubState('BLOCKED');
+    if (!("Notification" in window) || !("serviceWorker" in navigator)) {
+      setSubState("BLOCKED");
+      return;
+    }
+    
+    try {
+      const permission = Notification.permission;
+      if (permission === 'denied') {
+        setSubState('BLOCKED');
+      } else if (permission === 'granted') {
+        // Se a permissão já foi dada, verificamos a subscrição
+        isSubscribed().then(subscribed => {
+          setSubState(subscribed ? 'SUBSCRIBED' : 'UNSUBSCRIBED');
+        }).catch(() => {
+           setSubState('BLOCKED');
+        });
+      } else {
+        // Se a permissão for 'default', o usuário ainda não decidiu.
+        setSubState('UNSUBSCRIBED');
+      }
+    } catch(e) {
+        setSubState('BLOCKED');
     }
 
     const handleBeforeInstallPrompt = (e: Event) => {
