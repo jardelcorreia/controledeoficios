@@ -37,7 +37,6 @@ export default function RootLayout({
     <html lang="pt-BR" className={inter.variable}>
       <head>
          <meta name="theme-color" content="#7B96B8" />
-         <link rel="manifest" href="/manifest.webmanifest" />
       </head>
       <body className="font-body antialiased">
         <SidebarProvider>
