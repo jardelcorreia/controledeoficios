@@ -2,19 +2,11 @@
 'use client';
 
 import { getToken } from 'firebase/messaging';
-import { savePushSubscription, deletePushSubscription } from './oficios.actions';
+import { savePushSubscription } from './oficios.actions';
 import { app } from './firebase';
 import { getMessaging } from 'firebase/messaging';
 
 const VAPID_KEY = "BMOvZxaUXFm3yDnbYMxTKKfgkLC7ErYNVBHjGWPFHeGyCHq9b5mmCPPivky-KWClfOqVY6WPS9niSXdLD8rTjrQ";
-
-async function getServiceWorkerRegistration() {
-    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
-        return null;
-    }
-    return navigator.serviceWorker.ready;
-}
-
 
 export async function initializePushNotifications() {
   console.log("Iniciando processo de notificação push...");
@@ -67,46 +59,10 @@ export async function initializePushNotifications() {
 }
 
 export async function isSubscribed(): Promise<boolean> {
-    const registration = await getServiceWorkerRegistration();
-    if (!registration) return false;
-
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+        return false;
+    }
+    const registration = await navigator.serviceWorker.ready;
     const subscription = await registration.pushManager.getSubscription();
     return !!subscription;
 }
-
-export async function unsubscribeFromPush() {
-    const registration = await getServiceWorkerRegistration();
-    if (!registration) {
-        throw new Error("Service Worker não está disponível.");
-    }
-    
-    const subscription = await registration.pushManager.getSubscription();
-    
-    if (!subscription) {
-        console.log("Nenhuma subscrição encontrada para cancelar.");
-        return;
-    }
-
-    // A maneira mais confiável de obter o token para deletar é pegá-lo novamente
-    const messagingInstance = getMessaging(app);
-    const token = await getToken(messagingInstance, { vapidKey: VAPID_KEY }).catch((err) => {
-        console.warn("Não foi possível obter o token atual para remoção do servidor, mas a desinscrição no navegador continuará.", err);
-        return null;
-    });
-    
-    const unsubscribed = await subscription.unsubscribe();
-    if (!unsubscribed) {
-        throw new Error("Falha ao cancelar a subscrição no navegador.");
-    }
-    
-    console.log("Subscrição cancelada com sucesso no navegador.");
-    
-    if (token) {
-        await deletePushSubscription(token);
-        console.log("Token removido do servidor.");
-    } else {
-        console.warn("Não foi possível obter o token para remover do servidor, mas a desinscrição no navegador foi bem-sucedida.");
-    }
-}
-
-    

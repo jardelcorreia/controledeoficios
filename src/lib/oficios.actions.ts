@@ -167,29 +167,3 @@ export async function savePushSubscription(token: string) {
     return { success: false, error: errorMessage };
   }
 }
-
-export async function deletePushSubscription(token: string) {
-    try {
-        if (!token) {
-            throw new Error('Token de inscrição está faltando.');
-        }
-
-        const q = query(collection(db, PUSH_SUBSCRIPTIONS_COLLECTION), where("token", "==", token));
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) {
-            console.warn("Nenhum token encontrado para exclusão:", token);
-            return { success: true, message: "Token não encontrado, nenhuma ação necessária."};
-        }
-
-        const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
-        await Promise.all(deletePromises);
-
-        console.log(`Token ${token} e suas duplicatas foram removidos com sucesso.`);
-        return { success: true };
-    } catch (error) {
-        console.error("Erro ao excluir token de inscrição do Firestore:", error);
-        const errorMessage = error instanceof Error ? error.message : "Falha ao excluir a inscrição.";
-        return { success: false, error: errorMessage };
-    }
-}

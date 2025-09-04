@@ -29,8 +29,8 @@ import { saveNumeracaoConfig } from "@/lib/oficios.actions";
 import { useEffect, useTransition, useState, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, BellRing, Download, ShareSquare, BellOff } from "lucide-react";
-import { initializePushNotifications, isSubscribed, unsubscribeFromPush } from "@/lib/push";
+import { Terminal, BellRing, Download, ShareSquare, BellOff, AlertCircle } from "lucide-react";
+import { initializePushNotifications, isSubscribed } from "@/lib/push";
 
 type SubscriptionState = "LOADING" | "SUBSCRIBED" | "UNSUBSCRIBED" | "BLOCKED";
 
@@ -49,11 +49,38 @@ export default function ConfiguracoesPage() {
   
   const [subState, setSubState] = useState<SubscriptionState>("LOADING");
   const [isSubscribing, setIsSubscribing] = useState(false);
+  const [pushError, setPushError] = useState<string | null>(null);
 
   const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
   const [isIos, setIsIos] = useState(false);
   const [showIosInstallCard, setShowIosInstallCard] = useState(false);
 
+
+  const checkSubscriptionStatus = useCallback(async () => {
+    setSubState("LOADING");
+    setPushError(null);
+    try {
+      if (!("Notification" in window) || !("serviceWorker" in navigator)) {
+          setSubState("BLOCKED");
+          return;
+      }
+      const permission = Notification.permission;
+      if (permission === 'denied') {
+          setSubState('BLOCKED');
+          return;
+      }
+      if (permission === 'granted') {
+          const subscribed = await isSubscribed();
+          setSubState(subscribed ? 'SUBSCRIBED' : 'UNSUBSCRIBED');
+      } else {
+          setSubState('UNSUBSCRIBED');
+      }
+    } catch (e) {
+        console.error("Erro ao verificar status da subscrição:", e);
+        setSubState('BLOCKED');
+        setPushError(e instanceof Error ? e.message : "Ocorreu um erro ao verificar o estado das notificações.");
+    }
+  }, []);
 
   useEffect(() => {
     // Detecção de iOS
@@ -66,30 +93,7 @@ export default function ConfiguracoesPage() {
       setShowIosInstallCard(true);
     }
     
-    // Lógica robusta para verificar o estado da subscrição
-    if (!("Notification" in window) || !("serviceWorker" in navigator)) {
-      setSubState("BLOCKED");
-      return;
-    }
-    
-    try {
-      const permission = Notification.permission;
-      if (permission === 'denied') {
-        setSubState('BLOCKED');
-      } else if (permission === 'granted') {
-        // Se a permissão já foi dada, verificamos a subscrição
-        isSubscribed().then(subscribed => {
-          setSubState(subscribed ? 'SUBSCRIBED' : 'UNSUBSCRIBED');
-        }).catch(() => {
-           setSubState('BLOCKED');
-        });
-      } else {
-        // Se a permissão for 'default', o usuário ainda não decidiu.
-        setSubState('UNSUBSCRIBED');
-      }
-    } catch(e) {
-        setSubState('BLOCKED');
-    }
+    checkSubscriptionStatus();
 
     const handleBeforeInstallPrompt = (e: Event) => {
         e.preventDefault();
@@ -102,7 +106,7 @@ export default function ConfiguracoesPage() {
         window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
 
-  }, []);
+  }, [checkSubscriptionStatus]);
 
   const handleInstallClick = async () => {
     if (!installPrompt) {
@@ -119,8 +123,9 @@ export default function ConfiguracoesPage() {
     setInstallPrompt(null);
   };
 
-  const handleSubscribe = async () => {
+  const handleSubscription = async () => {
     setIsSubscribing(true);
+    setPushError(null);
     try {
       await initializePushNotifications();
       toast({ title: "Sucesso!", description: "As notificações foram ativadas." });
@@ -128,43 +133,17 @@ export default function ConfiguracoesPage() {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Ocorreu um erro desconhecido";
       console.error('Erro ao ativar notificações:', err);
+      setPushError(message);
       toast({ 
         title: "Erro ao ativar notificações", 
         description: message,
         variant: "destructive"
       });
-      // Se der erro, voltamos ao estado original com base na permissão
-      if (Notification.permission === 'denied') {
-        setSubState("BLOCKED");
-      } else {
-        setSubState("UNSUBSCRIBED");
-      }
+      checkSubscriptionStatus();
     } finally {
         setIsSubscribing(false);
     }
   };
-
-  const handleUnsubscribe = async () => {
-    setIsSubscribing(true);
-    try {
-      await unsubscribeFromPush();
-      toast({ title: "Sucesso!", description: "As notificações foram desativadas." });
-      setSubState("UNSUBSCRIBED");
-    } catch (err: unknown) {
-       const message = err instanceof Error ? err.message : "Ocorreu um erro desconhecido";
-       console.error('Erro ao desativar notificações:', err);
-       toast({ 
-        title: "Erro ao desativar notificações", 
-        description: message,
-        variant: "destructive"
-      });
-       // Mesmo se a desativação falhar, o mais provável é que o usuário queira tentar de novo.
-       // Revertemos para o estado de subscrito para que ele possa tentar novamente.
-       setSubState("SUBSCRIBED");
-    } finally {
-        setIsSubscribing(false);
-    }
-  }
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -269,33 +248,6 @@ export default function ConfiguracoesPage() {
       </div>
     )
   }
-  
-  const getSubscriptionButton = () => {
-    if (subState === 'LOADING') {
-      return <Button disabled>Verificando...</Button>
-    }
-
-    if (subState === 'BLOCKED') {
-      return <Button disabled variant="destructive">Notificações Bloqueadas</Button>
-    }
-
-    if (subState === 'SUBSCRIBED') {
-      return (
-        <Button onClick={handleUnsubscribe} disabled={isSubscribing} variant="outline">
-          <BellOff className="mr-2 h-4 w-4" />
-          {isSubscribing ? 'Desativando...' : 'Desativar Notificações'}
-        </Button>
-      );
-    }
-    
-    // UNSUBSCRIBED
-    return (
-        <Button onClick={handleSubscribe} disabled={isSubscribing}>
-          <BellRing className="mr-2 h-4 w-4" />
-          {isSubscribing ? 'Ativando...' : 'Ativar Notificações'}
-        </Button>
-    );
-  }
 
   return (
     <div className="flex flex-col h-full">
@@ -394,10 +346,22 @@ export default function ConfiguracoesPage() {
             <CardHeader>
                 <CardTitle>Notificações</CardTitle>
                 <CardDescription>
-                    Receba alertas sobre novos ofícios e ofícios enviados. Se o botão estiver desativado, verifique as permissões de notificação no seu navegador.
+                    Receba alertas sobre novos ofícios e ofícios enviados. Se as notificações estiverem desativadas, pode reativá-las aqui.
                 </CardDescription>
             </CardHeader>
             <CardContent>
+                 {pushError && (
+                    <Alert variant="destructive" className="mb-4">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Falha na Ativação</AlertTitle>
+                      <AlertDescription>
+                          <p>{pushError}</p>
+                          <p className="mt-2 text-xs">
+                              Por favor, verifique as permissões de notificação no seu navegador e tente novamente. Se o problema persistir, pode ser necessário limpar os dados do site.
+                          </p>
+                      </AlertDescription>
+                    </Alert>
+                 )}
                  <div className="flex items-center space-x-2">
                     {subState === 'SUBSCRIBED' ? <BellRing className="h-5 w-5 text-green-500" /> : <BellOff className="h-5 w-5 text-muted-foreground" />}
                     <p className="text-sm text-muted-foreground">
@@ -412,7 +376,13 @@ export default function ConfiguracoesPage() {
                 </div>
             </CardContent>
             <CardFooter className="border-t px-6 py-4">
-              {getSubscriptionButton()}
+               <Button 
+                onClick={handleSubscription} 
+                disabled={subState !== 'UNSUBSCRIBED' || isSubscribing}
+               >
+                <BellRing className="mr-2 h-4 w-4" />
+                {isSubscribing ? 'Ativando...' : 'Ativar Notificações'}
+              </Button>
             </CardFooter>
         </Card>
 
@@ -457,5 +427,3 @@ export default function ConfiguracoesPage() {
     </div>
   );
 }
-
-    
