@@ -2,12 +2,19 @@
 'use client';
 
 import { getToken } from 'firebase/messaging';
-import { savePushSubscription } from './oficios.actions';
+import { savePushSubscription, deletePushSubscription } from './oficios.actions';
 import { app } from './firebase';
 import { getMessaging } from 'firebase/messaging';
 
-// Esta é a chave pública correta do seu projeto, gerada no Console do Firebase.
 const VAPID_KEY = "BMOvZxaUXFm3yDnbYMxTKKfgkLC7ErYNVBHjGWPFHeGyCHq9b5mmCPPivky-KWClfOqVY6WPS9niSXdLD8rTjrQ";
+
+async function getServiceWorkerRegistration() {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+        return null;
+    }
+    return navigator.serviceWorker.ready;
+}
+
 
 export async function initializePushNotifications() {
   console.log("Iniciando processo de notificação push...");
@@ -40,7 +47,6 @@ export async function initializePushNotifications() {
       console.log('Token salvo com sucesso no servidor.');
       return currentToken;
     } else {
-      // Esta situação geralmente indica um problema de configuração ou do ambiente.
       console.error('Falha ao obter o token FCM. Nenhum token foi retornado.');
       throw new Error('Não foi possível obter o token de notificação. Verifique a configuração do Service Worker e do projeto Firebase.');
     }
@@ -49,15 +55,52 @@ export async function initializePushNotifications() {
     
     let errorMessage = "Ocorreu um erro desconhecido durante a configuração das notificações.";
     if (error instanceof Error) {
-        // Personaliza a mensagem para o erro mais comum que estamos enfrentando
-        if (error.name === 'AbortError' && error.message.includes('push service error')) {
+        if (error.name === 'AbortError' || error.message.includes('push service error')) {
             errorMessage = 'O serviço de push do navegador falhou. Isso pode ser um problema temporário com os servidores do Google ou uma restrição de rede no seu ambiente de desenvolvimento.';
         } else {
             errorMessage = error.message;
         }
     }
     
-    // Lança um novo erro com a mensagem simplificada para ser exibida na UI
     throw new Error(errorMessage);
   }
+}
+
+export async function isSubscribed(): Promise<boolean> {
+    const registration = await getServiceWorkerRegistration();
+    if (!registration) return false;
+
+    const subscription = await registration.pushManager.getSubscription();
+    return !!subscription;
+}
+
+export async function unsubscribeFromPush() {
+    const registration = await getServiceWorkerRegistration();
+    if (!registration) {
+        throw new Error("Service Worker não está disponível.");
+    }
+    
+    const subscription = await registration.pushManager.getSubscription();
+    
+    if (!subscription) {
+        console.log("Nenhuma subscrição encontrada para cancelar.");
+        return;
+    }
+
+    // Extrair o token para remover do Firestore
+    // O endpoint é o identificador único da subscrição, mas o token é armazenado
+    // Em alguns casos, pode ser necessário derivar o token do endpoint
+    const token = subscription.endpoint.split('/').pop();
+
+    const unsubscribed = await subscription.unsubscribe();
+    if (!unsubscribed) {
+        throw new Error("Falha ao cancelar a subscrição no navegador.");
+    }
+    
+    console.log("Subscrição cancelada com sucesso no navegador.");
+    
+    if (token) {
+        await deletePushSubscription(token);
+        console.log("Token removido do servidor.");
+    }
 }

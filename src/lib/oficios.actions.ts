@@ -11,6 +11,10 @@ import {
   setDoc,
   deleteDoc,
   serverTimestamp,
+  query,
+  where,
+  getDocs,
+  limit,
 } from 'firebase/firestore';
 import {
   getNumeracaoConfig,
@@ -143,20 +147,49 @@ export async function savePushSubscription(token: string) {
     if (!token) {
       throw new Error('Token de inscrição está faltando.');
     }
-    // Usa o próprio token como ID do documento para evitar duplicatas.
-    // Isso é mais eficiente do que consultar primeiro.
-    const docRef = doc(db, PUSH_SUBSCRIPTIONS_COLLECTION, token);
-    await setDoc(docRef, {
-      token: token,
-      createdAt: serverTimestamp(), // Ajuda a limpar tokens antigos no futuro
-    });
-    console.log('Token FCM salvo com sucesso no Firestore:', token);
+    const q = query(collection(db, PUSH_SUBSCRIPTIONS_COLLECTION), where("token", "==", token), limit(1));
+    const existing = await getDocs(q);
+
+    if (existing.empty) {
+        await addDoc(collection(db, PUSH_SUBSCRIPTIONS_COLLECTION), {
+            token: token,
+            createdAt: serverTimestamp(),
+        });
+        console.log('Token FCM salvo com sucesso no Firestore:', token);
+    } else {
+        console.log('Token FCM já existe, não foi salvo novamente.');
+    }
     return { success: true };
   } catch (error) {
     console.error('Erro ao salvar token de inscrição no Firestore:', error);
     const errorMessage =
       error instanceof Error ? error.message : 'Falha ao salvar a inscrição.';
-    // Retorna o erro para que o cliente possa tratá-lo, se necessário.
     return { success: false, error: errorMessage };
   }
+}
+
+export async function deletePushSubscription(token: string) {
+    try {
+        if (!token) {
+            throw new Error('Token de inscrição está faltando.');
+        }
+
+        const q = query(collection(db, PUSH_SUBSCRIPTIONS_COLLECTION), where("token", "==", token));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            console.warn("Nenhum token encontrado para exclusão:", token);
+            return { success: true, message: "Token não encontrado, nenhuma ação necessária."};
+        }
+
+        const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(deletePromises);
+
+        console.log(`Token ${token} e suas duplicatas foram removidos com sucesso.`);
+        return { success: true };
+    } catch (error) {
+        console.error("Erro ao excluir token de inscrição do Firestore:", error);
+        const errorMessage = error instanceof Error ? error.message : "Falha ao excluir a inscrição.";
+        return { success: false, error: errorMessage };
+    }
 }
