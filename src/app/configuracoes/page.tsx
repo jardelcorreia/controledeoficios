@@ -66,16 +66,25 @@ export default function ConfiguracoesPage() {
       setShowIosInstallCard(true);
     }
     
-    if ("Notification" in window) {
+    // Lógica robusta para verificar o estado da subscrição
+    if ("Notification" in window && "serviceWorker" in navigator) {
        const permission = Notification.permission;
        if (permission === 'denied') {
           setSubState('BLOCKED');
-       } else {
-         isSubscribed().then(subscribed => {
+       } else if (permission === 'granted') {
+          // Se a permissão já foi dada, verificamos a subscrição
+          isSubscribed().then(subscribed => {
             setSubState(subscribed ? 'SUBSCRIBED' : 'UNSUBSCRIBED');
-         });
+          }).catch(() => {
+            // Se a verificação falhar, assumimos que não está subscrito
+            setSubState('UNSUBSCRIBED');
+          });
+       } else {
+          // Se a permissão for 'default', o usuário ainda não decidiu.
+          setSubState('UNSUBSCRIBED');
        }
     } else {
+       // Se o navegador não suporta notificações, consideramos "bloqueado"
        setSubState('BLOCKED');
     }
 
@@ -121,7 +130,12 @@ export default function ConfiguracoesPage() {
         description: message,
         variant: "destructive"
       });
-      setSubState("UNSUBSCRIBED");
+      // Se der erro, voltamos ao estado original com base na permissão
+      if (Notification.permission === 'denied') {
+        setSubState("BLOCKED");
+      } else {
+        setSubState("UNSUBSCRIBED");
+      }
     } finally {
         setIsSubscribing(false);
     }
@@ -268,6 +282,7 @@ export default function ConfiguracoesPage() {
       );
     }
     
+    // UNSUBSCRIBED
     return (
         <Button onClick={handleSubscribe} disabled={isSubscribing}>
           <BellRing className="mr-2 h-4 w-4" />
