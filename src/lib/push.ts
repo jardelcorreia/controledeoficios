@@ -89,7 +89,10 @@ export async function unsubscribeFromPush() {
 
     // A maneira mais confiável de obter o token para deletar é pegá-lo novamente
     const messagingInstance = getMessaging(app);
-    const token = await getToken(messagingInstance, { vapidKey: VAPID_KEY });
+    const token = await getToken(messagingInstance, { vapidKey: VAPID_KEY }).catch((err) => {
+        console.warn("Não foi possível obter o token atual para remoção do servidor, mas a desinscrição no navegador continuará.", err);
+        return null;
+    });
     
     const unsubscribed = await subscription.unsubscribe();
     if (!unsubscribed) {
@@ -105,3 +108,5 @@ export async function unsubscribeFromPush() {
         console.warn("Não foi possível obter o token para remover do servidor, mas a desinscrição no navegador foi bem-sucedida.");
     }
 }
+
+    
