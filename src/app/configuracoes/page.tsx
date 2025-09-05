@@ -30,7 +30,11 @@ import { useEffect, useTransition, useState, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal, BellRing, Download, ShareSquare, BellOff, AlertCircle } from "lucide-react";
-import { initializePushNotifications, isSubscribed } from "@/lib/push";
+import { initializePushNotifications } from "@/lib/push";
+import { getToken } from "firebase/messaging";
+import { getMessaging } from "firebase/messaging";
+import { app } from "@/lib/firebase";
+
 
 type SubscriptionState = "SUBSCRIBED" | "UNSUBSCRIBED" | "BLOCKED";
 
@@ -59,25 +63,28 @@ export default function ConfiguracoesPage() {
   const checkSubscriptionStatus = useCallback(async () => {
     setPushError(null);
     try {
-      if (!("Notification" in window) || !("serviceWorker" in navigator)) {
-          setSubState("BLOCKED");
-          return;
-      }
-      const permission = Notification.permission;
-      if (permission === 'denied') {
-          setSubState('BLOCKED');
-          return;
-      }
-      if (permission === 'granted') {
-          const subscribed = await isSubscribed();
-          setSubState(subscribed ? 'SUBSCRIBED' : 'UNSUBSCRIBED');
-      } else {
-          setSubState('UNSUBSCRIBED');
-      }
+        if (!("Notification" in window) || !("serviceWorker" in navigator)) {
+            setSubState("BLOCKED");
+            return;
+        }
+
+        const permission = Notification.permission;
+        if (permission === 'denied') {
+            setSubState('BLOCKED');
+            return;
+        }
+
+        if (permission === 'granted') {
+            // Use getToken to reliably check for an active subscription token
+            const messagingInstance = getMessaging(app);
+            const currentToken = await getToken(messagingInstance, { serviceWorkerRegistration: await navigator.serviceWorker.ready });
+            setSubState(currentToken ? 'SUBSCRIBED' : 'UNSUBSCRIBED');
+        } else {
+            setSubState('UNSUBSCRIBED');
+        }
     } catch (e) {
         console.error("Erro ao verificar status da subscrição:", e);
-        setSubState('BLOCKED');
-        setPushError(e instanceof Error ? e.message : "Ocorreu um erro ao verificar o estado das notificações.");
+        setSubState('UNSUBSCRIBED'); // Fallback to unsubscribed on error
     }
   }, []);
 
@@ -128,7 +135,6 @@ export default function ConfiguracoesPage() {
     try {
       await initializePushNotifications();
       toast({ title: "Sucesso!", description: "As notificações foram ativadas." });
-      setSubState("SUBSCRIBED");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Ocorreu um erro desconhecido";
       console.error('Erro ao ativar notificações:', err);

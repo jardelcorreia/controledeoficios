@@ -57,12 +57,3 @@ export async function initializePushNotifications() {
     throw new Error(errorMessage);
   }
 }
-
-export async function isSubscribed(): Promise<boolean> {
-    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
-        return false;
-    }
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.getSubscription();
-    return !!subscription;
-}
