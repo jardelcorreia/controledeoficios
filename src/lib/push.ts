@@ -55,5 +55,3 @@ export async function initializePushNotifications(): Promise<NotificationPermiss
     throw new Error(errorMessage);
   }
 }
-
-    

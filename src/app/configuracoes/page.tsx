@@ -26,10 +26,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { getNumeracaoConfig } from "@/lib/oficios";
 import { saveNumeracaoConfig } from "@/lib/oficios.actions";
-import { useEffect, useTransition, useState } from "react";
+import { useEffect, useTransition, useState, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, Download } from "lucide-react";
+import { Terminal, Download, Bell, BellOff, BellRing } from "lucide-react";
+import { initializePushNotifications } from "@/lib/push";
 
 const formSchema = z.object({
   prefixo: z.string().optional(),
@@ -38,6 +39,8 @@ const formSchema = z.object({
   numeroInicial: z.coerce.number().min(1),
 });
 
+type NotificationState = "GRANTED" | "DENIED" | "DEFAULT" | "LOADING";
+
 export default function ConfiguracoesPage() {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
@@ -45,6 +48,27 @@ export default function ConfiguracoesPage() {
   const [error, setError] = useState<Error | null>(null);
   
   const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
+  const [notificationState, setNotificationState] = useState<NotificationState>("LOADING");
+  const [isSubscribing, setIsSubscribing] = useState(false);
+
+  const checkNotificationStatus = useCallback(() => {
+    if ('Notification' in window) {
+      setNotificationState(Notification.permission === 'granted' ? 'GRANTED' : Notification.permission === 'denied' ? 'DENIED' : 'DEFAULT');
+    } else {
+      setNotificationState('DENIED'); // Navegador não suporta
+    }
+  }, []);
+
+  useEffect(() => {
+    checkNotificationStatus();
+    
+    // Opcional: ouvir por mudanças de permissão, se suportado
+    if (navigator.permissions && navigator.permissions.query) {
+      navigator.permissions.query({ name: 'notifications' }).then((permissionStatus) => {
+        permissionStatus.onchange = checkNotificationStatus;
+      });
+    }
+  }, [checkNotificationStatus]);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -58,6 +82,37 @@ export default function ConfiguracoesPage() {
     };
 
   }, []);
+
+  const handleSubscription = async () => {
+    setIsSubscribing(true);
+    try {
+      const permission = await initializePushNotifications();
+      if (permission === 'granted') {
+        setNotificationState('GRANTED');
+        toast({
+          title: "Notificações Ativadas!",
+          description: "Você receberá atualizações importantes.",
+        });
+      } else {
+        setNotificationState('DENIED');
+        toast({
+          title: "Ativação Cancelada",
+          description: "Você pode ativar as notificações a qualquer momento.",
+          variant: 'destructive'
+        });
+      }
+    } catch (err: unknown) {
+      setNotificationState('DENIED');
+       toast({
+          title: "Erro ao Ativar Notificações",
+          description: err instanceof Error ? err.message : "Ocorreu um erro desconhecido.",
+          variant: "destructive",
+        });
+    } finally {
+        setIsSubscribing(false);
+    }
+  };
+
 
   const handleInstallClick = async () => {
     if (!installPrompt) {
@@ -115,6 +170,56 @@ export default function ConfiguracoesPage() {
       }
     });
   }
+
+  const renderNotificationCard = () => {
+    return (
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle>Notificações Push</CardTitle>
+          <CardDescription>
+            Receba alertas quando ofícios forem criados ou enviados.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {notificationState === 'LOADING' && (
+            <div className="flex items-center space-x-2">
+              <Skeleton className="h-5 w-5 rounded-full" />
+              <Skeleton className="h-4 w-[250px]" />
+            </div>
+          )}
+          {notificationState === 'GRANTED' && (
+             <div className="flex items-center text-green-600">
+              <Bell className="mr-2 h-5 w-5"/>
+              <p className="font-medium">As notificações estão ativadas neste navegador.</p>
+            </div>
+          )}
+          {notificationState === 'DENIED' && (
+            <Alert variant="destructive">
+              <Terminal className="h-4 w-4" />
+              <AlertTitle>Notificações Bloqueadas</AlertTitle>
+              <AlertDescription>
+                Você bloqueou as notificações. Para reativá-las, você precisa alterar as permissões nas configurações do seu navegador.
+              </AlertDescription>
+            </Alert>
+          )}
+           {notificationState === 'DEFAULT' && (
+             <div className="flex items-center text-muted-foreground">
+              <BellOff className="mr-2 h-5 w-5"/>
+              <p>As notificações não estão ativas.</p>
+            </div>
+          )}
+        </CardContent>
+        {notificationState === 'DEFAULT' && (
+          <CardFooter className="border-t px-6 py-4">
+              <Button onClick={handleSubscription} disabled={isSubscribing}>
+                <BellRing className="mr-2 h-4 w-4" />
+                {isSubscribing ? "Ativando..." : "Ativar Notificações"}
+              </Button>
+          </CardFooter>
+        )}
+      </Card>
+    );
+  };
 
    if (error) {
     return (
@@ -270,6 +375,8 @@ export default function ConfiguracoesPage() {
             </form>
           </Form>
         </Card>
+
+        {renderNotificationCard()}
 
          {installPrompt && (
             <Card className="max-w-2xl mx-auto">

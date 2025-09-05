@@ -2,46 +2,29 @@
 "use client";
 
 import { useEffect } from 'react';
-import { initializePushNotifications } from '@/lib/push';
 import { useToast } from '@/hooks/use-toast';
+import { getMessaging, onMessage } from 'firebase/messaging';
+import { app } from '@/lib/firebase';
 
 const NotificationProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const requestPermission = async () => {
-      try {
-        // Verifica se a permissão já foi solicitada antes
-        const existingPermission = Notification.permission;
-        if (existingPermission === 'default') {
-            const permission = await initializePushNotifications();
-            if (permission === 'granted') {
-                toast({
-                    title: 'Notificações Ativadas!',
-                    description: 'Você receberá atualizações importantes.',
-                });
-            }
-        }
-      } catch (error) {
-        console.error('Erro ao inicializar notificações push:', error);
-         if (error instanceof Error && error.message.includes('permission denied')) {
-            // Não mostra o toast se o usuário apenas fechou o pop-up
-         } else {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+        const messagingInstance = getMessaging(app);
+
+        const unsubscribe = onMessage(messagingInstance, (payload) => {
+            console.log('Foreground message received.', payload);
             toast({
-              title: 'Erro de Notificação',
-              description: 'Não foi possível ativar as notificações.',
-              variant: 'destructive',
+                title: payload.notification?.title,
+                description: payload.notification?.body,
             });
-         }
-      }
-    };
+        });
 
-    // Atraso para não sobrecarregar o carregamento inicial
-    const timer = setTimeout(() => {
-        requestPermission();
-    }, 2000); 
-
-    return () => clearTimeout(timer);
+        return () => {
+            unsubscribe();
+        };
+    }
   }, [toast]);
 
   return <>{children}</>;
