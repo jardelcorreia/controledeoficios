@@ -5,6 +5,7 @@ import "./globals.css";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/AppSidebar";
 import { Toaster } from "@/components/ui/toaster";
+import NotificationProvider from "@/components/NotificationProvider";
 
 const inter = Inter({
   subsets: ['latin'],
@@ -39,10 +40,12 @@ export default function RootLayout({
          <meta name="theme-color" content="#7B96B8" />
       </head>
       <body className="font-body antialiased">
-        <SidebarProvider>
-          <AppSidebar />
-          <SidebarInset>{children}</SidebarInset>
-        </SidebarProvider>
+        <NotificationProvider>
+          <SidebarProvider>
+            <AppSidebar />
+            <SidebarInset>{children}</SidebarInset>
+          </SidebarProvider>
+        </NotificationProvider>
         <Toaster />
       </body>
     </html>
