@@ -138,9 +138,9 @@ export default function ConfiguracoesPage() {
         description: message,
         variant: "destructive"
       });
-      checkSubscriptionStatus();
     } finally {
         setIsSubscribing(false);
+        checkSubscriptionStatus(); // Re-verifica o status final
     }
   };
 
@@ -345,7 +345,7 @@ export default function ConfiguracoesPage() {
             <CardHeader>
                 <CardTitle>Notificações</CardTitle>
                 <CardDescription>
-                    Receba alertas sobre novos ofícios e ofícios enviados. Se as notificações estiverem desativadas, pode reativá-las aqui.
+                    Receba alertas sobre novos ofícios e ofícios enviados.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -425,5 +425,3 @@ export default function ConfiguracoesPage() {
     </div>
   );
 }
-
-    
