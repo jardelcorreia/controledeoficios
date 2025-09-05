@@ -29,7 +29,7 @@ import { saveNumeracaoConfig } from "@/lib/oficios.actions";
 import { useEffect, useTransition, useState, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, BellRing, Download, ShareSquare, BellOff, AlertCircle } from "lucide-react";
+import { Terminal, BellRing, Download, BellOff, AlertCircle } from "lucide-react";
 import { initializePushNotifications } from "@/lib/push";
 import { getToken } from "firebase/messaging";
 import { getMessaging } from "firebase/messaging";
@@ -56,8 +56,6 @@ export default function ConfiguracoesPage() {
   const [pushError, setPushError] = useState<string | null>(null);
 
   const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
-  const [isIos, setIsIos] = useState(false);
-  const [showIosInstallCard, setShowIosInstallCard] = useState(false);
 
 
   const checkSubscriptionStatus = useCallback(async () => {
@@ -75,41 +73,47 @@ export default function ConfiguracoesPage() {
         }
 
         if (permission === 'granted') {
-            // Use getToken to reliably check for an active subscription token
             const messagingInstance = getMessaging(app);
-            const currentToken = await getToken(messagingInstance, { serviceWorkerRegistration: await navigator.serviceWorker.ready });
+            const serviceWorkerRegistration = await navigator.serviceWorker.ready;
+            const currentToken = await getToken(messagingInstance, { serviceWorkerRegistration });
             setSubState(currentToken ? 'SUBSCRIBED' : 'UNSUBSCRIBED');
         } else {
             setSubState('UNSUBSCRIBED');
         }
     } catch (e) {
         console.error("Erro ao verificar status da subscrição:", e);
-        setSubState('UNSUBSCRIBED'); // Fallback to unsubscribed on error
+        setSubState('UNSUBSCRIBED');
     }
   }, []);
 
   useEffect(() => {
-    // Detecção de iOS
-    const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-    setIsIos(isIosDevice);
-
-    const isInStandaloneMode = 'standalone' in window.navigator && (window.navigator as any).standalone;
-    
-    if (isIosDevice && !isInStandaloneMode) {
-      setShowIosInstallCard(true);
-    }
-    
     checkSubscriptionStatus();
 
     const handleBeforeInstallPrompt = (e: Event) => {
         e.preventDefault();
         setInstallPrompt(e);
     };
-
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // Adiciona listener para mudanças de permissão
+    if (navigator.permissions) {
+        navigator.permissions.query({ name: 'notifications' }).then((permissionStatus) => {
+            permissionStatus.onchange = () => {
+                checkSubscriptionStatus();
+            };
+        });
+    }
+
+    // Listener para quando o app volta a ficar visível
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            checkSubscriptionStatus();
+        }
+    });
 
     return () => {
         window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        document.removeEventListener('visibilitychange', checkSubscriptionStatus);
     };
 
   }, [checkSubscriptionStatus]);
@@ -133,8 +137,18 @@ export default function ConfiguracoesPage() {
     setIsSubscribing(true);
     setPushError(null);
     try {
-      await initializePushNotifications();
-      toast({ title: "Sucesso!", description: "As notificações foram ativadas." });
+      const permissionResult = await initializePushNotifications();
+       if (permissionResult === 'granted') {
+            toast({ title: "Sucesso!", description: "As notificações foram ativadas." });
+            setSubState('SUBSCRIBED');
+      } else {
+         toast({ 
+            title: "Permissão Necessária", 
+            description: "Você precisa permitir as notificações para ativá-las.",
+            variant: "destructive"
+          });
+         setSubState('UNSUBSCRIBED');
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Ocorreu um erro desconhecido";
       console.error('Erro ao ativar notificações:', err);
@@ -144,9 +158,9 @@ export default function ConfiguracoesPage() {
         description: message,
         variant: "destructive"
       });
+      checkSubscriptionStatus(); // Re-verifica em caso de erro
     } finally {
         setIsSubscribing(false);
-        checkSubscriptionStatus(); // Re-verifica o status final
     }
   };
 
@@ -362,7 +376,7 @@ export default function ConfiguracoesPage() {
                       <AlertDescription>
                           <p>{pushError}</p>
                           <p className="mt-2 text-xs">
-                              Por favor, verifique as permissões de notificação no seu navegador e tente novamente. Se o problema persistir, pode ser necessário limpar os dados do site.
+                              Por favor, verifique as permissões de notificação no seu navegador e tente novamente.
                           </p>
                       </AlertDescription>
                     </Alert>
@@ -378,6 +392,11 @@ export default function ConfiguracoesPage() {
                         </span>
                     </p>
                 </div>
+                 {subState === 'BLOCKED' && (
+                     <p className="text-xs text-amber-600 mt-2">
+                         Para reativar, você precisa ir às configurações do seu navegador, encontrar as permissões deste site e permitir as notificações.
+                     </p>
+                 )}
             </CardContent>
             <CardFooter className="border-t px-6 py-4">
                <Button 
@@ -385,7 +404,7 @@ export default function ConfiguracoesPage() {
                 disabled={subState !== 'UNSUBSCRIBED' || isSubscribing}
                >
                 <BellRing className="mr-2 h-4 w-4" />
-                {isSubscribing ? 'Ativando...' : 'Ativar Notificações'}
+                {isSubscribing ? 'Aguardando...' : 'Ativar Notificações'}
               </Button>
             </CardFooter>
         </Card>
@@ -406,28 +425,10 @@ export default function ConfiguracoesPage() {
                 </CardFooter>
             </Card>
         )}
-        
-        {showIosInstallCard && (
-          <Card className="max-w-2xl mx-auto">
-            <CardHeader>
-              <CardTitle>Instalar no iPhone</CardTitle>
-              <CardDescription>
-                Para instalar o aplicativo em seu dispositivo, siga estes passos:
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center text-center space-y-2">
-              <p className="text-sm">
-                1. Toque no ícone de <strong>Compartilhar</strong> na barra de ferramentas do Safari.
-              </p>
-               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-share-2 h-8 w-8 text-primary"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
-               <p className="text-sm">
-                2. Role para baixo e selecione <strong>"Adicionar à Tela de Início"</strong>.
-              </p>
-            </CardContent>
-          </Card>
-        )}
 
       </main>
     </div>
   );
 }
+
+    

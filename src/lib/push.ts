@@ -8,7 +8,7 @@ import { getMessaging } from 'firebase/messaging';
 
 const VAPID_KEY = "BMOvZxaUXFm3yDnbYMxTKKfgkLC7ErYNVBHjGWPFHeGyCHq9b5mmCPPivky-KWClfOqVY6WPS9niSXdLD8rTjrQ";
 
-export async function initializePushNotifications() {
+export async function initializePushNotifications(): Promise<NotificationPermission> {
   console.log("Iniciando processo de notificação push...");
   
   if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -21,7 +21,8 @@ export async function initializePushNotifications() {
     console.log("Solicitando permissão de notificação...");
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
-      throw new Error('Permissão de notificação negada pelo usuário.');
+      console.warn('Permissão de notificação negada pelo usuário.');
+      return permission;
     }
     console.log("Permissão concedida.");
 
@@ -37,23 +38,22 @@ export async function initializePushNotifications() {
         throw new Error(result.error || 'Falha ao salvar o token de inscrição no servidor.');
       }
       console.log('Token salvo com sucesso no servidor.');
-      return currentToken;
     } else {
       console.error('Falha ao obter o token FCM. Nenhum token foi retornado.');
-      throw new Error('Não foi possível obter o token de notificação. Verifique a configuração do Service Worker e do projeto Firebase.');
+      throw new Error('Não foi possível obter o token de notificação.');
     }
+    return 'granted';
+
   } catch (error: unknown) {
     console.error('❌ Erro detalhado no processo de push:', error);
     
     let errorMessage = "Ocorreu um erro desconhecido durante a configuração das notificações.";
     if (error instanceof Error) {
-        if (error.name === 'AbortError' || error.message.includes('push service error')) {
-            errorMessage = 'O serviço de push do navegador falhou. Isso pode ser um problema temporário com os servidores do Google ou uma restrição de rede no seu ambiente de desenvolvimento.';
-        } else {
-            errorMessage = error.message;
-        }
+        errorMessage = error.message;
     }
     
     throw new Error(errorMessage);
   }
 }
+
+    
