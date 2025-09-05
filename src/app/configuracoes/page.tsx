@@ -32,7 +32,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal, BellRing, Download, ShareSquare, BellOff, AlertCircle } from "lucide-react";
 import { initializePushNotifications, isSubscribed } from "@/lib/push";
 
-type SubscriptionState = "LOADING" | "SUBSCRIBED" | "UNSUBSCRIBED" | "BLOCKED";
+type SubscriptionState = "SUBSCRIBED" | "UNSUBSCRIBED" | "BLOCKED";
 
 const formSchema = z.object({
   prefixo: z.string().optional(),
@@ -47,7 +47,7 @@ export default function ConfiguracoesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   
-  const [subState, setSubState] = useState<SubscriptionState>("LOADING");
+  const [subState, setSubState] = useState<SubscriptionState>("UNSUBSCRIBED");
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [pushError, setPushError] = useState<string | null>(null);
 
@@ -57,7 +57,6 @@ export default function ConfiguracoesPage() {
 
 
   const checkSubscriptionStatus = useCallback(async () => {
-    setSubState("LOADING");
     setPushError(null);
     try {
       if (!("Notification" in window) || !("serviceWorker" in navigator)) {
@@ -370,7 +369,6 @@ export default function ConfiguracoesPage() {
                             {subState === 'SUBSCRIBED' && "Ativadas"}
                             {subState === 'BLOCKED' && "Bloqueadas pelo navegador"}
                             {subState === 'UNSUBSCRIBED' && "Desativadas"}
-                            {subState === 'LOADING' && "Verificando..."}
                         </span>
                     </p>
                 </div>
@@ -427,3 +425,5 @@ export default function ConfiguracoesPage() {
     </div>
   );
 }
+
+    
