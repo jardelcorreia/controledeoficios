@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Oficio, Status, getProximoNumeroOficio } from "@/lib/oficios";
+import { Oficio, Status } from "@/lib/oficios";
 import { deleteOficio } from "@/lib/oficios.actions";
 import { PlusCircle, MoreHorizontal, FileEdit, Eye, Trash2, Calendar, User, Search, X } from "lucide-react";
 import Link from "next/link";
@@ -39,20 +39,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogDescription
-} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState, useTransition, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import NovoOficioForm from "@/components/NovoOficioForm";
+import NovoOficioDialog from "./NovoOficioDialog";
 import { useRouter, useSearchParams } from "next/navigation";
 
 
@@ -98,11 +90,7 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
     const { toast } = useToast();
     const router = useRouter();
     const searchParams = useSearchParams();
-
     const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || "");
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [proximoNumero, setProximoNumero] = useState<string | null>(null);
-    const [loadingProximoNumero, setLoadingProximoNumero] = useState(true);
 
     const [isMounted, setIsMounted] = useState(false);
     useEffect(() => {
@@ -112,30 +100,6 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
     useEffect(() => {
       setOficios(allOficios);
     }, [allOficios]);
-
-    const fetchProximoNumero = () => {
-        setLoadingProximoNumero(true);
-         getProximoNumeroOficio().then((num) => {
-            setProximoNumero(num);
-        }).catch(() => {
-            setProximoNumero('Erro!');
-        }).finally(() => {
-             setLoadingProximoNumero(false);
-        });
-    };
-
-    useEffect(() => {
-        if (isModalOpen) {
-            fetchProximoNumero();
-        }
-    }, [isModalOpen]);
-
-
-    const handleOficioCreated = () => {
-        setIsModalOpen(false);
-        router.refresh();
-    };
-
 
     const filteredOficios = useMemo(() => {
         let currentOficios = oficios;
@@ -194,45 +158,15 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
                         Todos os documentos enviados. Apenas o último ofício pode ser excluído.
                       </CardDescription>
                     </div>
-                     <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                        <DialogTrigger asChild>
-                            <Button>
-                              <PlusCircle className="mr-2 h-4 w-4" />
-                              <span className="hidden sm:inline">Novo Ofício</span>
-                              <span className="inline sm:hidden">Novo</span>
+                      <NovoOficioDialog 
+                        triggerButton={
+                             <Button>
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                <span className="hidden sm:inline">Novo Ofício</span>
+                                <span className="inline sm:hidden">Novo</span>
                             </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Criar Novo Ofício</DialogTitle>
-                                 {loadingProximoNumero ? (
-                                    <div className="text-sm text-muted-foreground pt-2">
-                                        <Skeleton className="h-5 w-48" />
-                                    </div>
-                                    ) : (
-                                    <DialogDescription>
-                                        {proximoNumero !== 'Erro!' ? (
-                                            <>
-                                            O número do ofício a ser criado é:{" "}
-                                            <span className="font-bold text-primary">
-                                                {proximoNumero}
-                                            </span>
-                                            </>
-                                        ) : (
-                                            <span className="text-destructive">Não foi possível carregar o número.</span>
-                                        )}
-                                    </DialogDescription>
-                                 )}
-                            </DialogHeader>
-                            {proximoNumero && !loadingProximoNumero && proximoNumero !== 'Erro!' && (
-                                <NovoOficioForm
-                                    proximoNumero={proximoNumero}
-                                    onOficioCreated={handleOficioCreated}
-                                    onCancel={() => setIsModalOpen(false)}
-                                />
-                              )}
-                        </DialogContent>
-                      </Dialog>
+                        }
+                      />
                   </div>
                 </CardHeader>
                 <CardContent>
