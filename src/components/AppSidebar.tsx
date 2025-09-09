@@ -7,6 +7,8 @@ import {
   LayoutDashboard,
   NotebookPen,
   Settings,
+  Github,
+  Linkedin,
 } from "lucide-react";
 import {
   Sidebar,
@@ -16,6 +18,7 @@ import {
   SidebarMenuButton,
   SidebarContent,
   useSidebar,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -60,6 +63,24 @@ const AppSidebar = () => {
           ))}
         </SidebarMenu>
       </SidebarContent>
+       <SidebarFooter>
+        <div className="text-center text-xs text-sidebar-foreground/60 space-y-2">
+           <div className="flex justify-center items-center gap-4">
+               <a href="#" target="_blank" rel="noopener noreferrer" className="hover:text-sidebar-foreground transition-colors">
+                    <Linkedin size={18} />
+               </a>
+                <a href="#" target="_blank" rel="noopener noreferrer" className="hover:text-sidebar-foreground transition-colors">
+                    <Github size={18} />
+                </a>
+           </div>
+          <p>
+            Desenvolvido por Jardel Correia
+          </p>
+          <p>
+            © {new Date().getFullYear()} Todos os direitos reservados.
+          </p>
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 };
