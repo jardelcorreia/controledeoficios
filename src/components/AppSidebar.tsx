@@ -9,6 +9,7 @@ import {
   Settings,
   Github,
   Linkedin,
+  Instagram,
 } from "lucide-react";
 import {
   Sidebar,
@@ -66,11 +67,14 @@ const AppSidebar = () => {
        <SidebarFooter>
         <div className="text-center text-xs text-sidebar-foreground/60 space-y-2">
            <div className="flex justify-center items-center gap-4">
-               <a href="#" target="_blank" rel="noopener noreferrer" className="hover:text-sidebar-foreground transition-colors">
+               <a href="https://www.linkedin.com/in/jardel-correia-1b967916b" target="_blank" rel="noopener noreferrer" className="hover:text-sidebar-foreground transition-colors">
                     <Linkedin size={18} />
                </a>
-                <a href="#" target="_blank" rel="noopener noreferrer" className="hover:text-sidebar-foreground transition-colors">
+                <a href="https://github.com/jardelcorreia" target="_blank" rel="noopener noreferrer" className="hover:text-sidebar-foreground transition-colors">
                     <Github size={18} />
+                </a>
+                 <a href="https://instagram.com/jardelcorreia" target="_blank" rel="noopener noreferrer" className="hover:text-sidebar-foreground transition-colors">
+                    <Instagram size={18} />
                 </a>
            </div>
           <p>
