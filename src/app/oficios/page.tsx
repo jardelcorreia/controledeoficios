@@ -193,20 +193,24 @@ export default function OficiosPage() {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Criar Novo Ofício</DialogTitle>
-                         <DialogDescription>
-                              {loadingProximoNumero ? (
+                         {loadingProximoNumero ? (
+                            <div className="text-sm text-muted-foreground">
                                 <Skeleton className="h-5 w-48" />
-                              ) : proximoNumero !== 'Erro!' ? (
-                                <>
-                                O número do ofício a ser criado é:{" "}
-                                <span className="font-bold text-primary">
-                                    {proximoNumero}
-                                </span>
-                                </>
-                              ) : (
-                                 <span className="text-destructive">Não foi possível carregar o número.</span>
-                              )}
-                         </DialogDescription>
+                            </div>
+                            ) : (
+                            <DialogDescription>
+                                {proximoNumero !== 'Erro!' ? (
+                                    <>
+                                    O número do ofício a ser criado é:{" "}
+                                    <span className="font-bold text-primary">
+                                        {proximoNumero}
+                                    </span>
+                                    </>
+                                ) : (
+                                    <span className="text-destructive">Não foi possível carregar o número.</span>
+                                )}
+                            </DialogDescription>
+                         )}
                     </DialogHeader>
                     {proximoNumero && !loadingProximoNumero && proximoNumero !== 'Erro!' && (
                         <NovoOficioForm
@@ -423,5 +427,3 @@ export default function OficiosPage() {
         </AlertDialog>
     );
 }
-
-    
