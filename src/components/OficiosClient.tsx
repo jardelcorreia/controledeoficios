@@ -53,7 +53,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import NovoOficioForm from "@/components/NovoOficioForm";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 
 const statusColors: Record<Status, string> = {
@@ -61,14 +61,15 @@ const statusColors: Record<Status, string> = {
     "Enviado": "bg-blue-500",
 };
 
-export default function OficiosClient({ allOficios, initialSearchQuery }: { allOficios: Oficio[], initialSearchQuery?: string }) {
+export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) {
     const [oficios, setOficios] = useState(allOficios);
     const [isDeletePending, startDeleteTransition] = useTransition();
     const [oficioToDelete, setOficioToDelete] = useState<Oficio | null>(null);
     const { toast } = useToast();
     const router = useRouter();
+    const searchParams = useSearchParams();
 
-    const [searchQuery, setSearchQuery] = useState(initialSearchQuery || "");
+    const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || "");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [proximoNumero, setProximoNumero] = useState<string | null>(null);
     const [loadingProximoNumero, setLoadingProximoNumero] = useState(true);
