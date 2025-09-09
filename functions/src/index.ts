@@ -83,7 +83,7 @@ export const sendoficionotification = onDocumentWritten(
           .map((doc) => doc.data()?.token)
           .filter((token): token is string => !!token)
       );
-      
+
       const tokens = Array.from(tokensSet);
 
 

@@ -102,14 +102,16 @@ exports.sendoficionotification = (0, firestore_1.onDocumentWritten)("oficios/{of
             return null;
         }
         // Mapeia e filtra para garantir que apenas inscrições válidas sejam usadas.
-        const tokens = subscriptionsSnapshot.docs
+        // E usa um Set para garantir que cada token seja único.
+        const tokensSet = new Set(subscriptionsSnapshot.docs
             .map((doc) => { var _a; return (_a = doc.data()) === null || _a === void 0 ? void 0 : _a.token; })
-            .filter((token) => !!token);
+            .filter((token) => !!token));
+        const tokens = Array.from(tokensSet);
         if (tokens.length === 0) {
             logger.warn("Documentos de inscrição encontrados, mas nenhum continha um 'token' válido.");
             return null;
         }
-        logger.info(`Enviando notificação para ${tokens.length} inscritos.`);
+        logger.info(`Enviando notificação para ${tokens.length} inscritos únicos.`);
         const message = {
             notification,
             webpush,
