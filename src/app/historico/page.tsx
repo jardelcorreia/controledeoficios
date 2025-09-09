@@ -61,8 +61,8 @@ export default function HistoricoPage() {
       });
     };
 
-    const renderSkeleton = () => (
-      <TableRow>
+    const renderSkeleton = (key: number) => (
+      <TableRow key={key}>
           <TableCell className="font-medium">
               <Skeleton className="h-5 w-24" />
               <div className="md:hidden mt-1">
@@ -110,7 +110,7 @@ export default function HistoricoPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {loading && Array.from({ length: 5 }).map((_, i) => renderSkeleton())}
+                  {loading && Array.from({ length: 5 }).map((_, i) => renderSkeleton(i))}
                   {!loading && historico.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">
