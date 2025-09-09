@@ -74,6 +74,11 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
     const [proximoNumero, setProximoNumero] = useState<string | null>(null);
     const [loadingProximoNumero, setLoadingProximoNumero] = useState(true);
 
+    const [isMounted, setIsMounted] = useState(false);
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     useEffect(() => {
       setOficios(allOficios);
     }, [allOficios]);
@@ -143,6 +148,20 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
     }
     
     const ultimoOficioId = oficios.length > 0 ? oficios[0].id : null;
+
+    if (!isMounted) {
+        return (
+            <Card>
+                <CardHeader>
+                    <Skeleton className="h-10 w-48" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-10 w-full mb-4" />
+                    <Skeleton className="h-40 w-full" />
+                </CardContent>
+            </Card>
+        );
+    }
 
     return (
         <AlertDialog open={!!oficioToDelete} onOpenChange={(open) => !open && setOficioToDelete(null)}>

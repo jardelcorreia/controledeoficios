@@ -1,14 +1,8 @@
 import PageHeader from "@/components/PageHeader";
-import { Button } from "@/components/ui/button";
 import { getOficios } from "@/lib/oficios";
-import { PlusCircle } from "lucide-react";
 import OficiosClient from "@/components/OficiosClient";
 
-export default async function OficiosPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
+export default async function OficiosPage() {
   const oficios = await getOficios();
 
   return (
