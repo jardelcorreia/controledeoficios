@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getOficios, Oficio, Status } from "@/lib/oficios";
+import { getOficios, Oficio, Status, getProximoNumeroOficio } from "@/lib/oficios";
 import { deleteOficio } from "@/lib/oficios.actions";
 import { PlusCircle, MoreHorizontal, FileEdit, Eye, Terminal, Trash2, Calendar, User, Search, X } from "lucide-react";
 import Link from "next/link";
@@ -40,12 +40,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription
+} from "@/components/ui/dialog";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState, useTransition, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import NovoOficioForm from "@/components/NovoOficioForm";
 
 
 const statusColors: Record<Status, string> = {
@@ -62,14 +71,46 @@ export default function OficiosPage() {
     const { toast } = useToast();
 
     const [searchQuery, setSearchQuery] = useState("");
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [proximoNumero, setProximoNumero] = useState<string | null>(null);
+    const [loadingProximoNumero, setLoadingProximoNumero] = useState(true);
 
-    useEffect(() => {
+
+    const fetchOficios = () => {
         setLoading(true);
         getOficios()
             .then(data => setAllOficios(data))
             .catch(err => setError(err))
             .finally(() => setLoading(false));
+    };
+
+    const fetchProximoNumero = () => {
+        setLoadingProximoNumero(true);
+         getProximoNumeroOficio().then((num) => {
+            setProximoNumero(num);
+        }).catch(() => {
+            setProximoNumero('Erro!');
+        }).finally(() => {
+             setLoadingProximoNumero(false);
+        });
+    };
+
+    useEffect(() => {
+       fetchOficios();
     }, []);
+
+    useEffect(() => {
+        if (isModalOpen) {
+            fetchProximoNumero();
+        }
+    }, [isModalOpen]);
+
+
+    const handleOficioCreated = () => {
+        setIsModalOpen(false);
+        fetchOficios(); // Re-fetch data to show the new oficio in the list
+    };
+
 
     const filteredOficios = useMemo(() => {
         let oficios = allOficios;
@@ -141,13 +182,41 @@ export default function OficiosPage() {
               title="Gerenciamento de Ofícios"
               description="Crie, edite e visualize os ofícios enviados."
             >
-              <Button asChild>
-                <Link href="/oficios/novo">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  <span className="hidden sm:inline">Novo Ofício</span>
-                  <span className="inline sm:hidden">Novo</span>
-                </Link>
-              </Button>
+             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                <DialogTrigger asChild>
+                    <Button>
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      <span className="hidden sm:inline">Novo Ofício</span>
+                      <span className="inline sm:hidden">Novo</span>
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Criar Novo Ofício</DialogTitle>
+                         <DialogDescription>
+                              {loadingProximoNumero ? (
+                                <Skeleton className="h-5 w-48" />
+                              ) : proximoNumero !== 'Erro!' ? (
+                                <>
+                                O número do ofício a ser criado é:{" "}
+                                <span className="font-bold text-primary">
+                                    {proximoNumero}
+                                </span>
+                                </>
+                              ) : (
+                                 <span className="text-destructive">Não foi possível carregar o número.</span>
+                              )}
+                         </DialogDescription>
+                    </DialogHeader>
+                    {proximoNumero && !loadingProximoNumero && proximoNumero !== 'Erro!' && (
+                        <NovoOficioForm
+                            proximoNumero={proximoNumero}
+                            onOficioCreated={handleOficioCreated}
+                            onCancel={() => setIsModalOpen(false)}
+                        />
+                      )}
+                </DialogContent>
+              </Dialog>
             </PageHeader>
             <main className="flex-1 p-4 sm:p-6">
               <Card>
@@ -354,3 +423,5 @@ export default function OficiosPage() {
         </AlertDialog>
     );
 }
+
+    
