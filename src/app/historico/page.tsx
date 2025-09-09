@@ -110,7 +110,7 @@ export default function HistoricoPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {loading && Array.from({ length: 5 }).map((_, i) => <TableRow key={i}>{renderSkeleton()}</TableRow>)}
+                  {loading && Array.from({ length: 5 }).map((_, i) => renderSkeleton())}
                   {!loading && historico.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">
