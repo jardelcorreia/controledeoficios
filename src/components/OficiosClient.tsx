@@ -61,6 +61,36 @@ const statusColors: Record<Status, string> = {
     "Enviado": "bg-blue-500",
 };
 
+export function OficiosClientSkeleton() {
+    return (
+        <Card>
+            <CardHeader>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                        <Skeleton className="h-7 w-40" />
+                        <Skeleton className="h-4 w-80 mt-2" />
+                    </div>
+                    <Skeleton className="h-10 w-28" />
+                </div>
+            </CardHeader>
+            <CardContent>
+                <div className="mb-4">
+                    <Skeleton className="h-10 w-full sm:w-80" />
+                </div>
+                <div className="hidden md:block">
+                     <Skeleton className="h-40 w-full" />
+                </div>
+                 <div className="md:hidden space-y-4">
+                    <Skeleton className="h-32 w-full" />
+                    <Skeleton className="h-32 w-full" />
+                    <Skeleton className="h-32 w-full" />
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+
 export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) {
     const [oficios, setOficios] = useState(allOficios);
     const [isDeletePending, startDeleteTransition] = useTransition();
@@ -150,17 +180,7 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
     const ultimoOficioId = oficios.length > 0 ? oficios[0].id : null;
 
     if (!isMounted) {
-        return (
-            <Card>
-                <CardHeader>
-                    <Skeleton className="h-10 w-48" />
-                </CardHeader>
-                <CardContent>
-                    <Skeleton className="h-10 w-full mb-4" />
-                    <Skeleton className="h-40 w-full" />
-                </CardContent>
-            </Card>
-        );
+        return <OficiosClientSkeleton />;
     }
 
     return (

@@ -1,6 +1,7 @@
 import PageHeader from "@/components/PageHeader";
 import { getOficios } from "@/lib/oficios";
-import OficiosClient from "@/components/OficiosClient";
+import OficiosClient, { OficiosClientSkeleton } from "@/components/OficiosClient";
+import { Suspense } from "react";
 
 export default async function OficiosPage() {
   const oficios = await getOficios();
@@ -14,7 +15,9 @@ export default async function OficiosPage() {
         {/* O botão de novo ofício agora está dentro do OficiosClient para ter acesso ao modal */}
       </PageHeader>
       <main className="flex-1 p-4 sm:p-6">
-        <OficiosClient allOficios={oficios} />
+        <Suspense fallback={<OficiosClientSkeleton />}>
+          <OficiosClient allOficios={oficios} />
+        </Suspense>
       </main>
     </div>
   );
