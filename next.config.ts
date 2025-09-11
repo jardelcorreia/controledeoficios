@@ -1,6 +1,14 @@
-import type {NextConfig} from 'next';
+/** @type {import('next').NextConfig} */
 
-const nextConfig: NextConfig = {
+const withPWA = require('next-pwa')({
+  dest: 'public',
+  disable: process.env.NODE_ENV === 'development',
+  register: true,
+  sw: 'firebase-messaging-sw.js', 
+});
+
+
+const nextConfig = {
   /* config options here */
   typescript: {
     ignoreBuildErrors: true,
@@ -26,4 +34,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+module.exports = withPWA(nextConfig);
