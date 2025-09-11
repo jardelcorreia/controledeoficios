@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -89,7 +88,7 @@ export default function NovoOficioDialog({ triggerButton, proximoNumero: initial
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <Dialog.Trigger asChild>{triggerButton}</Dialog.Trigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogHeaderContent/>
         </DialogHeader>
