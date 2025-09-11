@@ -22,8 +22,8 @@ export const sendoficionotification = onDocumentWritten(
     let notification;
     let webpush;
 
-    // Caso 1: Novo ofício criado.
-    if (!event.data?.before.exists && event.data?.after.exists && dataAfter) {
+    // Caso 1: Novo ofício criado com status "Aguardando Envio".
+    if (!event.data?.before.exists && event.data?.after.exists && dataAfter && dataAfter.status === "Aguardando Envio") {
       logger.info(`Novo ofício criado: ${oficioId}`, dataAfter);
       notification = {
         title: "Novo Ofício Criado!",
