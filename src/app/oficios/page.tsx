@@ -3,6 +3,8 @@ import { getOficios } from "@/lib/oficios";
 import OficiosClient, { OficiosClientSkeleton } from "@/components/OficiosClient";
 import { Suspense } from "react";
 
+export const dynamic = 'force-dynamic';
+
 export default async function OficiosPage() {
   const oficios = await getOficios();
 

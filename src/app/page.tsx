@@ -25,6 +25,8 @@ import { Badge } from "@/components/ui/badge";
 import NovoOficioDialog from "@/components/NovoOficioDialog";
 import { Suspense } from "react";
 
+export const dynamic = 'force-dynamic';
+
 const statusColors: Record<Status, string> = {
   "Aguardando Envio": "bg-yellow-500",
   "Enviado": "bg-blue-500",
