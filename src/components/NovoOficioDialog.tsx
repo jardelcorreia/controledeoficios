@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import NovoOficioForm from "@/components/NovoOficioForm";
@@ -87,7 +88,7 @@ export default function NovoOficioDialog({ triggerButton, proximoNumero: initial
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <Dialog.Trigger asChild>{triggerButton}</Dialog.Trigger>
+      <DialogTrigger asChild>{triggerButton}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogHeaderContent/>
