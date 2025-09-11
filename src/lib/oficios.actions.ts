@@ -70,8 +70,8 @@ export async function createOficio(data: {
     detalhes: `Ofício nº ${numero} criado com status 'Aguardando Envio'.`,
   });
 
-  revalidatePath('/oficios');
-  revalidatePath('/');
+  revalidatePath('/oficios', 'page');
+  revalidatePath('/', 'page');
   return docRef.id;
 }
 
@@ -97,10 +97,10 @@ export async function updateOficio(
     detalhes: detalhes,
   });
 
-  revalidatePath(`/oficios/${id}`);
-  revalidatePath(`/oficios/${id}/editar`);
-  revalidatePath('/oficios');
-  revalidatePath('/');
+  revalidatePath(`/oficios/${id}`, 'page');
+  revalidatePath(`/oficios/${id}/editar`, 'page');
+  revalidatePath('/oficios', 'page');
+  revalidatePath('/', 'page');
 }
 
 export async function deleteOficio(id: string) {
@@ -120,17 +120,18 @@ export async function deleteOficio(id: string) {
     detalhes: `Ofício nº ${oficio.numero} excluído.`,
   });
 
-  revalidatePath('/oficios');
-  revalidatePath('/');
+  revalidatePath('/oficios', 'page');
+  revalidatePath('/', 'page');
+  revalidatePath(`/oficios/${id}`, 'page');
 }
 
 
 export async function saveNumeracaoConfig(config: Omit<NumeracaoConfig, 'id'>) {
   const docRef = doc(db, CONFIG_COLLECTION, NUMERACAO_DOC_ID);
   await setDoc(docRef, config);
-  revalidatePath('/configuracoes');
-  revalidatePath('/');
-  revalidatePath('/oficios/novo');
+  revalidatePath('/configuracoes', 'page');
+  revalidatePath('/', 'page');
+  revalidatePath('/oficios/novo', 'page');
 }
 
 
@@ -139,7 +140,7 @@ export async function addHistorico(data: Omit<Historico, 'id' | 'data'>) {
     ...data,
     data: new Date().toISOString(),
   });
-  revalidatePath('/historico');
+  revalidatePath('/historico', 'page');
 }
 
 export async function savePushSubscription(token: string) {

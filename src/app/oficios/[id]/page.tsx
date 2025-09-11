@@ -65,7 +65,13 @@ export default function OficioDetalhesPage() {
         getOficioById(id),
         getUltimoOficio()
     ]).then(([oficioData, ultimoOficioData]) => {
-        setOficio(oficioData);
+        if (!oficioData) {
+            // Se o ofício não for encontrado, não definimos erro aqui, 
+            // a renderização condicional abaixo cuidará disso.
+            setOficio(null);
+        } else {
+            setOficio(oficioData);
+        }
         setUltimoOficio(ultimoOficioData);
       })
       .catch((err) => {

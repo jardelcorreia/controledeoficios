@@ -38,7 +38,8 @@ export async function getOficios(): Promise<Oficio[]> {
     collection(db, OFICIOS_COLLECTION),
     orderBy('numeroSequencial', 'desc')
   );
-  const querySnapshot = await getDocs(q);
+  // @ts-ignore
+  const querySnapshot = await getDocs(q, { cache: 'no-store' });
   return querySnapshot.docs.map(
     (doc) => ({ id: doc.id, ...doc.data() } as Oficio)
   );
@@ -46,7 +47,8 @@ export async function getOficios(): Promise<Oficio[]> {
 
 export async function getOficioById(id: string): Promise<Oficio | null> {
   const docRef = doc(db, OFICIOS_COLLECTION, id);
-  const docSnap = await getDoc(docRef);
+  // @ts-ignore
+  const docSnap = await getDoc(docRef, { cache: 'no-store' });
   if (docSnap.exists()) {
     return { id: docSnap.id, ...docSnap.data() } as Oficio;
   }
@@ -59,7 +61,8 @@ export async function getOficiosRecentes(count: number): Promise<Oficio[]> {
     orderBy('numeroSequencial', 'desc'),
     limit(count)
   );
-  const querySnapshot = await getDocs(q);
+  // @ts-ignore
+  const querySnapshot = await getDocs(q, { cache: 'no-store' });
   return querySnapshot.docs.map(
     (doc) => ({ id: doc.id, ...doc.data() } as Oficio)
   );
@@ -71,7 +74,8 @@ export async function getUltimoOficio(): Promise<Oficio | null> {
     orderBy('numeroSequencial', 'desc'),
     limit(1)
   );
-  const querySnapshot = await getDocs(q);
+  // @ts-ignore
+  const querySnapshot = await getDocs(q, { cache: 'no-store' });
   if (querySnapshot.empty) {
     return null;
   }
@@ -91,7 +95,8 @@ export async function getProximoNumeroSequencial(
     orderBy('numeroSequencial', 'desc'),
     limit(1)
   );
-  const querySnapshot = await getDocs(q);
+  // @ts-ignore
+  const querySnapshot = await getDocs(q, { cache: 'no-store' });
 
   if (querySnapshot.empty) {
     return numeroInicial > 0 ? numeroInicial : 1;
@@ -136,7 +141,8 @@ const NUMERACAO_DOC_ID = 'numeracao';
 
 export async function getNumeracaoConfig(): Promise<NumeracaoConfig> {
   const docRef = doc(db, CONFIG_COLLECTION, NUMERACAO_DOC_ID);
-  const docSnap = await getDoc(docRef);
+  // @ts-ignore
+  const docSnap = await getDoc(docRef, { cache: 'no-store' });
 
   if (docSnap.exists()) {
     return docSnap.data() as NumeracaoConfig;
@@ -170,7 +176,8 @@ export async function getHistorico(
 
   if (lastVisibleId) {
     const lastDocRef = doc(db, HISTORICO_COLLECTION, lastVisibleId);
-    const lastDocSnap = await getDoc(lastDocRef);
+    // @ts-ignore
+    const lastDocSnap = await getDoc(lastDocRef, { cache: 'no-store' });
     if (!lastDocSnap.exists()) {
       // Se o documento cursor não for encontrado, retorna vazio
       return { historico: [], lastVisible: null };
@@ -186,7 +193,8 @@ export async function getHistorico(
     q = query(historicoCollection, orderBy('data', 'desc'), limit(pageSize));
   }
 
-  const snapshot = await getDocs(q);
+  // @ts-ignore
+  const snapshot = await getDocs(q, { cache: 'no-store' });
 
   const historicoData = snapshot.docs.map(
     (doc) => ({ id: doc.id, ...doc.data() } as Historico)
