@@ -1,8 +1,14 @@
-// Import the Firebase SDK for Messaging.
-import { initializeApp } from "firebase/app";
-import { getMessaging, onBackgroundMessage } from "firebase/messaging/sw";
+// Import and initialize the Firebase SDK
+// This is a minimal implementation of a service worker for Firebase Cloud Messaging.
+// It is required to be in the public directory and named firebase-messaging-sw.js
 
-// Your web app's Firebase configuration
+// Scripts for Firebase v9+
+importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
+
+// Initialize the Firebase app in the service worker
+// by passing in the messagingSenderId.
+// This is the same config from your web app's Firebase configuration.
 const firebaseConfig = {
   apiKey: "AIzaSyAwwgWBTAwaEISWj4zYh6sPi0ufixevHnU",
   authDomain: "controle-de-ofcios-pd89y.firebaseapp.com",
@@ -12,56 +18,21 @@ const firebaseConfig = {
   appId: "1:79560888151:web:2a707a8a44c4cb4284f812"
 };
 
-const app = initializeApp(firebaseConfig);
-const messaging = getMessaging(app);
+firebase.initializeApp(firebaseConfig);
 
-onBackgroundMessage(messaging, (payload) => {
-  console.log(
-    "[firebase-messaging-sw.js] Received background message ",
-    payload
-  );
-  
-  const notificationTitle = payload.notification?.title || "Novo Alerta";
+// Retrieve an instance of Firebase Messaging so that it can handle background
+// messages.
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage((payload) => {
+  console.log('[firebase-messaging-sw.js] Received background message ', payload);
+  // Customize notification here
+  const notificationTitle = payload.notification.title;
   const notificationOptions = {
-    body: payload.notification?.body || "Você tem uma nova mensagem.",
-    icon: payload.notification?.icon || "/icons/icon-192x192.png",
-    // Use a 'tag' para agrupar as notificações. 
-    // Notificações com a mesma tag se substituem, evitando duplicatas.
-    tag: "oficio-notification-tag", 
-    data: {
-      url: payload.fcmOptions?.link || "/",
-    },
+    body: payload.notification.body,
+    icon: '/icon-192x192.png'
   };
 
-  self.registration.showNotification(notificationTitle, notificationOptions);
-});
-
-
-// Adiciona um listener para o evento 'notificationclick'
-self.addEventListener("notificationclick", (event) => {
-  console.log("[Service Worker] Notification click Received.", event.notification);
-
-  event.notification.close();
-
-  const urlToOpen = event.notification.data?.url || "/";
-
-  event.waitUntil(
-    clients
-      .matchAll({
-        type: "window",
-        includeUncontrolled: true,
-      })
-      .then((clientList) => {
-        // Se uma janela com a mesma URL já estiver aberta, foque nela.
-        for (const client of clientList) {
-          if (client.url === urlToOpen && "focus" in client) {
-            return client.focus();
-          }
-        }
-        // Se não, abra uma nova janela.
-        if (clients.openWindow) {
-          return clients.openWindow(urlToOpen);
-        }
-      })
-  );
+  self.registration.showNotification(notificationTitle,
+    notificationOptions);
 });
