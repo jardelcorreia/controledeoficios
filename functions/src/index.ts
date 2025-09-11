@@ -19,23 +19,15 @@ export const sendoficionotification = onDocumentWritten(
     const dataAfter = event.data?.after.data();
     const dataBefore = event.data?.before.data();
 
-    let notification;
-    let webpush;
+    let notificationPayload;
 
     // Caso 1: Novo ofício criado com status "Aguardando Envio".
     if (!event.data?.before.exists && event.data?.after.exists && dataAfter && dataAfter.status === "Aguardando Envio") {
       logger.info(`Novo ofício criado: ${oficioId}`, dataAfter);
-      notification = {
+      notificationPayload = {
         title: "Novo Ofício Criado!",
         body: `O ofício nº ${dataAfter.numero} foi criado e aguarda envio.`,
-      };
-      webpush = {
-        fcmOptions: {
-          link: `/oficios/${oficioId}`,
-        },
-        notification: {
-          icon: "/icons/icon-192x192.png",
-        },
+        link: `/oficios/${oficioId}`,
       };
     } else if (
       // Caso 2: Ofício atualizado para "Enviado".
@@ -45,22 +37,15 @@ export const sendoficionotification = onDocumentWritten(
       dataAfter?.status === "Enviado"
     ) {
       logger.info(`Ofício enviado: ${oficioId}`, dataAfter);
-      notification = {
+      notificationPayload = {
         title: "Ofício Enviado!",
         body: `O ofício nº ${dataAfter.numero} foi enviado para ${dataAfter.destinatario}.`,
-      };
-      webpush = {
-        fcmOptions: {
-          link: `/oficios/${oficioId}`,
-        },
-        notification: {
-          icon: "/icons/icon-192x192.png",
-        },
+        link: `/oficios/${oficioId}`,
       };
     }
 
     // Se nenhuma condição de notificação foi atendida, encerra a execução.
-    if (!notification) {
+    if (!notificationPayload) {
       logger.info("Nenhuma condição de notificação atendida.");
       return null;
     }
@@ -76,8 +61,6 @@ export const sendoficionotification = onDocumentWritten(
         return null;
       }
 
-      // Mapeia e filtra para garantir que apenas inscrições válidas sejam usadas.
-      // E usa um Set para garantir que cada token seja único.
       const tokensSet = new Set(
         subscriptionsSnapshot.docs
           .map((doc) => doc.data()?.token)
@@ -85,7 +68,6 @@ export const sendoficionotification = onDocumentWritten(
       );
 
       const tokens = Array.from(tokensSet);
-
 
       if (tokens.length === 0) {
         logger.warn(
@@ -95,9 +77,16 @@ export const sendoficionotification = onDocumentWritten(
       }
 
       logger.info(`Enviando notificação para ${tokens.length} inscritos únicos.`);
+      
       const message = {
-        notification,
-        webpush,
+        // NÃO inclua o campo 'notification' para evitar que o SDK mostre uma notificação automática.
+        // Envie todos os dados necessários para o cliente construir a notificação.
+        data: {
+            title: notificationPayload.title,
+            body: notificationPayload.body,
+            icon: "/icons/icon-192x192.png",
+            link: notificationPayload.link
+        },
         tokens,
       };
 
