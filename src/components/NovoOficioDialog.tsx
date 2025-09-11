@@ -1,4 +1,4 @@
-// src/components/NovoOficioDialog.tsx
+
 "use client";
 
 import {
@@ -6,7 +6,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,6 +13,8 @@ import NovoOficioForm from "@/components/NovoOficioForm";
 import { getProximoNumeroOficio } from "@/lib/oficios";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { ScrollArea } from "./ui/scroll-area";
+
 
 type NovoOficioDialogProps = {
   triggerButton: React.ReactNode;
@@ -21,37 +22,36 @@ type NovoOficioDialogProps = {
 };
 
 export default function NovoOficioDialog({ triggerButton, proximoNumero: initialProximoNumero }: NovoOficioDialogProps) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [proximoNumero, setProximoNumero] = useState<string | null | undefined>(initialProximoNumero);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   
   useEffect(() => {
-    // If the component is opened and there's no initial number, fetch it.
-    if (isModalOpen && initialProximoNumero === undefined) {
+    if (isOpen && initialProximoNumero === undefined) {
       setLoading(true);
       getProximoNumeroOficio()
         .then(setProximoNumero)
         .catch(() => setProximoNumero("Erro!"))
         .finally(() => setLoading(false));
-    } else if (isModalOpen) {
-      // If a number was passed, use it.
+    } else if (isOpen) {
       setProximoNumero(initialProximoNumero);
     }
-  }, [isModalOpen, initialProximoNumero]);
+  }, [isOpen, initialProximoNumero]);
 
 
   const handleOficioCreated = () => {
-    setIsModalOpen(false);
-    router.refresh(); // Refreshes server components
+    setIsOpen(false);
+    router.refresh();
   };
 
-  return (
-    <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-      <DialogTrigger asChild>{triggerButton}</DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Criar Novo Ofício</DialogTitle>
+  const handleCancel = () => {
+    setIsOpen(false);
+  }
+
+  const DialogHeaderContent = () => (
+     <>
+        <DialogTitle>Criar Novo Ofício</DialogTitle>
           {loading ? (
             <div className="text-sm text-muted-foreground pt-2">
               <Skeleton className="h-5 w-48" />
@@ -59,12 +59,12 @@ export default function NovoOficioDialog({ triggerButton, proximoNumero: initial
           ) : (
             <DialogDescription>
               {proximoNumero && proximoNumero !== "Erro!" ? (
-                <>
+                <span>
                   O número do ofício a ser criado é:{" "}
                   <span className="font-bold text-primary">
                     {proximoNumero}
                   </span>
-                </>
+                </span>
               ) : (
                 <span className="text-destructive">
                   Não foi possível carregar o número. Verifique as
@@ -73,14 +73,29 @@ export default function NovoOficioDialog({ triggerButton, proximoNumero: initial
               )}
             </DialogDescription>
           )}
+     </>
+  )
+
+  const FormContent = () => (
+     !loading && proximoNumero && proximoNumero !== "Erro!" && (
+        <NovoOficioForm
+          proximoNumero={proximoNumero}
+          onOficioCreated={handleOficioCreated}
+          onCancel={handleCancel}
+        />
+      )
+  )
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog.Trigger asChild>{triggerButton}</Dialog.Trigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogHeaderContent/>
         </DialogHeader>
-        {!loading && proximoNumero && proximoNumero !== "Erro!" && (
-          <NovoOficioForm
-            proximoNumero={proximoNumero}
-            onOficioCreated={handleOficioCreated}
-            onCancel={() => setIsModalOpen(false)}
-          />
-        )}
+        <ScrollArea className="max-h-[calc(100vh-12rem)] pr-6">
+            <FormContent />
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

@@ -84,7 +84,6 @@ export function OficiosClientSkeleton() {
 
 
 export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) {
-    const [oficios, setOficios] = useState(allOficios);
     const [isDeletePending, startDeleteTransition] = useTransition();
     const [oficioToDelete, setOficioToDelete] = useState<Oficio | null>(null);
     const { toast } = useToast();
@@ -97,12 +96,8 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
         setIsMounted(true);
     }, []);
 
-    useEffect(() => {
-      setOficios(allOficios);
-    }, [allOficios]);
-
     const filteredOficios = useMemo(() => {
-        let currentOficios = oficios;
+        let currentOficios = allOficios;
 
         if (searchQuery) {
             const lowerCaseQuery = searchQuery.toLowerCase();
@@ -115,7 +110,7 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
         }
 
         return currentOficios;
-    }, [oficios, searchQuery]);
+    }, [allOficios, searchQuery]);
     
     const handleDelete = () => {
         if (!oficioToDelete) return;
@@ -123,7 +118,6 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
         startDeleteTransition(async () => {
             try {
                 await deleteOficio(oficioToDelete.id);
-                setOficios(prevOficios => prevOficios.filter(o => o.id !== oficioToDelete.id));
                 toast({
                     title: "Ofício Excluído!",
                     description: `O ofício nº ${oficioToDelete.numero} foi removido com sucesso.`,
@@ -134,14 +128,14 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
             } catch (err) {
                  toast({
                     title: "Erro ao excluir",
-                    description: "Não foi possível excluir o ofício. Tente novamente.",
+                    description: err instanceof Error ? err.message : "Não foi possível excluir o ofício. Tente novamente.",
                     variant: "destructive",
                 });
             }
         });
     }
     
-    const ultimoOficioId = oficios.length > 0 ? oficios[0].id : null;
+    const ultimoOficioId = allOficios.length > 0 ? allOficios[0].id : null;
 
     if (!isMounted) {
         return <OficiosClientSkeleton />;
