@@ -1,3 +1,4 @@
+
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getOficiosRecentes, getProximoNumeroOficio, Oficio, Status } from "@/lib/oficios";
-import { FilePlus2, Eye, Terminal, Calendar } from "lucide-react";
+import { FilePlus2, Eye, Terminal, Calendar, User } from "lucide-react";
 import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -55,7 +56,7 @@ async function ProximoOficioCard() {
           proximoNumero={proximoNumero}
           triggerButton={
             <Button className="mt-4 w-full" disabled={!proximoNumero}>
-              Usar este número
+              Criar Novo Ofício
             </Button>
           }
         />
@@ -86,7 +87,7 @@ async function OficiosRecentesTable() {
                 <TableHead className="hidden md:table-cell">
                   Destinatário
                 </TableHead>
-                <TableHead className="hidden lg:table-cell">
+                <TableHead className="hidden md:table-cell">
                   Responsável
                 </TableHead>
                 <TableHead className="hidden sm:table-cell">Data</TableHead>
@@ -117,7 +118,7 @@ async function OficiosRecentesTable() {
                       <TableCell className="hidden md:table-cell">
                         {oficio.destinatario}
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell">
+                      <TableCell className="hidden md:table-cell">
                         {oficio.responsavel}
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
@@ -177,6 +178,9 @@ async function OficiosRecentesTable() {
                     </p>
                     <p className="text-sm text-muted-foreground">
                       Dest.: {oficio.destinatario}
+                    </p>
+                     <p className="text-sm text-muted-foreground pt-1">
+                      Resp.: {oficio.responsavel}
                     </p>
                   </CardContent>
                   <CardFooter className="flex items-center justify-end text-xs text-muted-foreground border-t pt-2">

@@ -92,7 +92,6 @@ export default function OficioDetalhesPage() {
           description: `O ofício nº ${oficio.numero} foi removido do sistema.`,
         });
         router.push("/oficios");
-        router.refresh(); // Força a recarga dos dados
       } catch (err) {
         toast({
           title: "Erro ao excluir",
@@ -235,8 +234,8 @@ export default function OficioDetalhesPage() {
           <CardContent className="space-y-4">
              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
               <div className="flex items-center">
-                <User className="mr-2 h-4 w-4" />
-                <span>Responsável: {oficio.responsavel}</span>
+                <User className="mr-2 h-4 w-4 flex-shrink-0" />
+                <span className="truncate">Responsável: {oficio.responsavel}</span>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center items-start gap-4">

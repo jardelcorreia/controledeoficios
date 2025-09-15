@@ -191,7 +191,7 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
                               <TableHead className="w-[100px] hidden sm:table-cell">Status</TableHead>
                               <TableHead>Assunto</TableHead>
                               <TableHead className="hidden md:table-cell">Destinatário</TableHead>
-                              <TableHead className="hidden lg:table-cell">Responsável</TableHead>
+                              <TableHead className="hidden md:table-cell">Responsável</TableHead>
                               <TableHead className="hidden sm:table-cell w-[120px]">Data</TableHead>
                               <TableHead>
                                 <span className="sr-only">Ações</span>
@@ -211,7 +211,7 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
                                 <TableCell className="hidden md:table-cell">
                                   {oficio.destinatario}
                                 </TableCell>
-                                <TableCell className="hidden lg:table-cell">
+                                <TableCell className="hidden md:table-cell">
                                   {oficio.responsavel}
                                 </TableCell>
                                 <TableCell className="hidden sm:table-cell">
@@ -311,12 +311,12 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
                                   <p className="font-semibold">{oficio.assunto}</p>
                                   <p className="text-sm text-muted-foreground">Destinatário: {oficio.destinatario}</p>
                                </CardContent>
-                               <CardFooter className="flex justify-between text-xs text-muted-foreground border-t pt-4">
-                                    <div className="flex items-center">
-                                        <User className="mr-1.5 h-3 w-3" />
-                                        <span>{oficio.responsavel}</span>
+                               <CardFooter className="flex justify-between items-center text-xs text-muted-foreground border-t pt-4">
+                                    <div className="flex items-center truncate">
+                                        <User className="mr-1.5 h-3 w-3 flex-shrink-0" />
+                                        <span className="truncate">{oficio.responsavel}</span>
                                     </div>
-                                    <div className="flex items-center">
+                                    <div className="flex items-center flex-shrink-0">
                                         <Calendar className="mr-1.5 h-3 w-3" />
                                          <span>
                                             {new Date(oficio.data).toLocaleDateString("pt-BR", { timeZone: "UTC" })}
