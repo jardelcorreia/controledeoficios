@@ -56,7 +56,7 @@ async function ProximoOficioCard() {
           proximoNumero={proximoNumero}
           triggerButton={
             <Button className="mt-4 w-full" disabled={!proximoNumero}>
-              Criar Novo Ofício
+              Usar este número
             </Button>
           }
         />
