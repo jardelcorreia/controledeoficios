@@ -179,12 +179,13 @@ async function OficiosRecentesTable() {
                     <p className="text-sm text-muted-foreground">
                       Dest.: {oficio.destinatario}
                     </p>
-                     <p className="text-sm text-muted-foreground pt-1">
-                      Resp.: {oficio.responsavel}
-                    </p>
                   </CardContent>
-                  <CardFooter className="flex items-center justify-end text-xs text-muted-foreground border-t pt-2">
-                    <div className="flex items-center">
+                  <CardFooter className="flex justify-between items-center text-xs text-muted-foreground border-t pt-4">
+                    <div className="flex items-center truncate">
+                        <User className="mr-1.5 h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">{oficio.responsavel}</span>
+                    </div>
+                    <div className="flex items-center flex-shrink-0">
                       <Calendar className="mr-1.5 h-3 w-3" />
                       <span>
                         {new Date(oficio.data).toLocaleDateString("pt-BR", {

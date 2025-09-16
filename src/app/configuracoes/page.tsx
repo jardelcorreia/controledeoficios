@@ -175,7 +175,7 @@ export default function ConfiguracoesPage() {
     return (
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle>Notificações Push</CardTitle>
+          <CardTitle>Notificações</CardTitle>
           <CardDescription>
             Receba alertas quando ofícios forem criados ou enviados.
           </CardDescription>
