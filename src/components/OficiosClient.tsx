@@ -40,6 +40,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useEffect, useState, useTransition, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
@@ -207,7 +212,16 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
                                       {oficio.status}
                                   </Badge>
                                 </TableCell>
-                                <TableCell className="max-w-[200px] sm:max-w-[250px] truncate">{oficio.assunto}</TableCell>
+                                <TableCell className="max-w-[200px] sm:max-w-[250px] truncate">
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span>{oficio.assunto}</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>{oficio.assunto}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TableCell>
                                 <TableCell className="hidden md:table-cell">
                                   {oficio.destinatario}
                                 </TableCell>

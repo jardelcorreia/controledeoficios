@@ -22,6 +22,11 @@ import { FilePlus2, Eye, Terminal, Calendar, User } from "lucide-react";
 import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import NovoOficioDialog from "@/components/NovoOficioDialog";
 import { Suspense } from "react";
@@ -112,8 +117,15 @@ async function OficiosRecentesTable() {
                           {oficio.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="max-w-[150px] sm:max-w-[200px] truncate">
-                        {oficio.assunto}
+                       <TableCell className="max-w-[150px] sm:max-w-[200px] truncate">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span>{oficio.assunto}</span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{oficio.assunto}</p>
+                          </TooltipContent>
+                        </Tooltip>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
                         {oficio.destinatario}
