@@ -213,7 +213,7 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
                                       {oficio.status}
                                   </Badge>
                                 </TableCell>
-                                <TableCell className="max-w-[200px] sm:max-w-[250px]">
+                                <TableCell>
                                   <Tooltip>
                                     <TooltipTrigger asChild>
                                       <span className="line-clamp-2">{oficio.assunto}</span>
@@ -223,7 +223,7 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
                                     </TooltipContent>
                                   </Tooltip>
                                 </TableCell>
-                                <TableCell className="hidden md:table-cell">
+                                <TableCell className="hidden md:table-cell max-w-[200px]">
                                   {oficio.destinatario}
                                 </TableCell>
                                 <TableCell className="hidden md:table-cell">

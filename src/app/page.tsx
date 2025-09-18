@@ -119,7 +119,7 @@ async function OficiosRecentesTable() {
                             {oficio.status}
                           </Badge>
                         </TableCell>
-                         <TableCell className="max-w-[150px] sm:max-w-[200px]">
+                         <TableCell>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <span className="line-clamp-2">{oficio.assunto}</span>
@@ -129,7 +129,7 @@ async function OficiosRecentesTable() {
                             </TooltipContent>
                           </Tooltip>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell">
+                        <TableCell className="hidden md:table-cell max-w-[200px]">
                           {oficio.destinatario}
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
