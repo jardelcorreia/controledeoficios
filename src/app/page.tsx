@@ -22,15 +22,10 @@ import { FilePlus2, Eye, Terminal, Calendar, User } from "lucide-react";
 import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-  TooltipProvider,
-} from "@/components/ui/tooltip";
-
 import NovoOficioDialog from "@/components/NovoOficioDialog";
 import { Suspense } from "react";
+import TruncatedTooltipCell from "@/components/TruncatedTooltipCell";
+
 
 export const dynamic = 'force-dynamic';
 
@@ -82,7 +77,6 @@ async function OficiosRecentesTable() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <TooltipProvider>
           {/* Tabela para Desktop */}
           <div className="hidden md:block">
             <Table>
@@ -91,7 +85,7 @@ async function OficiosRecentesTable() {
                   <TableHead>Número</TableHead>
                   <TableHead className="hidden sm:table-cell">Status</TableHead>
                   <TableHead>Assunto</TableHead>
-                  <TableHead className="hidden md:table-cell">
+                  <TableHead className="hidden md:table-cell max-w-[200px]">
                     Destinatário
                   </TableHead>
                   <TableHead className="hidden md:table-cell">
@@ -120,14 +114,7 @@ async function OficiosRecentesTable() {
                           </Badge>
                         </TableCell>
                          <TableCell>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="line-clamp-2">{oficio.assunto}</span>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>{oficio.assunto}</p>
-                            </TooltipContent>
-                          </Tooltip>
+                           <TruncatedTooltipCell text={oficio.assunto} />
                         </TableCell>
                         <TableCell className="hidden md:table-cell max-w-[200px]">
                           {oficio.destinatario}
@@ -216,7 +203,6 @@ async function OficiosRecentesTable() {
                   </div>
                 )}
           </div>
-        </TooltipProvider>
       </CardContent>
     </Card>
   )

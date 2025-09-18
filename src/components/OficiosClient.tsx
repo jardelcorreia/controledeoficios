@@ -40,18 +40,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-  TooltipProvider,
-} from "@/components/ui/tooltip";
 import { useEffect, useState, useTransition, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import NovoOficioDialog from "./NovoOficioDialog";
 import { useRouter, useSearchParams } from "next/navigation";
+import TruncatedTooltipCell from "./TruncatedTooltipCell";
 
 
 const statusColors: Record<Status, string> = {
@@ -187,7 +182,7 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
                     </div>
                   </div>
                   
-                    <TooltipProvider>
+                    
                       {/* Tabela para Desktop */}
                       <div className="hidden md:block">
                         <Table>
@@ -196,7 +191,7 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
                               <TableHead className="w-[120px]">Número</TableHead>
                               <TableHead className="w-[100px] hidden sm:table-cell">Status</TableHead>
                               <TableHead>Assunto</TableHead>
-                              <TableHead className="hidden md:table-cell">Destinatário</TableHead>
+                              <TableHead className="hidden md:table-cell max-w-[200px]">Destinatário</TableHead>
                               <TableHead className="hidden md:table-cell">Responsável</TableHead>
                               <TableHead className="hidden sm:table-cell w-[120px]">Data</TableHead>
                               <TableHead>
@@ -214,14 +209,7 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
                                   </Badge>
                                 </TableCell>
                                 <TableCell>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <span className="line-clamp-2">{oficio.assunto}</span>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>{oficio.assunto}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
+                                    <TruncatedTooltipCell text={oficio.assunto} />
                                 </TableCell>
                                 <TableCell className="hidden md:table-cell max-w-[200px]">
                                   {oficio.destinatario}
@@ -345,7 +333,7 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
                             </div>
                          )}
                       </div>
-                    </TooltipProvider>
+                    
                 </CardContent>
               </Card>
              <AlertDialogContent>
