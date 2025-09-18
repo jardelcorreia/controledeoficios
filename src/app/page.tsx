@@ -26,6 +26,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  TooltipProvider,
 } from "@/components/ui/tooltip";
 
 import NovoOficioDialog from "@/components/NovoOficioDialog";
@@ -81,139 +82,141 @@ async function OficiosRecentesTable() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {/* Tabela para Desktop */}
-        <div className="hidden md:block">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Número</TableHead>
-                <TableHead className="hidden sm:table-cell">Status</TableHead>
-                <TableHead>Assunto</TableHead>
-                <TableHead className="hidden md:table-cell">
-                  Destinatário
-                </TableHead>
-                <TableHead className="hidden md:table-cell">
-                  Responsável
-                </TableHead>
-                <TableHead className="hidden sm:table-cell">Data</TableHead>
-                <TableHead>
-                  <span className="sr-only">Ações</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {oficiosRecentes.length > 0
-                ? oficiosRecentes.map((oficio) => (
-                    <TableRow key={oficio.id}>
-                      <TableCell className="font-medium">
-                        {oficio.numero}
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell">
+        <TooltipProvider>
+          {/* Tabela para Desktop */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Número</TableHead>
+                  <TableHead className="hidden sm:table-cell">Status</TableHead>
+                  <TableHead>Assunto</TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    Destinatário
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    Responsável
+                  </TableHead>
+                  <TableHead className="hidden sm:table-cell">Data</TableHead>
+                  <TableHead>
+                    <span className="sr-only">Ações</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {oficiosRecentes.length > 0
+                  ? oficiosRecentes.map((oficio) => (
+                      <TableRow key={oficio.id}>
+                        <TableCell className="font-medium">
+                          {oficio.numero}
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <Badge
+                            className={`${
+                              statusColors[oficio.status]
+                            } text-white hover:${statusColors[oficio.status]}`}
+                          >
+                            {oficio.status}
+                          </Badge>
+                        </TableCell>
+                         <TableCell className="max-w-[150px] sm:max-w-[200px]">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="line-clamp-2">{oficio.assunto}</span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{oficio.assunto}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          {oficio.destinatario}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          {oficio.responsavel}
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          {new Date(oficio.data).toLocaleDateString("pt-BR", {
+                            timeZone: "UTC",
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          <Button asChild variant="ghost" size="icon">
+                            <Link href={`/oficios/${oficio.id}`}>
+                              <Eye className="h-4 w-4" />
+                              <span className="sr-only">Visualizar</span>
+                            </Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  : (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center h-24">
+                          Nenhum ofício recente encontrado.
+                        </TableCell>
+                      </TableRow>
+                    )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Cards para Mobile */}
+          <div className="md:hidden space-y-4">
+            {oficiosRecentes.length > 0
+              ? oficiosRecentes.map((oficio) => (
+                  <Card key={oficio.id} className="flex flex-col">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                      <div>
+                        <CardTitle className="text-lg">
+                          {oficio.numero}
+                        </CardTitle>
                         <Badge
                           className={`${
                             statusColors[oficio.status]
-                          } text-white hover:${statusColors[oficio.status]}`}
+                          } text-white hover:${statusColors[oficio.status]} mt-1`}
                         >
                           {oficio.status}
                         </Badge>
-                      </TableCell>
-                       <TableCell className="max-w-[150px] sm:max-w-[200px] truncate">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span>{oficio.assunto}</span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{oficio.assunto}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {oficio.destinatario}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {oficio.responsavel}
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        {new Date(oficio.data).toLocaleDateString("pt-BR", {
-                          timeZone: "UTC",
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        <Button asChild variant="ghost" size="icon">
-                          <Link href={`/oficios/${oficio.id}`}>
-                            <Eye className="h-4 w-4" />
-                            <span className="sr-only">Visualizar</span>
-                          </Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                : (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center h-24">
-                        Nenhum ofício recente encontrado.
-                      </TableCell>
-                    </TableRow>
-                  )}
-            </TableBody>
-          </Table>
-        </div>
-
-        {/* Cards para Mobile */}
-        <div className="md:hidden space-y-4">
-          {oficiosRecentes.length > 0
-            ? oficiosRecentes.map((oficio) => (
-                <Card key={oficio.id} className="flex flex-col">
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <div>
-                      <CardTitle className="text-lg">
-                        {oficio.numero}
-                      </CardTitle>
-                      <Badge
-                        className={`${
-                          statusColors[oficio.status]
-                        } text-white hover:${statusColors[oficio.status]} mt-1`}
-                      >
-                        {oficio.status}
-                      </Badge>
-                    </div>
-                    <Button asChild variant="ghost" size="icon">
-                      <Link href={`/oficios/${oficio.id}`}>
-                        <Eye className="h-4 w-4" />
-                        <span className="sr-only">Visualizar</span>
-                      </Link>
-                    </Button>
-                  </CardHeader>
-                  <CardContent className="flex-1 space-y-1">
-                    <p className="font-semibold leading-tight">
-                      {oficio.assunto}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Dest.: {oficio.destinatario}
-                    </p>
-                  </CardContent>
-                  <CardFooter className="flex justify-between items-center text-xs text-muted-foreground border-t pt-4">
-                    <div className="flex items-center truncate">
-                        <User className="mr-1.5 h-3 w-3 flex-shrink-0" />
-                        <span className="truncate">{oficio.responsavel}</span>
-                    </div>
-                    <div className="flex items-center flex-shrink-0">
-                      <Calendar className="mr-1.5 h-3 w-3" />
-                      <span>
-                        {new Date(oficio.data).toLocaleDateString("pt-BR", {
-                          timeZone: "UTC",
-                        })}
-                      </span>
-                    </div>
-                  </CardFooter>
-                </Card>
-              ))
-            : (
-                <div className="text-center text-muted-foreground py-8">
-                  Nenhum ofício recente encontrado.
-                </div>
-              )}
-        </div>
+                      </div>
+                      <Button asChild variant="ghost" size="icon">
+                        <Link href={`/oficios/${oficio.id}`}>
+                          <Eye className="h-4 w-4" />
+                          <span className="sr-only">Visualizar</span>
+                        </Link>
+                      </Button>
+                    </CardHeader>
+                    <CardContent className="flex-1 space-y-1">
+                      <p className="font-semibold leading-tight">
+                        {oficio.assunto}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Dest.: {oficio.destinatario}
+                      </p>
+                    </CardContent>
+                    <CardFooter className="flex justify-between items-center text-xs text-muted-foreground border-t pt-4">
+                      <div className="flex items-center truncate">
+                          <User className="mr-1.5 h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{oficio.responsavel}</span>
+                      </div>
+                      <div className="flex items-center flex-shrink-0">
+                        <Calendar className="mr-1.5 h-3 w-3" />
+                        <span>
+                          {new Date(oficio.data).toLocaleDateString("pt-BR", {
+                            timeZone: "UTC",
+                          })}
+                        </span>
+                      </div>
+                    </CardFooter>
+                  </Card>
+                ))
+              : (
+                  <div className="text-center text-muted-foreground py-8">
+                    Nenhum ofício recente encontrado.
+                  </div>
+                )}
+          </div>
+        </TooltipProvider>
       </CardContent>
     </Card>
   )

@@ -44,6 +44,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  TooltipProvider,
 } from "@/components/ui/tooltip";
 import { useEffect, useState, useTransition, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -186,7 +187,7 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
                     </div>
                   </div>
                   
-                    <>
+                    <TooltipProvider>
                       {/* Tabela para Desktop */}
                       <div className="hidden md:block">
                         <Table>
@@ -212,10 +213,10 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
                                       {oficio.status}
                                   </Badge>
                                 </TableCell>
-                                <TableCell className="max-w-[200px] sm:max-w-[250px] truncate">
+                                <TableCell className="max-w-[200px] sm:max-w-[250px]">
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <span>{oficio.assunto}</span>
+                                      <span className="line-clamp-2">{oficio.assunto}</span>
                                     </TooltipTrigger>
                                     <TooltipContent>
                                       <p>{oficio.assunto}</p>
@@ -344,7 +345,7 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
                             </div>
                          )}
                       </div>
-                    </>
+                    </TooltipProvider>
                 </CardContent>
               </Card>
              <AlertDialogContent>
