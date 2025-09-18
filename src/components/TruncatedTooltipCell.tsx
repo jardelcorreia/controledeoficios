@@ -15,15 +15,13 @@ type TruncatedTooltipCellProps = {
 
 export default function TruncatedTooltipCell({ text }: TruncatedTooltipCellProps) {
   const [isTruncated, setIsTruncated] = useState(false);
-  const textRef = useRef<HTMLSpanElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     const checkTruncation = () => {
       const element = textRef.current;
       if (element) {
-        // Para line-clamp, a verificação scrollWidth > clientWidth não funciona
-        // A melhor abordagem é comparar scrollHeight com clientHeight
-        if (element.scrollHeight > element.clientHeight) {
+        if (element.scrollHeight > element.clientHeight || element.scrollWidth > element.clientWidth) {
           setIsTruncated(true);
         } else {
           setIsTruncated(false);
@@ -31,38 +29,31 @@ export default function TruncatedTooltipCell({ text }: TruncatedTooltipCellProps
       }
     };
 
-    // Verificação inicial
     checkTruncation();
 
-    // Adiciona listener para re-verificar em caso de redimensionamento
-    window.addEventListener('resize', checkTruncation);
+    const resizeObserver = new ResizeObserver(checkTruncation);
+    if (textRef.current) {
+      resizeObserver.observe(textRef.current);
+    }
+
     return () => {
-      window.removeEventListener('resize', checkTruncation);
+      resizeObserver.disconnect();
     };
   }, [text]);
 
-  if (isTruncated) {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span ref={textRef} className="line-clamp-2">
-              {text}
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{text}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  }
-
-  // Renderiza o texto com a classe para que a ref possa medir
-  // mas o tooltip só será mostrado se isTruncated for true.
   return (
-    <span ref={textRef} className="line-clamp-2">
-      {text}
-    </span>
+    <TooltipProvider>
+      <Tooltip open={isTruncated ? undefined : false}>
+        <TooltipTrigger asChild>
+          <div ref={textRef} className="truncate-cell">
+            {text}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{text}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
+
