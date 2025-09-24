@@ -1,4 +1,3 @@
-
 // src/lib/oficios.ts
 import { db } from '@/lib/firebase';
 import {
@@ -11,6 +10,7 @@ import {
   limit,
   where,
   startAfter,
+  DocumentSnapshot,
 } from 'firebase/firestore';
 
 export const statusList = ["Aguardando Envio", "Enviado"] as const;
@@ -33,15 +33,41 @@ const OFICIOS_COLLECTION = 'oficios';
 
 // --- Funções de Leitura ---
 
-export async function getOficios(): Promise<Oficio[]> {
-  const q = query(
-    collection(db, OFICIOS_COLLECTION),
-    orderBy('numeroSequencial', 'desc')
-  );
+export async function getOficios(
+  pageSize: number,
+  lastVisibleId?: string | null
+): Promise<{ oficios: Oficio[], lastVisible: string | null }> {
+  const oficiosCollection = collection(db, OFICIOS_COLLECTION);
+  let q;
+
+  if (lastVisibleId) {
+      const lastDoc = await getDoc(doc(db, OFICIOS_COLLECTION, lastVisibleId));
+      if (!lastDoc.exists()) {
+          return { oficios: [], lastVisible: null };
+      }
+      q = query(
+          oficiosCollection,
+          orderBy('numeroSequencial', 'desc'),
+          startAfter(lastDoc),
+          limit(pageSize)
+      );
+  } else {
+      q = query(
+          oficiosCollection,
+          orderBy('numeroSequencial', 'desc'),
+          limit(pageSize)
+      );
+  }
+  
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(
+
+  const oficiosData = querySnapshot.docs.map(
     (doc) => ({ id: doc.id, ...doc.data() } as Oficio)
   );
+  
+  const newLastVisible = querySnapshot.docs.length > 0 ? querySnapshot.docs[querySnapshot.docs.length - 1].id : null;
+
+  return { oficios: oficiosData, lastVisible: newLastVisible };
 }
 
 export async function getOficioById(id: string): Promise<Oficio | null> {

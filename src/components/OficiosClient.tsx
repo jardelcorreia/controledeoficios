@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Oficio, Status } from "@/lib/oficios";
+import { Oficio, Status, getOficios } from "@/lib/oficios";
 import { deleteOficio } from "@/lib/oficios.actions";
 import { PlusCircle, MoreHorizontal, FileEdit, Eye, Trash2, Calendar, User, Search, X } from "lucide-react";
 import Link from "next/link";
@@ -40,14 +40,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { useEffect, useState, useTransition, useMemo } from "react";
+import { useEffect, useState, useTransition, useMemo, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import NovoOficioDialog from "./NovoOficioDialog";
 import { useRouter, useSearchParams } from "next/navigation";
 import TruncatedTooltipCell from "./TruncatedTooltipCell";
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+import { Terminal } from "lucide-react";
 
+
+const PAGE_SIZE = 15;
 
 const statusColors: Record<Status, string> = {
     "Aguardando Envio": "bg-yellow-500",
@@ -84,7 +88,14 @@ export function OficiosClientSkeleton() {
 }
 
 
-export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) {
+export default function OficiosClient() {
+    const [oficios, setOficios] = useState<Oficio[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [lastVisible, setLastVisible] = useState<string | null>(null);
+    const [hasMore, setHasMore] = useState(true);
+    const [error, setError] = useState<Error | null>(null);
+    const [isLoadMorePending, startLoadMoreTransition] = useTransition();
+
     const [isDeletePending, startDeleteTransition] = useTransition();
     const [oficioToDelete, setOficioToDelete] = useState<Oficio | null>(null);
     const { toast } = useToast();
@@ -92,26 +103,49 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
     const searchParams = useSearchParams();
     const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || "");
 
-    const [isMounted, setIsMounted] = useState(false);
-    useEffect(() => {
-        setIsMounted(true);
+    const fetchOficios = useCallback(async (cursor: string | null) => {
+      try {
+        const { oficios: newOficios, lastVisible: newLastVisible } = await getOficios(PAGE_SIZE, cursor);
+        setOficios(prev => cursor ? [...prev, ...newOficios] : newOficios);
+        setLastVisible(newLastVisible);
+        setHasMore(newOficios.length === PAGE_SIZE);
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e : new Error("Ocorreu um erro desconhecido"));
+      } finally {
+        setLoading(false);
+      }
     }, []);
 
+    useEffect(() => {
+      setLoading(true);
+      fetchOficios(null);
+    }, [fetchOficios]);
+
+    const handleLoadMore = () => {
+        if (!lastVisible || !hasMore) return;
+        startLoadMoreTransition(() => {
+            fetchOficios(lastVisible);
+        });
+    };
+    
+    const handleRefresh = useCallback(() => {
+      setLoading(true);
+      setOficios([]);
+      fetchOficios(null);
+    }, [fetchOficios]);
+
     const filteredOficios = useMemo(() => {
-        let currentOficios = allOficios;
-
-        if (searchQuery) {
-            const lowerCaseQuery = searchQuery.toLowerCase();
-            currentOficios = currentOficios.filter(o => 
-                o.numero.toLowerCase().includes(lowerCaseQuery) ||
-                o.assunto.toLowerCase().includes(lowerCaseQuery) ||
-                o.destinatario.toLowerCase().includes(lowerCaseQuery) ||
-                o.responsavel.toLowerCase().includes(lowerCaseQuery)
-            );
+        if (!searchQuery) {
+            return oficios;
         }
-
-        return currentOficios;
-    }, [allOficios, searchQuery]);
+        const lowerCaseQuery = searchQuery.toLowerCase();
+        return oficios.filter(o => 
+            o.numero.toLowerCase().includes(lowerCaseQuery) ||
+            o.assunto.toLowerCase().includes(lowerCaseQuery) ||
+            o.destinatario.toLowerCase().includes(lowerCaseQuery) ||
+            o.responsavel.toLowerCase().includes(lowerCaseQuery)
+        );
+    }, [oficios, searchQuery]);
     
     const handleDelete = () => {
         if (!oficioToDelete) return;
@@ -124,7 +158,7 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
                     description: `O ofício nº ${oficioToDelete.numero} foi removido com sucesso.`,
                 });
                 setOficioToDelete(null);
-                router.refresh();
+                handleRefresh();
 
             } catch (err) {
                  toast({
@@ -136,11 +170,27 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
         });
     }
     
-    const ultimoOficioId = allOficios.length > 0 ? allOficios[0].id : null;
+    const ultimoOficioId = oficios.length > 0 ? oficios.find((_, i) => i === 0)?.id : null;
 
-    if (!isMounted) {
+     if (loading && oficios.length === 0) {
         return <OficiosClientSkeleton />;
     }
+
+    if (error) {
+    return (
+      <div className="flex flex-col h-full items-center justify-center p-4">
+          <Alert variant="destructive" className="max-w-2xl">
+            <Terminal className="h-4 w-4" />
+            <AlertTitle>
+              Erro ao Carregar os Ofícios
+            </AlertTitle>
+            <AlertDescription>
+              Não foi possível buscar os dados. Tente novamente mais tarde.
+            </AlertDescription>
+          </Alert>
+      </div>
+    );
+  }
 
     return (
         <AlertDialog open={!!oficioToDelete} onOpenChange={(open) => !open && setOficioToDelete(null)}>
@@ -161,6 +211,7 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
                                 <span className="inline sm:hidden">Novo</span>
                             </Button>
                         }
+                        onOficioCreated={handleRefresh}
                       />
                   </div>
                 </CardHeader>
@@ -182,7 +233,6 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
                     </div>
                   </div>
                   
-                    
                       {/* Tabela para Desktop */}
                       <div className="hidden md:block">
                         <Table>
@@ -212,7 +262,7 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
                                     <TruncatedTooltipCell text={oficio.assunto} />
                                 </TableCell>
                                 <TableCell className="hidden md:table-cell max-w-[200px]">
-                                  {oficio.destinatario}
+                                  <TruncatedTooltipCell text={oficio.destinatario} />
                                 </TableCell>
                                 <TableCell className="hidden md:table-cell">
                                   {oficio.responsavel}
@@ -335,6 +385,13 @@ export default function OficiosClient({ allOficios }: { allOficios: Oficio[] }) 
                       </div>
                     
                 </CardContent>
+                 {hasMore && filteredOficios.length > 0 && !searchQuery && (
+                    <CardFooter className="flex justify-center border-t pt-4">
+                        <Button onClick={handleLoadMore} disabled={isLoadMorePending}>
+                            {isLoadMorePending ? "Carregando..." : "Carregar Mais"}
+                        </Button>
+                    </CardFooter>
+                )}
               </Card>
              <AlertDialogContent>
                 <AlertDialogHeader>

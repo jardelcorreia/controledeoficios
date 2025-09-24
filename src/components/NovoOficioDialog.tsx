@@ -20,9 +20,10 @@ import { ScrollArea } from "./ui/scroll-area";
 type NovoOficioDialogProps = {
   triggerButton: React.ReactNode;
   proximoNumero?: string | null;
+  onOficioCreated?: () => void;
 };
 
-export default function NovoOficioDialog({ triggerButton, proximoNumero: initialProximoNumero }: NovoOficioDialogProps) {
+export default function NovoOficioDialog({ triggerButton, proximoNumero: initialProximoNumero, onOficioCreated }: NovoOficioDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [proximoNumero, setProximoNumero] = useState<string | null | undefined>(initialProximoNumero);
   const [loading, setLoading] = useState(false);
@@ -43,7 +44,11 @@ export default function NovoOficioDialog({ triggerButton, proximoNumero: initial
 
   const handleOficioCreated = () => {
     setIsOpen(false);
-    router.refresh();
+    if (onOficioCreated) {
+        onOficioCreated();
+    } else {
+        router.refresh();
+    }
   };
 
   const handleCancel = () => {
