@@ -51,7 +51,7 @@ import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Terminal } from "lucide-react";
 
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 10;
 
 const statusColors: Record<Status, string> = {
     "Aguardando Envio": "bg-yellow-500",
@@ -410,3 +410,5 @@ export default function OficiosClient() {
         </AlertDialog>
     );
 }
+
+    
