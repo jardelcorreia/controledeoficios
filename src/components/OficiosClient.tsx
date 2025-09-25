@@ -240,7 +240,7 @@ export default function OficiosClient() {
                           <TableHeader>
                             <TableRow>
                               <TableHead className="w-[120px]">Número</TableHead>
-                              <TableHead className="w-[180px] hidden sm:table-cell">Status</TableHead>
+                              <TableHead className="hidden sm:table-cell w-[1px]">Status</TableHead>
                               <TableHead>Assunto</TableHead>
                               <TableHead className="hidden md:table-cell max-w-[200px]">Destinatário</TableHead>
                               <TableHead className="hidden md:table-cell">Responsável</TableHead>

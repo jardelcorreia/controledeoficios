@@ -64,35 +64,37 @@ export default function StatusBadge({ oficio, onStatusChange }: StatusBadgeProps
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Badge
-          className={cn(
-            "group flex cursor-pointer items-center text-white transition-all duration-200",
-            statusColors[currentStatus]
-          )}
-        >
-          {isStatusPending ? (
-            <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-          ) : null}
-          <span className="whitespace-nowrap">{currentStatus}</span>
-          <ChevronDown className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
-        </Badge>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        {statusList.map((status) => (
-          <DropdownMenuItem
-            key={status}
-            onSelect={() => handleStatusChange(status)}
-            disabled={currentStatus === status || isStatusPending}
-          >
-            {currentStatus === status && (
-              <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+    <div className="flex">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Badge
+            className={cn(
+              "group flex cursor-pointer items-center text-white transition-all duration-200",
+              statusColors[currentStatus]
             )}
-            {status}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+          >
+            {isStatusPending ? (
+              <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+            ) : null}
+            <span className="whitespace-nowrap">{currentStatus}</span>
+            <ChevronDown className="ml-1 h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
+          </Badge>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          {statusList.map((status) => (
+            <DropdownMenuItem
+              key={status}
+              onSelect={() => handleStatusChange(status)}
+              disabled={currentStatus === status || isStatusPending}
+            >
+              {currentStatus === status && (
+                <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+              )}
+              {status}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }
