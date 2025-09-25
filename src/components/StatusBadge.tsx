@@ -68,7 +68,7 @@ export default function StatusBadge({ oficio, onStatusChange }: StatusBadgeProps
       <DropdownMenuTrigger asChild>
         <Badge
           className={cn(
-            "group relative cursor-pointer text-white transition-all duration-200 group-hover:pr-6",
+            "group flex cursor-pointer items-center text-white transition-all duration-200",
             statusColors[currentStatus]
           )}
         >
@@ -76,7 +76,7 @@ export default function StatusBadge({ oficio, onStatusChange }: StatusBadgeProps
             <Loader2 className="mr-1 h-4 w-4 animate-spin" />
           ) : null}
           <span className="whitespace-nowrap">{currentStatus}</span>
-          <ChevronDown className="absolute right-1 top-1/2 -translate-y-1/2 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
+          <ChevronDown className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
         </Badge>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
