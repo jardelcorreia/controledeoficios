@@ -68,7 +68,7 @@ export default function StatusBadge({ oficio, onStatusChange }: StatusBadgeProps
       <DropdownMenuTrigger asChild>
         <Badge
           className={cn(
-            "cursor-pointer text-white",
+            "cursor-pointer text-white transition-colors",
             statusColors[currentStatus]
           )}
         >
