@@ -362,7 +362,7 @@ export default function OficiosClient() {
                                <CardContent className="flex-1 space-y-2">
                                   <p className="font-semibold">{oficio.assunto}</p>
                                   <p className="text-sm text-muted-foreground">Destinatário: {oficio.destinatario}</p>
-                               </TCardContent>
+                               </CardContent>
                                <CardFooter className="flex justify-between items-center text-xs text-muted-foreground border-t pt-4">
                                     <div className="flex items-center truncate">
                                         <User className="mr-1.5 h-3 w-3 flex-shrink-0" />
@@ -384,15 +384,15 @@ export default function OficiosClient() {
                       </div>
                     
                 </CardContent>
-                 {hasMore && filteredOficios.length > 0 && !searchQuery && (
+                {hasMore && filteredOficios.length > 0 && !searchQuery && (
                     <CardFooter className="flex justify-center border-t pt-4">
                         <Button onClick={handleLoadMore} disabled={isLoadMorePending}>
                             {isLoadMorePending ? "Carregando..." : "Carregar Mais"}
                         </Button>
                     </CardFooter>
                 )}
-              </Card>
-             <AlertDialogContent>
+            </Card>
+            <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
                     <AlertDialogDescription>
@@ -409,5 +409,3 @@ export default function OficiosClient() {
         </AlertDialog>
     );
 }
-
-    
