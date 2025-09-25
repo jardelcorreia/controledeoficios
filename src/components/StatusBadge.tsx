@@ -68,15 +68,15 @@ export default function StatusBadge({ oficio, onStatusChange }: StatusBadgeProps
       <DropdownMenuTrigger asChild>
         <Badge
           className={cn(
-            "group relative cursor-pointer text-white transition-colors",
+            "group cursor-pointer text-white transition-colors flex items-center gap-1",
             statusColors[currentStatus]
           )}
         >
           {isStatusPending ? (
-            <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : null}
-          <span>{currentStatus}</span>
-           <ChevronDown className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100 ml-1" />
+          <span className="whitespace-nowrap">{currentStatus}</span>
+           <ChevronDown className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
         </Badge>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
