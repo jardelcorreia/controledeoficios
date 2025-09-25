@@ -49,6 +49,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import TruncatedTooltipCell from "./TruncatedTooltipCell";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Terminal } from "lucide-react";
+import StatusBadge from "./StatusBadge";
 
 
 const PAGE_SIZE = 10;
@@ -239,7 +240,7 @@ export default function OficiosClient() {
                           <TableHeader>
                             <TableRow>
                               <TableHead className="w-[120px]">Número</TableHead>
-                              <TableHead className="w-[100px] hidden sm:table-cell">Status</TableHead>
+                              <TableHead className="w-[150px] hidden sm:table-cell">Status</TableHead>
                               <TableHead>Assunto</TableHead>
                               <TableHead className="hidden md:table-cell max-w-[200px]">Destinatário</TableHead>
                               <TableHead className="hidden md:table-cell">Responsável</TableHead>
@@ -254,9 +255,7 @@ export default function OficiosClient() {
                               <TableRow key={oficio.id}>
                                 <TableCell className="font-medium">{oficio.numero}</TableCell>
                                 <TableCell className="hidden sm:table-cell">
-                                  <Badge className={`${statusColors[oficio.status]} text-white hover:${statusColors[oficio.status]}`}>
-                                      {oficio.status}
-                                  </Badge>
+                                  <StatusBadge oficio={oficio} />
                                 </TableCell>
                                 <TableCell>
                                     <TruncatedTooltipCell text={oficio.assunto} />
@@ -324,9 +323,9 @@ export default function OficiosClient() {
                                <CardHeader className="flex flex-row items-start justify-between pb-2">
                                     <div>
                                         <CardTitle className="text-lg">{oficio.numero}</CardTitle>
-                                        <Badge className={`${statusColors[oficio.status]} text-white hover:${statusColors[oficio.status]} mt-1`}>
-                                            {oficio.status}
-                                        </Badge>
+                                        <div className="mt-1">
+                                          <StatusBadge oficio={oficio} />
+                                        </div>
                                     </div>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
@@ -363,7 +362,7 @@ export default function OficiosClient() {
                                <CardContent className="flex-1 space-y-2">
                                   <p className="font-semibold">{oficio.assunto}</p>
                                   <p className="text-sm text-muted-foreground">Destinatário: {oficio.destinatario}</p>
-                               </CardContent>
+                               </TCardContent>
                                <CardFooter className="flex justify-between items-center text-xs text-muted-foreground border-t pt-4">
                                     <div className="flex items-center truncate">
                                         <User className="mr-1.5 h-3 w-3 flex-shrink-0" />

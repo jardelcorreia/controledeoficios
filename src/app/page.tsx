@@ -17,22 +17,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getOficiosRecentes, getProximoNumeroOficio, Oficio, Status } from "@/lib/oficios";
-import { FilePlus2, Eye, Terminal, Calendar, User } from "lucide-react";
+import { getOficiosRecentes, getProximoNumeroOficio, Oficio } from "@/lib/oficios";
+import { FilePlus2, Eye, User, Calendar } from "lucide-react";
 import Link from "next/link";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import NovoOficioDialog from "@/components/NovoOficioDialog";
 import { Suspense } from "react";
 import TruncatedTooltipCell from "@/components/TruncatedTooltipCell";
+import StatusBadge from "@/components/StatusBadge";
 
 
 export const dynamic = 'force-dynamic';
-
-const statusColors: Record<Status, string> = {
-  "Aguardando Envio": "bg-yellow-500",
-  "Enviado": "bg-blue-500",
-};
 
 async function ProximoOficioCard() {
   const proximoNumero = await getProximoNumeroOficio();
@@ -105,19 +99,13 @@ async function OficiosRecentesTable() {
                           {oficio.numero}
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
-                          <Badge
-                            className={`${
-                              statusColors[oficio.status]
-                            } text-white hover:${statusColors[oficio.status]}`}
-                          >
-                            {oficio.status}
-                          </Badge>
+                          <StatusBadge oficio={oficio} />
                         </TableCell>
                          <TableCell>
                            <TruncatedTooltipCell text={oficio.assunto} />
                         </TableCell>
                         <TableCell className="hidden md:table-cell max-w-[200px]">
-                          {oficio.destinatario}
+                           <TruncatedTooltipCell text={oficio.destinatario} />
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
                           {oficio.responsavel}
@@ -158,13 +146,9 @@ async function OficiosRecentesTable() {
                         <CardTitle className="text-lg">
                           {oficio.numero}
                         </CardTitle>
-                        <Badge
-                          className={`${
-                            statusColors[oficio.status]
-                          } text-white hover:${statusColors[oficio.status]} mt-1`}
-                        >
-                          {oficio.status}
-                        </Badge>
+                        <div className="mt-1">
+                          <StatusBadge oficio={oficio} />
+                        </div>
                       </div>
                       <Button asChild variant="ghost" size="icon">
                         <Link href={`/oficios/${oficio.id}`}>

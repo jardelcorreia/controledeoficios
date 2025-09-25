@@ -3,7 +3,6 @@
 
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -11,15 +10,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { getOficioById, getUltimoOficio, Oficio, statusList, Status } from "@/lib/oficios";
-import { deleteOficio, updateOficio } from "@/lib/oficios.actions";
-import { FileEdit, User, ArrowLeft, Trash2, ChevronDown, CheckCircle } from "lucide-react";
+import { getOficioById, getUltimoOficio, Oficio, Status } from "@/lib/oficios";
+import { deleteOficio } from "@/lib/oficios.actions";
+import { FileEdit, User, ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
 import {
   AlertDialog,
@@ -37,11 +30,7 @@ import { Terminal } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-
-const statusColors: Record<Status, string> = {
-    "Aguardando Envio": "bg-yellow-500",
-    "Enviado": "bg-blue-500",
-};
+import StatusBadge from "@/components/StatusBadge";
 
 
 export default function OficioDetalhesPage() {
@@ -55,32 +44,28 @@ export default function OficioDetalhesPage() {
   const [error, setError] = useState<Error | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDeletePending, startDeleteTransition] = useTransition();
-  const [isStatusPending, startStatusTransition] = useTransition();
-
 
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    Promise.all([
-        getOficioById(id),
-        getUltimoOficio()
-    ]).then(([oficioData, ultimoOficioData]) => {
-        if (!oficioData) {
-            // Se o ofício não for encontrado, não definimos erro aqui, 
-            // a renderização condicional abaixo cuidará disso.
-            setOficio(null);
-        } else {
+    const fetchOficioData = async () => {
+        try {
+            const [oficioData, ultimoOficioData] = await Promise.all([
+                getOficioById(id),
+                getUltimoOficio()
+            ]);
+            
             setOficio(oficioData);
+            setUltimoOficio(ultimoOficioData);
+        } catch (err: unknown) {
+             setError(err instanceof Error ? err : new Error("Ocorreu um erro desconhecido"));
+        } finally {
+            setLoading(false);
         }
-        setUltimoOficio(ultimoOficioData);
-      })
-      .catch((err) => {
-        setError(err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    };
+    fetchOficioData();
   }, [id]);
+
 
   const handleDelete = () => {
     if (!oficio) return;
@@ -101,34 +86,9 @@ export default function OficioDetalhesPage() {
       }
     });
   };
-  
-  const handleStatusChange = (newStatus: Status) => {
-      if (!oficio) return;
-      startStatusTransition(async () => {
-          try {
-              await updateOficio(oficio.id, { status: newStatus });
-              setOficio(prev => prev ? {...prev, status: newStatus} : null);
-              
-              if (newStatus === "Enviado") {
-                 toast({
-                  title: "Ofício Enviado!",
-                  description: `O ofício nº ${oficio.numero} foi marcado como enviado.`
-                });
-              } else {
-                toast({
-                    title: "Status Atualizado!",
-                    description: `O status do ofício foi alterado para "${newStatus}".`
-                });
-              }
 
-          } catch(err) {
-              toast({
-                title: "Erro ao alterar status",
-                description: "Não foi possível alterar o status. Tente novamente.",
-                variant: "destructive",
-            });
-          }
-      });
+  const handleStatusChange = (newStatus: Status) => {
+      setOficio(prev => prev ? {...prev, status: newStatus} : null);
   }
 
   const canDelete = oficio && ultimoOficio && oficio.id === ultimoOficio.id;
@@ -238,26 +198,9 @@ export default function OficioDetalhesPage() {
                 <span className="truncate">Responsável: {oficio.responsavel}</span>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row sm:items-center items-start gap-4">
-                 <Badge className={`${statusColors[oficio.status]} text-white hover:${statusColors[oficio.status]}`}>
-                    Status: {oficio.status}
-                </Badge>
-                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" disabled={isStatusPending}>
-                            {isStatusPending ? "Alterando..." : "Alterar Status"}
-                            <ChevronDown className="ml-2 h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                        {statusList.map(status => (
-                            <DropdownMenuItem key={status} onSelect={() => handleStatusChange(status)} disabled={oficio.status === status}>
-                                {oficio.status === status && <CheckCircle className="mr-2 h-4 w-4 text-green-500" />}
-                                {status}
-                            </DropdownMenuItem>
-                        ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
+            <div className="flex items-center gap-4">
+                <p className="text-sm font-medium">Status:</p>
+                <StatusBadge oficio={oficio} onStatusChange={handleStatusChange}/>
             </div>
           </CardContent>
         </Card>
