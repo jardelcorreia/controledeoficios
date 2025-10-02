@@ -244,7 +244,7 @@ export default function OficiosClient() {
                               <TableHead>Assunto</TableHead>
                               <TableHead className="hidden md:table-cell max-w-[200px]">Destinatário</TableHead>
                               <TableHead className="hidden md:table-cell">Responsável</TableHead>
-                              <TableHead className="hidden sm:table-cell w-[120px]">Data</TableHead>
+                              <TableHead className="hidden sm:table-cell w-[200px]">Data</TableHead>
                               <TableHead>
                                 <span className="sr-only">Ações</span>
                               </TableHead>
@@ -255,7 +255,9 @@ export default function OficiosClient() {
                               <TableRow key={oficio.id}>
                                 <TableCell className="font-medium">{oficio.numero}</TableCell>
                                 <TableCell className="hidden sm:table-cell">
-                                  <StatusBadge oficio={oficio} />
+                                  <div className="flex">
+                                    <StatusBadge oficio={oficio} />
+                                  </div>
                                 </TableCell>
                                 <TableCell>
                                     <TruncatedTooltipCell text={oficio.assunto} />
@@ -267,8 +269,8 @@ export default function OficiosClient() {
                                   {oficio.responsavel}
                                 </TableCell>
                                 <TableCell className="hidden sm:table-cell">
-                                  {new Date(oficio.data).toLocaleDateString("pt-BR", {
-                                    timeZone: "UTC",
+                                  {new Date(oficio.data).toLocaleString("pt-BR", {
+                                    timeZone: "America/Sao_Paulo",
                                   })}
                                 </TableCell>
                                 <TableCell>
@@ -371,7 +373,7 @@ export default function OficiosClient() {
                                     <div className="flex items-center flex-shrink-0">
                                         <Calendar className="mr-1.5 h-3 w-3" />
                                          <span>
-                                            {new Date(oficio.data).toLocaleDateString("pt-BR", { timeZone: "UTC" })}
+                                            {new Date(oficio.data).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: 'short' })}
                                          </span>
                                     </div>
                                </CardFooter>

@@ -111,8 +111,8 @@ async function OficiosRecentesTable() {
                           {oficio.responsavel}
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
-                          {new Date(oficio.data).toLocaleDateString("pt-BR", {
-                            timeZone: "UTC",
+                          {new Date(oficio.data).toLocaleString("pt-BR", {
+                            timeZone: "America/Sao_Paulo",
                           })}
                         </TableCell>
                         <TableCell>
@@ -173,8 +173,9 @@ async function OficiosRecentesTable() {
                       <div className="flex items-center flex-shrink-0">
                         <Calendar className="mr-1.5 h-3 w-3" />
                         <span>
-                          {new Date(oficio.data).toLocaleDateString("pt-BR", {
-                            timeZone: "UTC",
+                          {new Date(oficio.data).toLocaleString("pt-BR", {
+                            timeZone: "America/Sao_Paulo",
+                            dateStyle: "short",
                           })}
                         </span>
                       </div>

@@ -188,7 +188,7 @@ export default function OficioDetalhesPage() {
               {oficio.status === "Enviado" &&
                 `Enviado para ${oficio.destinatario} em ${new Date(
                   oficio.data
-                ).toLocaleDateString("pt-BR", { timeZone: "UTC" })}`}
+                ).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}`}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
