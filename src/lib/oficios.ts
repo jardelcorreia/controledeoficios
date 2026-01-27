@@ -1,3 +1,4 @@
+
 // src/lib/oficios.ts
 import { db } from '@/lib/firebase';
 import {
@@ -47,14 +48,14 @@ export async function getOficios(
       }
       q = query(
           oficiosCollection,
-          orderBy('numeroSequencial', 'desc'),
+          orderBy('data', 'desc'),
           startAfter(lastDoc),
           limit(pageSize)
       );
   } else {
       q = query(
           oficiosCollection,
-          orderBy('numeroSequencial', 'desc'),
+          orderBy('data', 'desc'),
           limit(pageSize)
       );
   }
@@ -82,7 +83,7 @@ export async function getOficioById(id: string): Promise<Oficio | null> {
 export async function getOficiosRecentes(count: number): Promise<Oficio[]> {
   const q = query(
     collection(db, OFICIOS_COLLECTION),
-    orderBy('numeroSequencial', 'desc'),
+    orderBy('data', 'desc'),
     limit(count)
   );
   const querySnapshot = await getDocs(q);
@@ -94,7 +95,7 @@ export async function getOficiosRecentes(count: number): Promise<Oficio[]> {
 export async function getUltimoOficio(): Promise<Oficio | null> {
   const q = query(
     collection(db, OFICIOS_COLLECTION),
-    orderBy('numeroSequencial', 'desc'),
+    orderBy('data', 'desc'),
     limit(1)
   );
   const querySnapshot = await getDocs(q);
