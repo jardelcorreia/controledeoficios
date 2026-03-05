@@ -39,7 +39,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { useEffect, useState, useTransition, useMemo, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
@@ -53,11 +52,6 @@ import StatusBadge from "./StatusBadge";
 
 
 const PAGE_SIZE = 10;
-
-const statusColors: Record<Status, string> = {
-    "Aguardando Envio": "bg-yellow-500",
-    "Enviado": "bg-blue-500",
-};
 
 export function OficiosClientSkeleton() {
     return (
@@ -100,7 +94,6 @@ export default function OficiosClient() {
     const [isDeletePending, startDeleteTransition] = useTransition();
     const [oficioToDelete, setOficioToDelete] = useState<Oficio | null>(null);
     const { toast } = useToast();
-    const router = useRouter();
     const searchParams = useSearchParams();
     const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || "");
 
@@ -240,7 +233,7 @@ export default function OficiosClient() {
                           <TableHeader>
                             <TableRow>
                               <TableHead className="w-[120px]">Número</TableHead>
-                              <TableHead className="hidden sm:table-cell w-[1px]">Status</TableHead>
+                              <TableHead className="hidden sm:table-cell w-[180px]">Status</TableHead>
                               <TableHead>Assunto</TableHead>
                               <TableHead className="hidden md:table-cell max-w-[200px]">Destinatário</TableHead>
                               <TableHead className="hidden md:table-cell">Responsável</TableHead>
@@ -255,9 +248,7 @@ export default function OficiosClient() {
                               <TableRow key={oficio.id}>
                                 <TableCell className="font-medium">{oficio.numero}</TableCell>
                                 <TableCell className="hidden sm:table-cell">
-                                  <div className="flex">
-                                    <StatusBadge oficio={oficio} />
-                                  </div>
+                                  <StatusBadge oficio={oficio} />
                                 </TableCell>
                                 <TableCell>
                                     <TruncatedTooltipCell text={oficio.assunto} />
@@ -365,10 +356,10 @@ export default function OficiosClient() {
                                   <p className="font-semibold">{oficio.assunto}</p>
                                   <p className="text-sm text-muted-foreground">Destinatário: {oficio.destinatario}</p>
                                </CardContent>
-                               <CardFooter className="flex justify-between items-center text-xs text-muted-foreground border-t pt-4 gap-2">
-                                    <div className="flex items-center min-w-0 flex-1">
+                               <CardFooter className="flex justify-between items-center text-xs text-muted-foreground border-t pt-4 gap-4">
+                                    <div className="flex items-center min-w-0 flex-1 overflow-hidden">
                                         <User className="mr-1.5 h-3 w-3 flex-shrink-0" />
-                                        <span className="truncate">{oficio.responsavel}</span>
+                                        <span className="truncate block">{oficio.responsavel}</span>
                                     </div>
                                     <div className="flex items-center flex-shrink-0 whitespace-nowrap">
                                         <Calendar className="mr-1.5 h-3 w-3" />
@@ -376,7 +367,7 @@ export default function OficiosClient() {
                                             {new Date(oficio.data).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: 'short' })}
                                          </span>
                                     </div>
-                               </CardFooter>
+                                </CardFooter>
                             </Card>
                          )) : (
                             <div className="text-center text-muted-foreground py-10">

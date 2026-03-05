@@ -165,10 +165,10 @@ async function OficiosRecentesTable() {
                         Dest.: {oficio.destinatario}
                       </p>
                     </CardContent>
-                    <CardFooter className="flex justify-between items-center text-xs text-muted-foreground border-t pt-4 gap-2">
-                      <div className="flex items-center min-w-0 flex-1">
+                    <CardFooter className="flex justify-between items-center text-xs text-muted-foreground border-t pt-4 gap-4">
+                      <div className="flex items-center min-w-0 flex-1 overflow-hidden">
                           <User className="mr-1.5 h-3 w-3 flex-shrink-0" />
-                          <span className="truncate">{oficio.responsavel}</span>
+                          <span className="truncate block">{oficio.responsavel}</span>
                       </div>
                       <div className="flex items-center flex-shrink-0 whitespace-nowrap">
                         <Calendar className="mr-1.5 h-3 w-3" />
