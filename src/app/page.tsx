@@ -85,7 +85,7 @@ async function OficiosRecentesTable() {
                   <TableHead className="hidden md:table-cell">
                     Criado por:
                   </TableHead>
-                  <TableHead className="hidden sm:table-cell">Data</TableHead>
+                  <TableHead className="hidden sm:table-cell">Data e Hora</TableHead>
                   <TableHead>
                     <span className="sr-only">Ações</span>
                   </TableHead>
@@ -111,9 +111,20 @@ async function OficiosRecentesTable() {
                           {oficio.responsavel}
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
-                          {new Date(oficio.data).toLocaleString("pt-BR", {
-                            timeZone: "America/Sao_Paulo",
-                          })}
+                          <div className="flex flex-col text-xs">
+                            <span className="font-medium">
+                              {new Date(oficio.data).toLocaleDateString("pt-BR", {
+                                timeZone: "America/Sao_Paulo",
+                              })}
+                            </span>
+                            <span className="text-muted-foreground">
+                              {new Date(oficio.data).toLocaleTimeString("pt-BR", {
+                                timeZone: "America/Sao_Paulo",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Button asChild variant="ghost" size="icon">
@@ -168,15 +179,27 @@ async function OficiosRecentesTable() {
                     <CardFooter className="flex justify-between items-start text-xs text-muted-foreground border-t pt-4 gap-4">
                       <div className="flex items-start min-w-0 flex-1">
                           <User className="mr-1.5 h-3 w-3 mt-0.5 flex-shrink-0" />
-                          <span className="break-words leading-normal">Criado por: {oficio.responsavel}</span>
+                          <div className="flex flex-col">
+                            <span>Criado por:</span>
+                            <span className="break-words leading-tight font-medium text-foreground/80">{oficio.responsavel}</span>
+                          </div>
                       </div>
-                      <div className="flex items-center flex-shrink-0 whitespace-nowrap mt-0.5">
-                        <Calendar className="mr-1.5 h-3 w-3" />
-                        <span>
-                          {new Date(oficio.data).toLocaleString("pt-BR", {
-                            timeZone: "America/Sao_Paulo",
-                          })}
-                        </span>
+                      <div className="flex items-start flex-shrink-0 text-right">
+                        <Calendar className="mr-1.5 h-3 w-3 mt-0.5" />
+                        <div className="flex flex-col">
+                          <span className="whitespace-nowrap">
+                            {new Date(oficio.data).toLocaleDateString("pt-BR", {
+                              timeZone: "America/Sao_Paulo",
+                            })}
+                          </span>
+                          <span className="whitespace-nowrap">
+                            {new Date(oficio.data).toLocaleTimeString("pt-BR", {
+                              timeZone: "America/Sao_Paulo",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
                       </div>
                     </CardFooter>
                   </Card>

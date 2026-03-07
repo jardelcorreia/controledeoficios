@@ -115,16 +115,36 @@ export default function HistoricoPage() {
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">
                         <div>{item.acao}</div>
-                        <div className="text-muted-foreground text-xs md:hidden">
-                          {new Date(item.data).toLocaleString("pt-BR", {
-                            timeZone: "America/Sao_Paulo",
-                          })}
+                        <div className="text-muted-foreground text-xs md:hidden flex flex-col mt-1">
+                          <span>
+                            {new Date(item.data).toLocaleDateString("pt-BR", {
+                              timeZone: "America/Sao_Paulo",
+                            })}
+                          </span>
+                          <span>
+                            {new Date(item.data).toLocaleTimeString("pt-BR", {
+                              timeZone: "America/Sao_Paulo",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        {new Date(item.data).toLocaleString("pt-BR", {
-                          timeZone: "America/Sao_Paulo",
-                        })}
+                        <div className="flex flex-col text-xs">
+                          <span className="font-medium">
+                            {new Date(item.data).toLocaleDateString("pt-BR", {
+                              timeZone: "America/Sao_Paulo",
+                            })}
+                          </span>
+                          <span className="text-muted-foreground">
+                            {new Date(item.data).toLocaleTimeString("pt-BR", {
+                              timeZone: "America/Sao_Paulo",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
                       </TableCell>
                       <TableCell>{item.detalhes}</TableCell>
                     </TableRow>
