@@ -18,12 +18,21 @@ export const statusList = ["Aguardando Envio", "Enviado"] as const;
 
 export type Status = (typeof statusList)[number];
 
+export const criadoresList = [
+  "Edmilson Gomes",
+  "Jardel Correia",
+  "Phillipe Moraes",
+  "Yanni Rolim"
+] as const;
+
+export type Criador = (typeof criadoresList)[number];
+
 export type Oficio = {
   id: string;
   numero: string;
   assunto: string;
   destinatario: string;
-  responsavel: string;
+  responsavel: string; // Mantido o nome da propriedade para não quebrar dados existentes
   data: string; // ISO 8601 format
   numeroSequencial: number;
   ano: number;

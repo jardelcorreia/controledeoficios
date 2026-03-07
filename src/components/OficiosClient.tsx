@@ -236,7 +236,7 @@ export default function OficiosClient() {
                               <TableHead className="hidden sm:table-cell w-[180px]">Status</TableHead>
                               <TableHead>Assunto</TableHead>
                               <TableHead className="hidden md:table-cell max-w-[200px]">Destinatário</TableHead>
-                              <TableHead className="hidden md:table-cell">Responsável</TableHead>
+                              <TableHead className="hidden md:table-cell">Criado por:</TableHead>
                               <TableHead className="hidden sm:table-cell w-[200px]">Data</TableHead>
                               <TableHead>
                                 <span className="sr-only">Ações</span>
@@ -359,12 +359,14 @@ export default function OficiosClient() {
                                <CardFooter className="flex justify-between items-start text-xs text-muted-foreground border-t pt-4 gap-4">
                                     <div className="flex items-start min-w-0 flex-1">
                                         <User className="mr-1.5 h-3 w-3 mt-0.5 flex-shrink-0" />
-                                        <span className="break-words leading-normal">{oficio.responsavel}</span>
+                                        <span className="break-words leading-normal">Criado por: {oficio.responsavel}</span>
                                     </div>
                                     <div className="flex items-center flex-shrink-0 whitespace-nowrap mt-0.5">
                                         <Calendar className="mr-1.5 h-3 w-3" />
                                          <span>
-                                            {new Date(oficio.data).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: 'short' })}
+                                            {new Date(oficio.data).toLocaleString("pt-BR", {
+                                              timeZone: "America/Sao_Paulo",
+                                            })}
                                          </span>
                                     </div>
                                 </CardFooter>

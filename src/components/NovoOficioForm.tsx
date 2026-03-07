@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { useTransition } from "react";
 import { createOficio } from "@/lib/oficios.actions";
+import { criadoresList } from "@/lib/oficios";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,11 +19,20 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const formSchema = z.object({
   assunto: z.string().min(5, "O assunto deve ter pelo menos 5 caracteres."),
   destinatario: z.string().min(3, "O destinatário é obrigatório."),
-  responsavel: z.string().min(3, "O responsável é obrigatório."),
+  responsavel: z.enum(criadoresList, {
+    errorMap: () => ({ message: "Selecione quem está criando o ofício." }),
+  }),
 });
 
 type NovoOficioFormProps = {
@@ -40,7 +50,7 @@ export default function NovoOficioForm({ proximoNumero, onOficioCreated, onCance
     defaultValues: {
       assunto: "",
       destinatario: "",
-      responsavel: "",
+      responsavel: undefined,
     },
   });
 
@@ -98,10 +108,21 @@ export default function NovoOficioForm({ proximoNumero, onOficioCreated, onCance
           name="responsavel"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Responsável</FormLabel>
-              <FormControl>
-                <Input placeholder="Digite o seu nome" {...field} />
-              </FormControl>
+              <FormLabel>Criado por:</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {criadoresList.map((nome) => (
+                    <SelectItem key={nome} value={nome}>
+                      {nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -118,5 +139,3 @@ export default function NovoOficioForm({ proximoNumero, onOficioCreated, onCance
     </Form>
   );
 }
-
-    

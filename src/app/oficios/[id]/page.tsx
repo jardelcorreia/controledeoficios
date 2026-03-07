@@ -188,14 +188,16 @@ export default function OficioDetalhesPage() {
               {oficio.status === "Enviado" &&
                 `Enviado para ${oficio.destinatario} em ${new Date(
                   oficio.data
-                ).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}`}
+                ).toLocaleString("pt-BR", {
+                  timeZone: "America/Sao_Paulo",
+                })}`}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
               <div className="flex items-center">
                 <User className="mr-2 h-4 w-4 flex-shrink-0" />
-                <span className="truncate">Responsável: {oficio.responsavel}</span>
+                <span className="truncate">Criado por: {oficio.responsavel}</span>
               </div>
             </div>
             <div className="flex items-center gap-4">

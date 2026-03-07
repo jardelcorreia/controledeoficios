@@ -32,7 +32,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, useParams } from "next/navigation";
-import { getOficioById, Oficio, statusList, Status } from "@/lib/oficios";
+import { getOficioById, Oficio, statusList, Status, criadoresList } from "@/lib/oficios";
 import { updateOficio } from "@/lib/oficios.actions";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
@@ -41,7 +41,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 const formSchema = z.object({
   assunto: z.string().min(5, "O assunto deve ter pelo menos 5 caracteres."),
   destinatario: z.string().min(3, "O destinatário é obrigatório."),
-  responsavel: z.string().min(3, "O responsável é obrigatório."),
+  responsavel: z.enum(criadoresList, {
+    errorMap: () => ({ message: "Selecione quem está criando o ofício." }),
+  }),
   status: z.custom<Status>((val) => statusList.includes(val as Status), {
       message: "Status inválido"
   })
@@ -62,7 +64,7 @@ export default function EditarOficioPage() {
     defaultValues: {
       assunto: "",
       destinatario: "",
-      responsavel: "",
+      responsavel: undefined as any,
       status: "Aguardando Envio"
     },
   });
@@ -77,7 +79,7 @@ export default function EditarOficioPage() {
           form.reset({
             assunto: data.assunto,
             destinatario: data.destinatario,
-            responsavel: data.responsavel,
+            responsavel: (criadoresList.includes(data.responsavel as any) ? data.responsavel : undefined) as any,
             status: data.status
           });
         }
@@ -241,13 +243,21 @@ export default function EditarOficioPage() {
                   name="responsavel"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Responsável</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Ex: Nome do responsável pelo envio"
-                          {...field}
-                        />
-                      </FormControl>
+                      <FormLabel>Criado por:</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {criadoresList.map((nome) => (
+                            <SelectItem key={nome} value={nome}>
+                              {nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
