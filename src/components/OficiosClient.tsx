@@ -44,7 +44,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import NovoOficioDialog from "./NovoOficioDialog";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import TruncatedTooltipCell from "./TruncatedTooltipCell";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Terminal } from "lucide-react";
@@ -52,6 +52,7 @@ import StatusBadge from "./StatusBadge";
 
 
 const PAGE_SIZE = 10;
+const SEARCH_LIMIT = 500; // Limite maior para busca global
 
 export function OficiosClientSkeleton() {
     return (
@@ -96,13 +97,14 @@ export default function OficiosClient() {
     const { toast } = useToast();
     const searchParams = useSearchParams();
     const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || "");
+    const [isSearching, setIsSearching] = useState(false);
 
-    const fetchOficios = useCallback(async (cursor: string | null) => {
+    const fetchOficios = useCallback(async (cursor: string | null, limitSize: number = PAGE_SIZE) => {
       try {
-        const { oficios: newOficios, lastVisible: newLastVisible } = await getOficios(PAGE_SIZE, cursor);
+        const { oficios: newOficios, lastVisible: newLastVisible } = await getOficios(limitSize, cursor);
         setOficios(prev => cursor ? [...prev, ...newOficios] : newOficios);
         setLastVisible(newLastVisible);
-        setHasMore(newOficios.length === PAGE_SIZE);
+        setHasMore(newOficios.length === limitSize);
       } catch (e: unknown) {
         setError(e instanceof Error ? e : new Error("Ocorreu um erro desconhecido"));
       } finally {
@@ -110,22 +112,37 @@ export default function OficiosClient() {
       }
     }, []);
 
+    // Efeito para carregar inicial ou quando limpa a busca
     useEffect(() => {
-      setLoading(true);
-      fetchOficios(null);
-    }, [fetchOficios]);
+      if (!searchQuery) {
+        setIsSearching(false);
+        setLoading(true);
+        fetchOficios(null, PAGE_SIZE);
+      }
+    }, [searchQuery, fetchOficios]);
+
+    // Efeito para busca global quando o usuário digita
+    useEffect(() => {
+      if (searchQuery.length >= 2) {
+        setIsSearching(true);
+        setLoading(true);
+        // Quando busca, pegamos um lote grande para o filtro local funcionar globalmente
+        fetchOficios(null, SEARCH_LIMIT);
+      }
+    }, [searchQuery, fetchOficios]);
 
     const handleLoadMore = () => {
-        if (!lastVisible || !hasMore) return;
+        if (!lastVisible || !hasMore || isSearching) return;
         startLoadMoreTransition(() => {
-            fetchOficios(lastVisible);
+            fetchOficios(lastVisible, PAGE_SIZE);
         });
     };
     
     const handleRefresh = useCallback(() => {
       setLoading(true);
       setOficios([]);
-      fetchOficios(null);
+      setSearchQuery("");
+      fetchOficios(null, PAGE_SIZE);
     }, [fetchOficios]);
 
     const filteredOficios = useMemo(() => {
@@ -219,10 +236,15 @@ export default function OficiosClient() {
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
-                        {searchQuery && (
-                            <Button variant="ghost" size="icon" className="absolute right-1 top-0.5 h-8 w-8" onClick={() => setSearchQuery('')}>
-                                <X className="h-4 w-4" />
-                            </Button>
+                        {(searchQuery || loading) && (
+                            <div className="absolute right-1 top-0.5 flex items-center">
+                                {loading && <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>}
+                                {searchQuery && (
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSearchQuery('')}>
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                )}
+                            </div>
                         )}
                     </div>
                   </div>
@@ -233,7 +255,7 @@ export default function OficiosClient() {
                           <TableHeader>
                             <TableRow>
                               <TableHead className="w-[120px]">Número</TableHead>
-                              <TableHead className="hidden sm:table-cell w-[180px]">Status</TableHead>
+                              <TableHead className="w-[1px]">Status</TableHead>
                               <TableHead>Assunto</TableHead>
                               <TableHead className="hidden md:table-cell max-w-[200px]">Destinatário</TableHead>
                               <TableHead className="hidden md:table-cell">Criado por:</TableHead>
@@ -247,7 +269,7 @@ export default function OficiosClient() {
                             {filteredOficios.length > 0 ? filteredOficios.map((oficio) => (
                               <TableRow key={oficio.id}>
                                 <TableCell className="font-medium">{oficio.numero}</TableCell>
-                                <TableCell className="hidden sm:table-cell">
+                                <TableCell>
                                   <StatusBadge oficio={oficio} />
                                 </TableCell>
                                 <TableCell>
@@ -402,7 +424,7 @@ export default function OficiosClient() {
                       </div>
                     
                 </CardContent>
-                {hasMore && filteredOficios.length > 0 && !searchQuery && (
+                {hasMore && filteredOficios.length > 0 && !isSearching && (
                     <CardFooter className="flex justify-center border-t pt-4">
                         <Button onClick={handleLoadMore} disabled={isLoadMorePending}>
                             {isLoadMorePending ? "Carregando..." : "Carregar Mais"}
