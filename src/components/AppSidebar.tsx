@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -37,12 +36,17 @@ const AppSidebar = () => {
 
   return (
     <Sidebar>
-      <SidebarHeader>
-        <div className="flex items-center gap-2">
-          <NotebookPen className="size-6 text-sidebar-primary" />
-          <h1 className="text-lg font-semibold text-sidebar-foreground">
-            Controle de Ofícios
-          </h1>
+      <SidebarHeader className="p-4 border-b">
+        <div className="flex items-start gap-3">
+          <NotebookPen className="size-6 text-sidebar-primary mt-1 shrink-0" />
+          <div className="flex flex-col">
+            <h1 className="text-lg font-bold leading-tight text-sidebar-foreground">
+              Controle de Ofícios
+            </h1>
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-sidebar-foreground/50 leading-tight mt-0.5">
+              Controle, Avaliação e Auditoria
+            </p>
+          </div>
         </div>
       </SidebarHeader>
       <SidebarContent>
