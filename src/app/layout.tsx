@@ -1,11 +1,11 @@
-
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/AppSidebar";
 import { Toaster } from "@/components/ui/toaster";
 import NotificationProvider from "@/components/NotificationProvider";
+import Script from "next/script";
 
 const inter = Inter({
   subsets: ['latin'],
@@ -29,6 +29,13 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: "#7B96B8",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -36,9 +43,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className={inter.variable}>
-      <head>
-         <meta name="theme-color" content="#7B96B8" />
-      </head>
       <body className="font-body antialiased">
         <NotificationProvider>
           <SidebarProvider>
@@ -47,6 +51,19 @@ export default function RootLayout({
           </SidebarProvider>
         </NotificationProvider>
         <Toaster />
+        <Script id="register-sw" strategy="afterInteractive">
+          {`
+            if ('serviceWorker' in navigator) {
+              window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                  console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }, function(err) {
+                  console.log('ServiceWorker registration failed: ', err);
+                });
+              });
+            }
+          `}
+        </Script>
       </body>
     </html>
   );

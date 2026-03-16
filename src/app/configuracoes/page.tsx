@@ -1,4 +1,3 @@
-
 "use client";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -26,11 +25,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { getNumeracaoConfig } from "@/lib/oficios";
 import { saveNumeracaoConfig } from "@/lib/oficios.actions";
-import { useEffect, useTransition, useState, useCallback } from "react";
+import { useEffect, useTransition, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, Download, Bell, BellOff, BellRing } from "lucide-react";
-import { initializePushNotifications } from "@/lib/push";
+import { Terminal, Download } from "lucide-react";
 
 const formSchema = z.object({
   prefixo: z.string().optional(),
@@ -39,93 +37,54 @@ const formSchema = z.object({
   numeroInicial: z.coerce.number().min(1),
 });
 
-type NotificationState = "GRANTED" | "DENIED" | "DEFAULT" | "LOADING";
-
 export default function ConfiguracoesPage() {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   
-  const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
-  const [notificationState, setNotificationState] = useState<NotificationState>("LOADING");
-  const [isSubscribing, setIsSubscribing] = useState(false);
-
-  const checkNotificationStatus = useCallback(() => {
-    if ('Notification' in window) {
-      setNotificationState(Notification.permission === 'granted' ? 'GRANTED' : Notification.permission === 'denied' ? 'DENIED' : 'DEFAULT');
-    } else {
-      setNotificationState('DENIED'); // Navegador não suporta
-    }
-  }, []);
-
-  useEffect(() => {
-    checkNotificationStatus();
-    
-    // Opcional: ouvir por mudanças de permissão, se suportado
-    if (navigator.permissions && navigator.permissions.query) {
-      navigator.permissions.query({ name: 'notifications' }).then((permissionStatus) => {
-        permissionStatus.onchange = checkNotificationStatus;
-      });
-    }
-  }, [checkNotificationStatus]);
+  // Estado para o prompt de instalação
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
+        // Previne o mini-infobar automático no Chrome
         e.preventDefault();
+        // Guarda o evento para disparar depois
         setInstallPrompt(e);
     };
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
     return () => {
         window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
-
   }, []);
-
-  const handleSubscription = async () => {
-    setIsSubscribing(true);
-    try {
-      const permission = await initializePushNotifications();
-      if (permission === 'granted') {
-        setNotificationState('GRANTED');
-        toast({
-          title: "Notificações Ativadas!",
-          description: "Você receberá atualizações importantes.",
-        });
-      } else {
-        setNotificationState('DENIED');
-        toast({
-          title: "Ativação Cancelada",
-          description: "Você pode ativar as notificações a qualquer momento.",
-          variant: 'destructive'
-        });
-      }
-    } catch (err: unknown) {
-      setNotificationState('DENIED');
-       toast({
-          title: "Erro ao Ativar Notificações",
-          description: err instanceof Error ? err.message : "Ocorreu um erro desconhecido.",
-          variant: "destructive",
-        });
-    } finally {
-        setIsSubscribing(false);
-    }
-  };
-
 
   const handleInstallClick = async () => {
     if (!installPrompt) {
       return;
     }
-    const promptEvent = installPrompt as any;
-    promptEvent.prompt();
-    const { outcome } = await promptEvent.userChoice;
+
+    // Mostra o prompt de instalação nativo
+    installPrompt.prompt();
+
+    // Aguarda a escolha do utilizador
+    const { outcome } = await installPrompt.userChoice;
+    
     if (outcome === 'accepted') {
-       toast({ title: "Instalado!", description: "O aplicativo foi adicionado à sua tela inicial."});
+       toast({
+          title: "Instalado!",
+          description: "O aplicativo foi adicionado à sua tela inicial.",
+        });
     } else {
-       toast({ title: "Instalação cancelada", description: "Você pode instalar o aplicativo a qualquer momento."});
+       toast({
+          title: "Instalação cancelada",
+          description: "Você pode instalar o aplicativo a qualquer momento.",
+        });
     }
+
+    // Limpa o prompt para que não possa ser usado novamente sem novo evento
     setInstallPrompt(null);
   };
 
@@ -170,56 +129,6 @@ export default function ConfiguracoesPage() {
       }
     });
   }
-
-  const renderNotificationCard = () => {
-    return (
-      <Card className="max-w-2xl mx-auto">
-        <CardHeader>
-          <CardTitle>Notificações</CardTitle>
-          <CardDescription>
-            Receba alertas quando ofícios forem criados ou enviados.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {notificationState === 'LOADING' && (
-            <div className="flex items-center space-x-2">
-              <Skeleton className="h-5 w-5 rounded-full" />
-              <Skeleton className="h-4 w-[250px]" />
-            </div>
-          )}
-          {notificationState === 'GRANTED' && (
-             <div className="flex items-center text-green-600">
-              <Bell className="mr-2 h-5 w-5"/>
-              <p className="font-medium">As notificações estão ativadas neste navegador.</p>
-            </div>
-          )}
-          {notificationState === 'DENIED' && (
-            <Alert variant="destructive">
-              <Terminal className="h-4 w-4" />
-              <AlertTitle>Notificações Bloqueadas</AlertTitle>
-              <AlertDescription>
-                Você bloqueou as notificações. Para reativá-las, você precisa alterar as permissões nas configurações do seu navegador.
-              </AlertDescription>
-            </Alert>
-          )}
-           {notificationState === 'DEFAULT' && (
-             <div className="flex items-center text-muted-foreground">
-              <BellOff className="mr-2 h-5 w-5"/>
-              <p>As notificações não estão ativas.</p>
-            </div>
-          )}
-        </CardContent>
-        {notificationState === 'DEFAULT' && (
-          <CardFooter className="border-t px-6 py-4">
-              <Button onClick={handleSubscription} disabled={isSubscribing}>
-                <BellRing className="mr-2 h-4 w-4" />
-                {isSubscribing ? "Ativando..." : "Ativar Notificações"}
-              </Button>
-          </CardFooter>
-        )}
-      </Card>
-    );
-  };
 
    if (error) {
     return (
@@ -376,20 +285,19 @@ export default function ConfiguracoesPage() {
           </Form>
         </Card>
 
-        {renderNotificationCard()}
-
-         {installPrompt && (
+        {/* Card de Instalação PWA */}
+        {installPrompt && (
             <Card className="max-w-2xl mx-auto">
                 <CardHeader>
                     <CardTitle>Instalar Aplicativo</CardTitle>
                     <CardDescription>
-                        Instale o aplicativo em seu dispositivo para um acesso mais rápido.
+                        Instale o sistema em seu dispositivo para um acesso mais rápido e ícone na tela inicial.
                     </CardDescription>
                 </CardHeader>
                 <CardFooter className="border-t px-6 py-4">
                     <Button onClick={handleInstallClick}>
                         <Download className="mr-2 h-4 w-4" />
-                        Instalar Aplicativo
+                        Instalar no Dispositivo
                     </Button>
                 </CardFooter>
             </Card>
