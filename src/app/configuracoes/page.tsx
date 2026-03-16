@@ -16,7 +16,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
@@ -43,14 +42,11 @@ export default function ConfiguracoesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   
-  // Estado para o prompt de instalação
   const [installPrompt, setInstallPrompt] = useState<any>(null);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
-        // Previne o mini-infobar automático no Chrome
         e.preventDefault();
-        // Guarda o evento para disparar depois
         setInstallPrompt(e);
     };
 
@@ -66,10 +62,7 @@ export default function ConfiguracoesPage() {
       return;
     }
 
-    // Mostra o prompt de instalação nativo
     installPrompt.prompt();
-
-    // Aguarda a escolha do utilizador
     const { outcome } = await installPrompt.userChoice;
     
     if (outcome === 'accepted') {
@@ -77,14 +70,7 @@ export default function ConfiguracoesPage() {
           title: "Instalado!",
           description: "O aplicativo foi adicionado à sua tela inicial.",
         });
-    } else {
-       toast({
-          title: "Instalação cancelada",
-          description: "Você pode instalar o aplicativo a qualquer momento.",
-        });
     }
-
-    // Limpa o prompt para que não possa ser usado novamente sem novo evento
     setInstallPrompt(null);
   };
 
@@ -106,7 +92,6 @@ export default function ConfiguracoesPage() {
         }
         setLoading(false);
     }).catch((err: unknown) => {
-        console.error("Erro ao carregar configurações:", err);
         setError(err instanceof Error ? err : new Error("Ocorreu um erro desconhecido"));
         setLoading(false);
     });
@@ -140,12 +125,8 @@ export default function ConfiguracoesPage() {
         <main className="flex-1 p-4 sm:p-6">
           <Alert variant="destructive">
             <Terminal className="h-4 w-4" />
-            <AlertTitle>
-              Erro ao Carregar
-            </AlertTitle>
-            <AlertDescription>
-              Não foi possível carregar as configurações. Tente novamente mais tarde.
-            </AlertDescription>
+            <AlertTitle>Erro ao Carregar</AlertTitle>
+            <AlertDescription>Não foi possível carregar as configurações.</AlertDescription>
           </Alert>
         </main>
       </div>
@@ -161,31 +142,10 @@ export default function ConfiguracoesPage() {
         />
         <main className="flex-1 p-4 sm:p-6">
           <Card className="max-w-2xl mx-auto">
-             <CardHeader>
-                <Skeleton className="h-8 w-1/2" />
-                <Skeleton className="h-4 w-3/4" />
-            </CardHeader>
+            <CardHeader><Skeleton className="h-8 w-1/2" /><Skeleton className="h-4 w-3/4" /></CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-               <div className="space-y-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-               <div className="space-y-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-10 w-full" />
-              </div>
+              <div className="space-y-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-10 w-full" /></div>
             </CardContent>
-            <CardFooter className="border-t px-6 py-4">
-              <Skeleton className="h-10 w-40" />
-            </CardFooter>
           </Card>
         </main>
       </div>
@@ -204,10 +164,7 @@ export default function ConfiguracoesPage() {
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <CardHeader>
                 <CardTitle>Numeração de Ofícios</CardTitle>
-                <CardDescription>
-                  Configure o formato para a numeração automática dos ofícios.
-                  Exemplo: OF-001/2024-GAB
-                </CardDescription>
+                <CardDescription>Configure o formato para a numeração automática dos ofícios.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormField
@@ -216,12 +173,7 @@ export default function ConfiguracoesPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Prefixo</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ex: OF" {...field} value={field.value || ''} />
-                      </FormControl>
-                      <FormDescription>
-                        Texto que aparece antes do número do ofício.
-                      </FormDescription>
+                      <FormControl><Input placeholder="Ex: OF" {...field} value={field.value || ''} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -232,12 +184,7 @@ export default function ConfiguracoesPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Sufixo</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ex: GAB" {...field} value={field.value || ''} />
-                      </FormControl>
-                      <FormDescription>
-                        Texto que aparece após o ano. (Opcional)
-                      </FormDescription>
+                      <FormControl><Input placeholder="Ex: GAB" {...field} value={field.value || ''} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -248,13 +195,7 @@ export default function ConfiguracoesPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Ano Base</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="Ex: 2024" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        O ano corrente para a numeração. A contagem reinicia a
-                        cada ano.
-                      </FormDescription>
+                      <FormControl><Input type="number" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -265,12 +206,7 @@ export default function ConfiguracoesPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Número Inicial</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="Ex: 1" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        A contagem iniciará a partir deste número a cada ano, a menos que já exista um número maior.
-                      </FormDescription>
+                      <FormControl><Input type="number" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -285,24 +221,19 @@ export default function ConfiguracoesPage() {
           </Form>
         </Card>
 
-        {/* Card de Instalação PWA */}
         {installPrompt && (
-            <Card className="max-w-2xl mx-auto">
+            <Card className="max-w-2xl mx-auto border-primary/50 bg-primary/5">
                 <CardHeader>
                     <CardTitle>Instalar Aplicativo</CardTitle>
-                    <CardDescription>
-                        Instale o sistema em seu dispositivo para um acesso mais rápido e ícone na tela inicial.
-                    </CardDescription>
+                    <CardDescription>Instale o sistema para acesso rápido e ícone na tela inicial.</CardDescription>
                 </CardHeader>
                 <CardFooter className="border-t px-6 py-4">
                     <Button onClick={handleInstallClick}>
-                        <Download className="mr-2 h-4 w-4" />
-                        Instalar no Dispositivo
+                        <Download className="mr-2 h-4 w-4" /> Instalar no Dispositivo
                     </Button>
                 </CardFooter>
             </Card>
         )}
-
       </main>
     </div>
   );

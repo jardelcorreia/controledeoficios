@@ -1,14 +1,13 @@
-self.addEventListener('install', (event) => {
+self.addEventListener('install', function(event) {
   self.skipWaiting();
 });
 
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', function(event) {
   event.waitUntil(clients.claim());
 });
 
-self.addEventListener('fetch', (event) => {
-  // Estratégia simples de fetch para cumprir requisitos de PWA
-  event.respondWith(fetch(event.request).catch(() => {
-    return caches.match(event.request);
-  }));
+self.addEventListener('fetch', function(event) {
+  // O Service Worker é obrigatório para a instalabilidade PWA.
+  // Neste caso, ele apenas repassa as requisições para a rede.
+  event.respondWith(fetch(event.request));
 });

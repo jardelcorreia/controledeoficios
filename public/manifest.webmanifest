@@ -1,20 +1,20 @@
 {
   "name": "Controle de Ofícios",
   "short_name": "Ofícios",
-  "description": "Sistema para gerenciamento de ofícios - Controle, Avaliação e Auditoria",
+  "description": "Sistema para gerenciamento de ofícios - Setor de Controle, Avaliação e Auditoria",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#7B96B8",
   "icons": [
     {
-      "src": "https://picsum.photos/seed/pwa1/192/192",
+      "src": "https://picsum.photos/seed/icon192/192/192",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "https://picsum.photos/seed/pwa2/512/512",
+      "src": "https://picsum.photos/seed/icon512/512/512",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
