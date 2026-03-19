@@ -123,7 +123,7 @@ export default function DashboardClient() {
                 )}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Número gerado em tempo real com base no último registro.
+                este será o próximo número de ofício a ser criado
               </p>
             </div>
             <NovoOficioDialog
@@ -142,7 +142,7 @@ export default function DashboardClient() {
         <CardHeader>
           <CardTitle>Ofícios Recentes</CardTitle>
           <CardDescription>
-            Últimos documentos gerados. Atualizado instantaneamente.
+            últimos ofícios criados no sistema
           </CardDescription>
         </CardHeader>
         <CardContent>
