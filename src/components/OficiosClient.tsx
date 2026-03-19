@@ -10,9 +10,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Oficio, Status, getOficios } from "@/lib/oficios";
+import { Oficio } from "@/lib/oficios";
 import { deleteOficio } from "@/lib/oficios.actions";
-import { PlusCircle, MoreHorizontal, FileEdit, Eye, Trash2, Calendar, User, Search, X } from "lucide-react";
+import { PlusCircle, MoreHorizontal, FileEdit, Eye, Trash2, Calendar, User, Search, X, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -39,7 +39,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useEffect, useState, useTransition, useMemo, useCallback } from "react";
+import { useEffect, useState, useTransition, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -47,12 +47,9 @@ import NovoOficioDialog from "./NovoOficioDialog";
 import { useSearchParams } from "next/navigation";
 import TruncatedTooltipCell from "./TruncatedTooltipCell";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
-import { Terminal } from "lucide-react";
 import StatusBadge from "./StatusBadge";
-
-
-const PAGE_SIZE = 10;
-const SEARCH_LIMIT = 500; // Limite maior para busca global
+import { db } from "@/lib/firebase";
+import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
 
 export function OficiosClientSkeleton() {
     return (
@@ -70,85 +67,53 @@ export function OficiosClientSkeleton() {
                 <div className="mb-4">
                     <Skeleton className="h-10 w-full sm:w-80" />
                 </div>
-                <div className="hidden md:block">
-                     <Skeleton className="h-40 w-full" />
-                </div>
-                 <div className="md:hidden space-y-4">
-                    <Skeleton className="h-32 w-full" />
-                    <Skeleton className="h-32 w-full" />
-                    <Skeleton className="h-32 w-full" />
+                <div className="space-y-4">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
                 </div>
             </CardContent>
         </Card>
     );
 }
 
-
 export default function OficiosClient() {
     const [oficios, setOficios] = useState<Oficio[]>([]);
     const [loading, setLoading] = useState(true);
-    const [lastVisible, setLastVisible] = useState<string | null>(null);
-    const [hasMore, setHasMore] = useState(true);
-    const [error, setError] = useState<Error | null>(null);
-    const [isLoadMorePending, startLoadMoreTransition] = useTransition();
+    const [error, setError] = useState<string | null>(null);
 
-    const [isDeletePending, startDeleteTransition] = useTransition();
     const [oficioToDelete, setOficioToDelete] = useState<Oficio | null>(null);
+    const [isDeletePending, startDeleteTransition] = useTransition();
+    
     const { toast } = useToast();
     const searchParams = useSearchParams();
     const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || "");
-    const [isSearching, setIsSearching] = useState(false);
 
-    const fetchOficios = useCallback(async (cursor: string | null, limitSize: number = PAGE_SIZE) => {
-      try {
-        const { oficios: newOficios, lastVisible: newLastVisible } = await getOficios(limitSize, cursor);
-        setOficios(prev => cursor ? [...prev, ...newOficios] : newOficios);
-        setLastVisible(newLastVisible);
-        setHasMore(newOficios.length === limitSize);
-      } catch (e: unknown) {
-        setError(e instanceof Error ? e : new Error("Ocorreu um erro desconhecido"));
-      } finally {
-        setLoading(false);
-      }
+    // Listener em tempo real para todos os ofícios (limitado aos últimos 200 por performance)
+    useEffect(() => {
+        setLoading(true);
+        const q = query(
+            collection(db, "oficios"),
+            orderBy("data", "desc"),
+            limit(200)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Oficio));
+            setOficios(docs);
+            setLoading(false);
+            setError(null);
+        }, (err) => {
+            console.error("Erro no listener de ofícios:", err);
+            setError("Falha ao sincronizar dados com o servidor.");
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
     }, []);
 
-    // Efeito para carregar inicial ou quando limpa a busca
-    useEffect(() => {
-      if (!searchQuery) {
-        setIsSearching(false);
-        setLoading(true);
-        fetchOficios(null, PAGE_SIZE);
-      }
-    }, [searchQuery, fetchOficios]);
-
-    // Efeito para busca global quando o usuário digita
-    useEffect(() => {
-      if (searchQuery.length >= 2) {
-        setIsSearching(true);
-        setLoading(true);
-        // Quando busca, pegamos um lote grande para o filtro local funcionar globalmente
-        fetchOficios(null, SEARCH_LIMIT);
-      }
-    }, [searchQuery, fetchOficios]);
-
-    const handleLoadMore = () => {
-        if (!lastVisible || !hasMore || isSearching) return;
-        startLoadMoreTransition(() => {
-            fetchOficios(lastVisible, PAGE_SIZE);
-        });
-    };
-    
-    const handleRefresh = useCallback(() => {
-      setLoading(true);
-      setOficios([]);
-      setSearchQuery("");
-      fetchOficios(null, PAGE_SIZE);
-    }, [fetchOficios]);
-
     const filteredOficios = useMemo(() => {
-        if (!searchQuery) {
-            return oficios;
-        }
+        if (!searchQuery) return oficios;
         const lowerCaseQuery = searchQuery.toLowerCase();
         return oficios.filter(o => 
             o.numero.toLowerCase().includes(lowerCaseQuery) ||
@@ -169,82 +134,68 @@ export default function OficiosClient() {
                     description: `O ofício nº ${oficioToDelete.numero} foi removido com sucesso.`,
                 });
                 setOficioToDelete(null);
-                handleRefresh();
-
             } catch (err) {
                  toast({
                     title: "Erro ao excluir",
-                    description: err instanceof Error ? err.message : "Não foi possível excluir o ofício. Tente novamente.",
+                    description: err instanceof Error ? err.message : "Não foi possível excluir o ofício.",
                     variant: "destructive",
                 });
             }
         });
     }
     
-    const ultimoOficioId = oficios.length > 0 ? oficios.find((_, i) => i === 0)?.id : null;
+    const ultimoOficioId = oficios.length > 0 ? oficios[0].id : null;
 
-     if (loading && oficios.length === 0) {
-        return <OficiosClientSkeleton />;
-    }
-
-    if (error) {
-    return (
-      <div className="flex flex-col h-full items-center justify-center p-4">
-          <Alert variant="destructive" className="max-w-2xl">
-            <Terminal className="h-4 w-4" />
-            <AlertTitle>
-              Erro ao Carregar os Ofícios
-            </AlertTitle>
-            <AlertDescription>
-              Não foi possível buscar os dados. Tente novamente mais tarde.
-            </AlertDescription>
-          </Alert>
-      </div>
-    );
-  }
+    if (loading && oficios.length === 0) return <OficiosClientSkeleton />;
 
     return (
         <AlertDialog open={!!oficioToDelete} onOpenChange={(open) => !open && setOficioToDelete(null)}>
-            <Card>
-                <CardHeader>
+            <Card className="shadow-sm border-none sm:border">
+                <CardHeader className="px-4 sm:px-6">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
                       <CardTitle>Lista de Ofícios</CardTitle>
                       <CardDescription>
-                        Todos os documentos enviados. Apenas o último ofício pode ser excluído.
+                        Exibindo os últimos 200 registros em tempo real.
                       </CardDescription>
                     </div>
                       <NovoOficioDialog 
                         triggerButton={
-                             <Button>
+                             <Button className="w-full sm:w-auto">
                                 <PlusCircle className="mr-2 h-4 w-4" />
-                                <span className="hidden sm:inline">Novo Ofício</span>
-                                <span className="inline sm:hidden">Novo</span>
+                                Novo Ofício
                             </Button>
                         }
-                        onOficioCreated={handleRefresh}
                       />
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="mb-4 flex flex-col sm:flex-row gap-2">
+                <CardContent className="px-4 sm:px-6">
+                  {error && (
+                    <Alert variant="destructive" className="mb-4">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Erro de Conexão</AlertTitle>
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  <div className="mb-6">
                     <div className="relative flex-1">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input 
                             placeholder="Buscar por número, assunto, destinatário..."
-                            className="pl-8 w-full"
+                            className="pl-10 w-full sm:max-w-md h-11"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
-                        {(searchQuery || loading) && (
-                            <div className="absolute right-1 top-0.5 flex items-center">
-                                {loading && <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>}
-                                {searchQuery && (
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSearchQuery('')}>
-                                        <X className="h-4 w-4" />
-                                    </Button>
-                                )}
-                            </div>
+                        {searchQuery && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8" 
+                              onClick={() => setSearchQuery('')}
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
                         )}
                     </div>
                   </div>
@@ -253,14 +204,14 @@ export default function OficiosClient() {
                       <div className="hidden md:block">
                         <Table>
                           <TableHeader>
-                            <TableRow>
-                              <TableHead className="w-[120px]">Número</TableHead>
-                              <TableHead className="w-[1px]">Status</TableHead>
+                            <TableRow className="hover:bg-transparent">
+                              <TableHead className="w-[140px]">Número</TableHead>
+                              <TableHead className="w-[120px]">Status</TableHead>
                               <TableHead>Assunto</TableHead>
-                              <TableHead className="hidden md:table-cell max-w-[200px]">Destinatário</TableHead>
-                              <TableHead className="hidden md:table-cell">Criado por:</TableHead>
-                              <TableHead className="hidden sm:table-cell w-[120px]">Data e Hora</TableHead>
-                              <TableHead>
+                              <TableHead className="hidden lg:table-cell">Destinatário</TableHead>
+                              <TableHead className="hidden md:table-cell w-[180px]">Criado por:</TableHead>
+                              <TableHead className="w-[110px]">Data / Hora</TableHead>
+                              <TableHead className="w-[50px]">
                                 <span className="sr-only">Ações</span>
                               </TableHead>
                             </TableRow>
@@ -268,22 +219,22 @@ export default function OficiosClient() {
                           <TableBody>
                             {filteredOficios.length > 0 ? filteredOficios.map((oficio) => (
                               <TableRow key={oficio.id}>
-                                <TableCell className="font-medium">{oficio.numero}</TableCell>
+                                <TableCell className="font-bold text-primary">{oficio.numero}</TableCell>
                                 <TableCell>
                                   <StatusBadge oficio={oficio} />
                                 </TableCell>
                                 <TableCell>
                                     <TruncatedTooltipCell text={oficio.assunto} />
                                 </TableCell>
-                                <TableCell className="hidden md:table-cell max-w-[200px]">
+                                <TableCell className="hidden lg:table-cell">
                                   <TruncatedTooltipCell text={oficio.destinatario} />
                                 </TableCell>
-                                <TableCell className="hidden md:table-cell">
+                                <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
                                   {oficio.responsavel}
                                 </TableCell>
-                                <TableCell className="hidden sm:table-cell">
-                                  <div className="flex flex-col text-xs">
-                                    <span className="font-medium">
+                                <TableCell>
+                                  <div className="flex flex-col text-[11px] leading-tight">
+                                    <span className="font-semibold">
                                       {new Date(oficio.data).toLocaleDateString("pt-BR", {
                                         timeZone: "America/Sao_Paulo",
                                       })}
@@ -305,15 +256,15 @@ export default function OficiosClient() {
                                         <MoreHorizontal className="h-4 w-4" />
                                       </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
+                                    <DropdownMenuContent align="end" className="w-48">
                                       <DropdownMenuItem asChild>
-                                        <Link href={`/oficios/${oficio.id}`}>
+                                        <Link href={`/oficios/${oficio.id}`} className="cursor-pointer">
                                           <Eye className="mr-2 h-4 w-4" />
                                           Visualizar
                                         </Link>
                                       </DropdownMenuItem>
                                       <DropdownMenuItem asChild>
-                                        <Link href={`/oficios/${oficio.id}/editar`}>
+                                        <Link href={`/oficios/${oficio.id}/editar`} className="cursor-pointer">
                                           <FileEdit className="mr-2 h-4 w-4" />
                                           Editar
                                         </Link>
@@ -321,7 +272,7 @@ export default function OficiosClient() {
                                       <DropdownMenuSeparator />
                                       <DropdownMenuItem 
                                           onClick={() => setOficioToDelete(oficio)} 
-                                          className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                                          className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
                                           disabled={oficio.id !== ultimoOficioId}
                                       >
                                           <Trash2 className="mr-2 h-4 w-4" />
@@ -333,8 +284,8 @@ export default function OficiosClient() {
                               </TableRow>
                             )) : (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-center h-24">
-                                        Nenhum ofício encontrado com os filtros atuais.
+                                    <TableCell colSpan={7} className="text-center h-32 text-muted-foreground italic">
+                                        Nenhum ofício encontrado.
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -345,54 +296,54 @@ export default function OficiosClient() {
                        {/* Cards para Mobile */}
                       <div className="md:hidden space-y-4">
                          {filteredOficios.length > 0 ? filteredOficios.map((oficio) => (
-                            <Card key={oficio.id} className="flex flex-col">
+                            <Card key={oficio.id} className="flex flex-col shadow-sm border-l-4 border-l-primary">
                                <CardHeader className="flex flex-row items-start justify-between pb-2">
-                                    <div>
-                                        <CardTitle className="text-lg">{oficio.numero}</CardTitle>
+                                    <div className="min-w-0">
+                                        <CardTitle className="text-lg font-bold text-primary">{oficio.numero}</CardTitle>
                                         <div className="mt-1">
                                           <StatusBadge oficio={oficio} />
                                         </div>
                                     </div>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" className="h-8 w-8 p-0">
+                                        <Button variant="ghost" className="h-10 w-10 p-0 flex-shrink-0">
                                             <span className="sr-only">Abrir menu</span>
-                                            <MoreHorizontal className="h-4 w-4" />
+                                            <MoreHorizontal className="h-5 w-5" />
                                         </Button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
+                                        <DropdownMenuContent align="end" className="w-56">
                                         <DropdownMenuItem asChild>
-                                            <Link href={`/oficios/${oficio.id}`}>
-                                            <Eye className="mr-2 h-4 w-4" />
+                                            <Link href={`/oficios/${oficio.id}`} className="py-3">
+                                            <Eye className="mr-3 h-5 w-5" />
                                             Visualizar
                                             </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem asChild>
-                                            <Link href={`/oficios/${oficio.id}/editar`}>
-                                            <FileEdit className="mr-2 h-4 w-4" />
+                                            <Link href={`/oficios/${oficio.id}/editar`} className="py-3">
+                                            <FileEdit className="mr-3 h-5 w-5" />
                                             Editar
                                             </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem 
                                             onClick={() => setOficioToDelete(oficio)} 
-                                            className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                                            className="text-destructive focus:text-destructive py-3"
                                             disabled={oficio.id !== ultimoOficioId}
                                         >
-                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            <Trash2 className="mr-3 h-5 w-5" />
                                             Excluir
                                         </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                </CardHeader>
-                               <CardContent className="flex-1 space-y-2">
-                                  <p className="font-semibold break-words">{oficio.assunto}</p>
-                                  <p className="text-sm text-muted-foreground break-words">Destinatário: {oficio.destinatario}</p>
+                               <CardContent className="flex-1 space-y-2 py-2">
+                                  <p className="font-semibold break-words leading-tight">{oficio.assunto}</p>
+                                  <p className="text-xs text-muted-foreground break-words">Dest.: {oficio.destinatario}</p>
                                </CardContent>
-                               <CardFooter className="flex justify-between items-start text-xs text-muted-foreground border-t pt-4 gap-4">
+                               <CardFooter className="flex justify-between items-start text-[10px] text-muted-foreground border-t pt-3 mt-1 bg-muted/20 rounded-b-lg gap-2">
                                     <div className="flex items-start min-w-0 flex-1">
                                         <User className="mr-1.5 h-3 w-3 mt-0.5 flex-shrink-0" />
-                                        <div className="flex flex-col">
+                                        <div className="flex flex-col min-w-0">
                                           <span>Criado por:</span>
                                           <span className="break-words leading-tight font-medium text-foreground/80">{oficio.responsavel}</span>
                                         </div>
@@ -400,7 +351,7 @@ export default function OficiosClient() {
                                     <div className="flex items-start flex-shrink-0 text-right">
                                         <Calendar className="mr-1.5 h-3 w-3 mt-0.5" />
                                          <div className="flex flex-col">
-                                            <span className="whitespace-nowrap">
+                                            <span className="whitespace-nowrap font-medium">
                                               {new Date(oficio.data).toLocaleDateString("pt-BR", {
                                                 timeZone: "America/Sao_Paulo",
                                               })}
@@ -417,32 +368,31 @@ export default function OficiosClient() {
                                 </CardFooter>
                             </Card>
                          )) : (
-                            <div className="text-center text-muted-foreground py-10">
+                            <div className="text-center text-muted-foreground py-12 bg-muted/10 rounded-lg border border-dashed">
                                 Nenhum ofício encontrado.
                             </div>
                          )}
                       </div>
                     
                 </CardContent>
-                {hasMore && filteredOficios.length > 0 && !isSearching && (
-                    <CardFooter className="flex justify-center border-t pt-4">
-                        <Button onClick={handleLoadMore} disabled={isLoadMorePending}>
-                            {isLoadMorePending ? "Carregando..." : "Carregar Mais"}
-                        </Button>
-                    </CardFooter>
-                )}
             </Card>
+
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                    <AlertDialogTitle>Excluir Ofício?</AlertDialogTitle>
                     <AlertDialogDescription>
                         Esta ação não pode ser desfeita. Isso excluirá permanentemente o ofício <strong>nº {oficioToDelete?.numero}</strong>.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel onClick={() => setOficioToDelete(null)}>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} disabled={isDeletePending} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
-                        {isDeletePending ? "Excluindo..." : "Confirmar Exclusão"}
+                    <AlertDialogAction 
+                      onClick={handleDelete} 
+                      disabled={isDeletePending} 
+                      className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                    >
+                        {isDeletePending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                        Confirmar Exclusão
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
