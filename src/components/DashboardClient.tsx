@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -130,7 +129,7 @@ export default function DashboardClient() {
               proximoNumero={proximoNumero}
               triggerButton={
                 <Button className="mt-6 w-full shadow-md" disabled={!proximoNumero}>
-                  Criar com este número
+                  Usar este número
                 </Button>
               }
             />
