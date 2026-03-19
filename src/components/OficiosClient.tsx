@@ -324,9 +324,9 @@ export default function OficiosClient() {
                        {/* Cards para Mobile */}
                       <div className="md:hidden space-y-4">
                          {paginatedOficios.length > 0 ? paginatedOficios.map((oficio) => (
-                            <Card key={oficio.id} className="flex flex-col shadow-sm border-l-4 border-l-primary">
-                               <CardHeader className="flex flex-row items-start justify-between pb-2">
-                                    <div className="min-w-0">
+                            <Card key={oficio.id} className="flex flex-col shadow-sm border-l-4 border-l-primary overflow-hidden">
+                               <CardHeader className="flex flex-row items-start justify-between pb-2 pr-2">
+                                    <div className="min-w-0 pr-2">
                                         <CardTitle className="text-lg font-bold text-primary">{oficio.numero}</CardTitle>
                                         <div className="mt-1">
                                           <StatusBadge oficio={oficio} />
@@ -334,7 +334,7 @@ export default function OficiosClient() {
                                     </div>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" className="h-10 w-10 p-0 flex-shrink-0">
+                                        <Button variant="ghost" className="h-8 w-8 p-0 flex-shrink-0 mt-0.5" title="Opções">
                                             <span className="sr-only">Abrir menu</span>
                                             <MoreHorizontal className="h-5 w-5" />
                                         </Button>

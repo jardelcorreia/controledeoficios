@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -200,13 +201,13 @@ export default function DashboardClient() {
               <div className="md:hidden space-y-4">
                 {oficiosRecentes.length > 0 ? (
                   oficiosRecentes.map((oficio) => (
-                    <Card key={oficio.id} className="flex flex-col shadow-sm border-l-4 border-l-primary">
-                      <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <div>
+                    <Card key={oficio.id} className="flex flex-col shadow-sm border-l-4 border-l-primary overflow-hidden">
+                      <CardHeader className="flex flex-row items-center justify-between pb-2 pr-2">
+                        <div className="min-w-0 pr-2">
                           <CardTitle className="text-lg font-bold text-primary">{oficio.numero}</CardTitle>
                           <div className="mt-1"><StatusBadge oficio={oficio} /></div>
                         </div>
-                        <Button asChild variant="ghost" size="icon" className="h-10 w-10">
+                        <Button asChild variant="ghost" className="h-8 w-8 p-0 flex-shrink-0" title="Ver detalhes">
                           <Link href={`/oficios/${oficio.id}`}><Eye className="h-5 w-5" /></Link>
                         </Button>
                       </CardHeader>
