@@ -12,7 +12,21 @@ import {
 } from "@/components/ui/table";
 import { Oficio } from "@/lib/oficios";
 import { deleteOficio } from "@/lib/oficios.actions";
-import { PlusCircle, MoreHorizontal, FileEdit, Eye, Trash2, Calendar, User, Search, X, Loader2, AlertCircle } from "lucide-react";
+import { 
+  PlusCircle, 
+  MoreHorizontal, 
+  FileEdit, 
+  Eye, 
+  Trash2, 
+  Calendar, 
+  User, 
+  Search, 
+  X, 
+  Loader2, 
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight
+} from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -27,7 +41,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from "@/components/ui/card";
 import {
   AlertDialog,
@@ -50,6 +63,8 @@ import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import StatusBadge from "./StatusBadge";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
+
+const ITEMS_PER_PAGE = 15;
 
 export function OficiosClientSkeleton() {
     return (
@@ -81,6 +96,7 @@ export default function OficiosClient() {
     const [oficios, setOficios] = useState<Oficio[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
 
     const [oficioToDelete, setOficioToDelete] = useState<Oficio | null>(null);
     const [isDeletePending, startDeleteTransition] = useTransition();
@@ -89,7 +105,6 @@ export default function OficiosClient() {
     const searchParams = useSearchParams();
     const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || "");
 
-    // Listener em tempo real para todos os ofícios (limitado aos últimos 200 por performance)
     useEffect(() => {
         setLoading(true);
         const q = query(
@@ -113,15 +128,27 @@ export default function OficiosClient() {
     }, []);
 
     const filteredOficios = useMemo(() => {
-        if (!searchQuery) return oficios;
-        const lowerCaseQuery = searchQuery.toLowerCase();
+        const query = searchQuery.toLowerCase();
+        if (!query) return oficios;
         return oficios.filter(o => 
-            o.numero.toLowerCase().includes(lowerCaseQuery) ||
-            o.assunto.toLowerCase().includes(lowerCaseQuery) ||
-            o.destinatario.toLowerCase().includes(lowerCaseQuery) ||
-            o.responsavel.toLowerCase().includes(lowerCaseQuery)
+            o.numero.toLowerCase().includes(query) ||
+            o.assunto.toLowerCase().includes(query) ||
+            o.destinatario.toLowerCase().includes(query) ||
+            o.responsavel.toLowerCase().includes(query)
         );
     }, [oficios, searchQuery]);
+
+    // Lógica de Paginação
+    const totalPages = Math.ceil(filteredOficios.length / ITEMS_PER_PAGE);
+    const paginatedOficios = useMemo(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        return filteredOficios.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    }, [filteredOficios, currentPage]);
+
+    // Volta para a página 1 quando a busca muda
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery]);
     
     const handleDelete = () => {
         if (!oficioToDelete) return;
@@ -156,7 +183,7 @@ export default function OficiosClient() {
                     <div>
                       <CardTitle>Lista de Ofícios</CardTitle>
                       <CardDescription>
-                        Exibindo os últimos 200 registros em tempo real.
+                        Gerencie todos os documentos registrados no sistema.
                       </CardDescription>
                     </div>
                       <NovoOficioDialog 
@@ -217,7 +244,7 @@ export default function OficiosClient() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {filteredOficios.length > 0 ? filteredOficios.map((oficio) => (
+                            {paginatedOficios.length > 0 ? paginatedOficios.map((oficio) => (
                               <TableRow key={oficio.id}>
                                 <TableCell className="font-bold text-primary">{oficio.numero}</TableCell>
                                 <TableCell>
@@ -295,7 +322,7 @@ export default function OficiosClient() {
 
                        {/* Cards para Mobile */}
                       <div className="md:hidden space-y-4">
-                         {filteredOficios.length > 0 ? filteredOficios.map((oficio) => (
+                         {paginatedOficios.length > 0 ? paginatedOficios.map((oficio) => (
                             <Card key={oficio.id} className="flex flex-col shadow-sm border-l-4 border-l-primary">
                                <CardHeader className="flex flex-row items-start justify-between pb-2">
                                     <div className="min-w-0">
@@ -373,6 +400,35 @@ export default function OficiosClient() {
                             </div>
                          )}
                       </div>
+
+                    {/* Controles de Paginação */}
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-between space-x-2 py-4 border-t mt-4">
+                        <div className="text-sm text-muted-foreground">
+                          Página <strong>{currentPage}</strong> de <strong>{totalPages}</strong>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                          >
+                            <ChevronLeft className="h-4 w-4 mr-1" />
+                            Anterior
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                          >
+                            Próximo
+                            <ChevronRight className="h-4 w-4 ml-1" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                     
                 </CardContent>
             </Card>
