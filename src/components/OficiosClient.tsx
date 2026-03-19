@@ -39,6 +39,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -128,13 +129,13 @@ export default function OficiosClient() {
     }, []);
 
     const filteredOficios = useMemo(() => {
-        const query = searchQuery.toLowerCase();
-        if (!query) return oficios;
+        const queryText = searchQuery.toLowerCase();
+        if (!queryText) return oficios;
         return oficios.filter(o => 
-            o.numero.toLowerCase().includes(query) ||
-            o.assunto.toLowerCase().includes(query) ||
-            o.destinatario.toLowerCase().includes(query) ||
-            o.responsavel.toLowerCase().includes(query)
+            o.numero.toLowerCase().includes(queryText) ||
+            o.assunto.toLowerCase().includes(queryText) ||
+            o.destinatario.toLowerCase().includes(queryText) ||
+            o.responsavel.toLowerCase().includes(queryText)
         );
     }, [oficios, searchQuery]);
 
