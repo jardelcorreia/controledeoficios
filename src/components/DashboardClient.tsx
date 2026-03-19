@@ -122,7 +122,7 @@ export default function DashboardClient() {
                 )}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                este será o próximo número de ofício a ser criado
+                Este será o próximo número de ofício a ser criado
               </p>
             </div>
             <NovoOficioDialog
@@ -141,7 +141,7 @@ export default function DashboardClient() {
         <CardHeader>
           <CardTitle>Ofícios Recentes</CardTitle>
           <CardDescription>
-            últimos ofícios criados no sistema
+            Últimos ofícios criados no sistema
           </CardDescription>
         </CardHeader>
         <CardContent>
