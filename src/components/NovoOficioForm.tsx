@@ -6,8 +6,14 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { useTransition } from "react";
-import { createOficio } from "@/lib/oficios.actions";
-import { criadoresList } from "@/lib/oficios";
+import { 
+  criadoresList, 
+  getNumeracaoConfig, 
+  getProximoNumeroSequencial, 
+  getNumeroFormatado 
+} from "@/lib/oficios";
+import { db } from "@/lib/firebase";
+import { collection, addDoc } from "firebase/firestore";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -57,17 +63,48 @@ export default function NovoOficioForm({ proximoNumero, onOficioCreated, onCance
   async function onSubmit(values: z.infer<typeof formSchema>) {
     startTransition(async () => {
       try {
-        await createOficio(values);
+        const config = await getNumeracaoConfig();
+        const numeroSequencial = await getProximoNumeroSequencial(
+          config.anoBase,
+          config.numeroInicial
+        );
+        const numeroReal = await getNumeroFormatado(
+          numeroSequencial,
+          config.anoBase,
+          config.prefixo,
+          config.sufixo
+        );
+
+        const newOficio = {
+          ...values,
+          numero: numeroReal,
+          numeroSequencial,
+          ano: config.anoBase,
+          data: new Date().toISOString(),
+          status: 'Aguardando Envio',
+        };
+
+        // Adiciona o ofício
+        await addDoc(collection(db, 'oficios'), newOficio);
+
+        // Adiciona ao histórico
+        await addDoc(collection(db, 'historico'), {
+          acao: 'Criação de Ofício',
+          detalhes: `Ofício nº ${numeroReal} criado com status 'Aguardando Envio'.`,
+          data: new Date().toISOString(),
+        });
+
         toast({
           title: "Ofício Criado!",
-          description: `O ofício nº ${proximoNumero} foi salvo com sucesso.`,
+          description: `O ofício nº ${numeroReal} foi salvo com sucesso.`,
         });
+        
         onOficioCreated();
       } catch (err) {
+        console.error(err);
         toast({
           title: "Erro ao criar ofício",
-          description:
-            "Não foi possível criar o ofício. Verifique as configurações e tente novamente.",
+          description: "Não foi possível criar o ofício. Tente novamente.",
           variant: "destructive",
         });
       }

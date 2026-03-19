@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -10,7 +10,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Oficio, Status, statusList } from "@/lib/oficios";
-import { updateOficio } from "@/lib/oficios.actions";
+import { db } from "@/lib/firebase";
+import { doc, updateDoc, addDoc, collection } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, Loader2, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -30,30 +31,37 @@ export default function StatusBadge({ oficio, onStatusChange }: StatusBadgeProps
   const [isStatusPending, startStatusTransition] = useTransition();
   const { toast } = useToast();
 
+  // Mantém o estado local sincronizado com a prop (útil para listeners em tempo real)
+  useEffect(() => {
+    setCurrentStatus(oficio.status);
+  }, [oficio.status]);
+
   const handleStatusChange = (newStatus: Status) => {
     if (currentStatus === newStatus) return;
 
     startStatusTransition(async () => {
       try {
-        await updateOficio(oficio.id, { status: newStatus });
+        const docRef = doc(db, "oficios", oficio.id);
+        await updateDoc(docRef, { status: newStatus });
+        
+        await addDoc(collection(db, 'historico'), {
+          acao: 'Alteração de Status',
+          detalhes: `Status do ofício nº ${oficio.numero} alterado para '${newStatus}'.`,
+          data: new Date().toISOString(),
+        });
+
         setCurrentStatus(newStatus);
         
         if (onStatusChange) {
             onStatusChange(newStatus);
         }
 
-        if (newStatus === "Enviado") {
-          toast({
-            title: "Ofício Enviado!",
-            description: `O ofício nº ${oficio.numero} foi marcado como enviado.`,
-          });
-        } else {
-          toast({
-            title: "Status Atualizado!",
-            description: `O status do ofício foi alterado para "${newStatus}".`,
-          });
-        }
+        toast({
+          title: newStatus === "Enviado" ? "Ofício Enviado!" : "Status Atualizado!",
+          description: `O ofício nº ${oficio.numero} foi marcado como ${newStatus.toLowerCase()}.`,
+        });
       } catch (err) {
+        console.error(err);
         toast({
           title: "Erro ao alterar status",
           description: "Não foi possível alterar o status. Tente novamente.",
@@ -98,4 +106,3 @@ export default function StatusBadge({ oficio, onStatusChange }: StatusBadgeProps
     </div>
   );
 }
-
