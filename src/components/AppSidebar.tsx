@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -23,10 +22,16 @@ import {
 } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 
 const AppSidebar = () => {
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const menuItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -86,7 +91,7 @@ const AppSidebar = () => {
             Desenvolvido por Jardel Correia
           </p>
           <p>
-            © {new Date().getFullYear()} Todos os direitos reservados.
+            © {mounted ? new Date().getFullYear() : "----"} Todos os direitos reservados.
           </p>
         </div>
       </SidebarFooter>

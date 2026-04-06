@@ -1,4 +1,3 @@
-
 "use client";
 
 import PageHeader from "@/components/PageHeader";
@@ -27,8 +26,10 @@ export default function HistoricoPage() {
     const [loading, setLoading] = useState(true);
     const [isLoadMorePending, startLoadMoreTransition] = useTransition();
     const [error, setError] = useState<Error | null>(null);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
         setLoading(true);
         getHistorico(PAGE_SIZE)
             .then(({ historico: initialHistorico, lastVisible: newLastVisible }) => {
@@ -116,35 +117,45 @@ export default function HistoricoPage() {
                       <TableCell className="font-medium">
                         <div>{item.acao}</div>
                         <div className="text-muted-foreground text-xs md:hidden flex flex-col mt-1">
-                          <span>
-                            {new Date(item.data).toLocaleDateString("pt-BR", {
-                              timeZone: "America/Sao_Paulo",
-                            })}
-                          </span>
-                          <span>
-                            {new Date(item.data).toLocaleTimeString("pt-BR", {
-                              timeZone: "America/Sao_Paulo",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
+                          {mounted ? (
+                            <>
+                              <span>
+                                {new Date(item.data).toLocaleDateString("pt-BR", {
+                                  timeZone: "America/Sao_Paulo",
+                                })}
+                              </span>
+                              <span>
+                                {new Date(item.data).toLocaleTimeString("pt-BR", {
+                                  timeZone: "America/Sao_Paulo",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="h-3 w-16 bg-muted animate-pulse rounded" />
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        <div className="flex flex-col text-xs">
-                          <span className="font-medium">
-                            {new Date(item.data).toLocaleDateString("pt-BR", {
-                              timeZone: "America/Sao_Paulo",
-                            })}
-                          </span>
-                          <span className="text-muted-foreground">
-                            {new Date(item.data).toLocaleTimeString("pt-BR", {
-                              timeZone: "America/Sao_Paulo",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
-                        </div>
+                        {mounted ? (
+                          <div className="flex flex-col text-xs">
+                            <span className="font-medium">
+                              {new Date(item.data).toLocaleDateString("pt-BR", {
+                                timeZone: "America/Sao_Paulo",
+                              })}
+                            </span>
+                            <span className="text-muted-foreground">
+                              {new Date(item.data).toLocaleTimeString("pt-BR", {
+                                timeZone: "America/Sao_Paulo",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="h-6 w-20 bg-muted animate-pulse rounded" />
+                        )}
                       </TableCell>
                       <TableCell>{item.detalhes}</TableCell>
                     </TableRow>

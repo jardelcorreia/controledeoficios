@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -32,8 +31,12 @@ export default function DashboardClient() {
   const [proximoNumero, setProximoNumero] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
-  // Listener para Ofícios Recentes
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     const q = query(
       collection(db, "oficios"),
@@ -54,7 +57,6 @@ export default function DashboardClient() {
     return () => unsubscribe();
   }, []);
 
-  // Listener para Configurações e Cálculo do Próximo Número
   useEffect(() => {
     const configRef = doc(db, "config", "numeracao");
     
@@ -152,7 +154,6 @@ export default function DashboardClient() {
             </div>
           ) : (
             <>
-              {/* Desktop View */}
               <div className="hidden md:block">
                 <Table>
                   <TableHeader>
@@ -176,10 +177,14 @@ export default function DashboardClient() {
                           <TableCell className="hidden md:table-cell"><TruncatedTooltipCell text={oficio.destinatario} /></TableCell>
                           <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{oficio.responsavel}</TableCell>
                           <TableCell>
-                            <div className="flex flex-col text-[11px] leading-tight">
-                              <span className="font-semibold">{new Date(oficio.data).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}</span>
-                              <span className="text-muted-foreground">{new Date(oficio.data).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" })}</span>
-                            </div>
+                            {mounted ? (
+                              <div className="flex flex-col text-[11px] leading-tight">
+                                <span className="font-semibold">{new Date(oficio.data).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}</span>
+                                <span className="text-muted-foreground">{new Date(oficio.data).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" })}</span>
+                              </div>
+                            ) : (
+                              <div className="h-4 w-12 bg-muted animate-pulse rounded" />
+                            )}
                           </TableCell>
                           <TableCell>
                             <Button asChild variant="ghost" size="icon" className="h-8 w-8">
@@ -197,12 +202,11 @@ export default function DashboardClient() {
                 </Table>
               </div>
 
-              {/* Mobile View */}
               <div className="md:hidden space-y-4">
                 {oficiosRecentes.length > 0 ? (
                   oficiosRecentes.map((oficio) => (
                     <Card key={oficio.id} className="flex flex-col shadow-sm border-l-4 border-l-primary overflow-hidden">
-                      <CardHeader className="flex flex-row items-center justify-between pb-2 pr-2">
+                      <CardHeader className="flex flex-row items-center justify-between pb-2 pr-4 pl-4">
                         <div className="min-w-0 pr-2">
                           <CardTitle className="text-lg font-bold text-primary">{oficio.numero}</CardTitle>
                           <div className="mt-1"><StatusBadge oficio={oficio} /></div>
@@ -211,11 +215,11 @@ export default function DashboardClient() {
                           <Link href={`/oficios/${oficio.id}`}><Eye className="h-5 w-5" /></Link>
                         </Button>
                       </CardHeader>
-                      <CardContent className="flex-1 space-y-1 py-2">
+                      <CardContent className="flex-1 space-y-1 py-2 px-4">
                         <p className="font-semibold leading-tight text-sm break-words">{oficio.assunto}</p>
                         <p className="text-xs text-muted-foreground break-words">Dest.: {oficio.destinatario}</p>
                       </CardContent>
-                      <CardFooter className="flex justify-between items-start text-[10px] text-muted-foreground border-t pt-3 mt-1 bg-muted/20 rounded-b-lg gap-2">
+                      <CardFooter className="flex justify-between items-start text-[10px] text-muted-foreground border-t pt-3 mt-1 bg-muted/20 rounded-b-lg gap-2 px-4">
                         <div className="flex items-start min-w-0 flex-1">
                           <User className="mr-1.5 h-3 w-3 mt-0.5 flex-shrink-0" />
                           <div className="flex flex-col min-w-0">
@@ -226,8 +230,14 @@ export default function DashboardClient() {
                         <div className="flex items-start flex-shrink-0 text-right">
                           <Calendar className="mr-1.5 h-3 w-3 mt-0.5" />
                           <div className="flex flex-col">
-                            <span className="whitespace-nowrap font-medium">{new Date(oficio.data).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}</span>
-                            <span className="whitespace-nowrap">{new Date(oficio.data).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" })}</span>
+                            {mounted ? (
+                              <>
+                                <span className="whitespace-nowrap font-medium">{new Date(oficio.data).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}</span>
+                                <span className="whitespace-nowrap">{new Date(oficio.data).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" })}</span>
+                              </>
+                            ) : (
+                              <span className="h-3 w-10 bg-muted animate-pulse rounded" />
+                            )}
                           </div>
                         </div>
                       </CardFooter>

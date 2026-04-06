@@ -41,10 +41,12 @@ export default function ConfiguracoesPage() {
   const [isPending, startTransition] = useTransition();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [mounted, setMounted] = useState(false);
   
   const [installPrompt, setInstallPrompt] = useState<any>(null);
 
   useEffect(() => {
+    setMounted(true);
     const handleBeforeInstallPrompt = (e: Event) => {
         e.preventDefault();
         setInstallPrompt(e);
@@ -79,12 +81,13 @@ export default function ConfiguracoesPage() {
     defaultValues: {
       prefixo: "",
       sufixo: "",
-      anoBase: new Date().getFullYear(),
+      anoBase: mounted ? new Date().getFullYear() : 2024,
       numeroInicial: 1,
     },
   });
 
   useEffect(() => {
+    if (!mounted) return;
     setLoading(true);
     getNumeracaoConfig().then((config) => {
         if (config) {
@@ -95,7 +98,7 @@ export default function ConfiguracoesPage() {
         setError(err instanceof Error ? err : new Error("Ocorreu um erro desconhecido"));
         setLoading(false);
     });
-  }, [form]);
+  }, [form, mounted]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     startTransition(async () => {
@@ -133,7 +136,7 @@ export default function ConfiguracoesPage() {
     );
   }
 
-  if (loading) {
+  if (loading || !mounted) {
     return (
        <div className="flex flex-col h-full">
         <PageHeader
