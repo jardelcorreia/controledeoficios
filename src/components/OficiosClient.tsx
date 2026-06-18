@@ -130,14 +130,20 @@ export default function OficiosClient() {
     }, []);
 
     const filteredOficios = useMemo(() => {
-        const queryText = searchQuery.toLowerCase();
+        const queryText = searchQuery.toLowerCase().trim();
         if (!queryText) return oficios;
-        return oficios.filter(o => 
-            o.numero.toLowerCase().includes(queryText) ||
-            o.assunto.toLowerCase().includes(queryText) ||
-            o.destinatario.toLowerCase().includes(queryText) ||
-            o.responsavel.toLowerCase().includes(queryText)
-        );
+
+        // Divide a busca em termos individuais (tokens)
+        const tokens = queryText.split(/\s+/).filter(t => t.length > 0);
+        if (tokens.length === 0) return oficios;
+
+        return oficios.filter(o => {
+            // Combina os campos pesquisáveis em uma única string para cada ofício
+            const searchableText = `${o.numero} ${o.assunto} ${o.destinatario} ${o.responsavel}`.toLowerCase();
+            
+            // Verifica se TODOS os tokens da busca estão presentes no texto pesquisável
+            return tokens.every(token => searchableText.includes(token));
+        });
     }, [oficios, searchQuery]);
 
     const totalPages = Math.ceil(filteredOficios.length / ITEMS_PER_PAGE);
@@ -209,7 +215,7 @@ export default function OficiosClient() {
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input 
-                            placeholder="Buscar por número, assunto, destinatário..."
+                            placeholder="Ex: OF GAB 001 (termos não sequenciais)"
                             className="pl-10 w-full sm:max-w-md h-11"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
