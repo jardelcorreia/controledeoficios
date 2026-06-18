@@ -215,7 +215,7 @@ export default function OficiosClient() {
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input 
-                            placeholder="Ex: OF GAB 001 (termos não sequenciais)"
+                            placeholder="Ex: práxis 2025(termos sequenciais ou não)"
                             className="pl-10 w-full sm:max-w-md h-11"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
