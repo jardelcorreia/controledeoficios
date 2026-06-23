@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -125,7 +124,7 @@ export default function NovoOficioForm({ proximoNumero, onOficioCreated, onCance
                 </FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="Ex: Manutenção de via pública" 
+                    placeholder="Digite o assunto do ofício" 
                     className="h-10"
                     {...field} 
                   />
@@ -146,7 +145,7 @@ export default function NovoOficioForm({ proximoNumero, onOficioCreated, onCance
                 </FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="Ex: Secretaria de Infraestrutura" 
+                    placeholder="Ex: Setor Financeiro" 
                     className="h-10"
                     {...field} 
                   />
