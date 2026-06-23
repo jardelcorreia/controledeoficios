@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -111,21 +112,21 @@ export default function NovoOficioForm({ proximoNumero, onOficioCreated, onCance
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-        <div className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="space-y-5">
           <FormField
             control={form.control}
             name="assunto"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="flex items-center gap-2">
-                  <MessageSquare className="size-3.5 text-muted-foreground" />
+                <FormLabel className="flex items-center gap-2 text-sm font-semibold mb-1.5">
+                  <MessageSquare className="size-3.5 text-primary/70" />
                   Assunto
                 </FormLabel>
                 <FormControl>
                   <Input 
                     placeholder="Digite o assunto do ofício" 
-                    className="h-10"
+                    className="h-11 rounded-lg border-muted-foreground/20 focus:border-primary/50"
                     {...field} 
                   />
                 </FormControl>
@@ -139,14 +140,14 @@ export default function NovoOficioForm({ proximoNumero, onOficioCreated, onCance
             name="destinatario"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="flex items-center gap-2">
-                  <Send className="size-3.5 text-muted-foreground" />
+                <FormLabel className="flex items-center gap-2 text-sm font-semibold mb-1.5">
+                  <Send className="size-3.5 text-primary/70" />
                   Destinatário
                 </FormLabel>
                 <FormControl>
                   <Input 
                     placeholder="Ex: Setor Financeiro" 
-                    className="h-10"
+                    className="h-11 rounded-lg border-muted-foreground/20 focus:border-primary/50"
                     {...field} 
                   />
                 </FormControl>
@@ -160,19 +161,19 @@ export default function NovoOficioForm({ proximoNumero, onOficioCreated, onCance
             name="responsavel"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="flex items-center gap-2">
-                  <User className="size-3.5 text-muted-foreground" />
+                <FormLabel className="flex items-center gap-2 text-sm font-semibold mb-1.5">
+                  <User className="size-3.5 text-primary/70" />
                   Responsável
                 </FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger className="h-10">
+                    <SelectTrigger className="h-11 rounded-lg border-muted-foreground/20 focus:border-primary/50">
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
+                  <SelectContent className="rounded-xl">
                     {criadoresList.map((nome) => (
-                      <SelectItem key={nome} value={nome}>
+                      <SelectItem key={nome} value={nome} className="py-3">
                         {nome}
                       </SelectItem>
                     ))}
@@ -184,21 +185,20 @@ export default function NovoOficioForm({ proximoNumero, onOficioCreated, onCance
           />
         </div>
 
-        <div className="flex justify-end gap-3 pt-4">
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 sm:pt-2">
           <Button 
             variant="ghost" 
             type="button" 
             onClick={onCancel} 
             disabled={isPending}
-            size="sm"
+            className="h-11 rounded-lg sm:h-9"
           >
             Cancelar
           </Button>
           <Button 
             type="submit" 
             disabled={isPending || !proximoNumero}
-            size="sm"
-            className="min-w-[120px]"
+            className="h-11 rounded-lg sm:h-9 sm:min-w-[140px] shadow-lg shadow-primary/10"
           >
             {isPending ? (
               <>
