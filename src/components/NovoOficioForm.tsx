@@ -23,7 +23,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -86,10 +85,8 @@ export default function NovoOficioForm({ proximoNumero, onOficioCreated, onCance
           status: 'Aguardando Envio',
         };
 
-        // Adiciona o ofício
         await addDoc(collection(db, 'oficios'), newOficio);
 
-        // Adiciona ao histórico
         await addDoc(collection(db, 'historico'), {
           acao: 'Criação de Ofício',
           detalhes: `Ofício nº ${numeroReal} criado com status 'Aguardando Envio'.`,
@@ -115,27 +112,24 @@ export default function NovoOficioForm({ proximoNumero, onOficioCreated, onCance
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
         <div className="space-y-4">
           <FormField
             control={form.control}
             name="assunto"
             render={({ field }) => (
               <FormItem>
-                <div className="flex items-center gap-2 mb-1">
-                  <MessageSquare className="size-4 text-muted-foreground" />
-                  <FormLabel className="font-semibold">Assunto do Documento</FormLabel>
-                </div>
+                <FormLabel className="flex items-center gap-2">
+                  <MessageSquare className="size-3.5 text-muted-foreground" />
+                  Assunto
+                </FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="Ex: Solicitação de manutenção de via pública" 
-                    className="h-11 shadow-sm focus-visible:ring-primary"
+                    placeholder="Ex: Manutenção de via pública" 
+                    className="h-10"
                     {...field} 
                   />
                 </FormControl>
-                <FormDescription className="text-[11px]">
-                  Descreva brevemente a finalidade deste ofício.
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -146,20 +140,17 @@ export default function NovoOficioForm({ proximoNumero, onOficioCreated, onCance
             name="destinatario"
             render={({ field }) => (
               <FormItem>
-                <div className="flex items-center gap-2 mb-1">
-                  <Send className="size-4 text-muted-foreground" />
-                  <FormLabel className="font-semibold">Destinatário</FormLabel>
-                </div>
+                <FormLabel className="flex items-center gap-2">
+                  <Send className="size-3.5 text-muted-foreground" />
+                  Destinatário
+                </FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="Ex: Secretaria Municipal de Infraestrutura" 
-                    className="h-11 shadow-sm focus-visible:ring-primary"
+                    placeholder="Ex: Secretaria de Infraestrutura" 
+                    className="h-10"
                     {...field} 
                   />
                 </FormControl>
-                <FormDescription className="text-[11px]">
-                  Indique o setor ou autoridade que receberá o ofício.
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -170,14 +161,14 @@ export default function NovoOficioForm({ proximoNumero, onOficioCreated, onCance
             name="responsavel"
             render={({ field }) => (
               <FormItem>
-                <div className="flex items-center gap-2 mb-1">
-                  <User className="size-4 text-muted-foreground" />
-                  <FormLabel className="font-semibold">Responsável pela Elaboração</FormLabel>
-                </div>
+                <FormLabel className="flex items-center gap-2">
+                  <User className="size-3.5 text-muted-foreground" />
+                  Responsável
+                </FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger className="h-11 shadow-sm focus-visible:ring-primary">
-                      <SelectValue placeholder="Selecione o emissor..." />
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -194,20 +185,21 @@ export default function NovoOficioForm({ proximoNumero, onOficioCreated, onCance
           />
         </div>
 
-        <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t">
+        <div className="flex justify-end gap-3 pt-4">
           <Button 
             variant="ghost" 
             type="button" 
             onClick={onCancel} 
             disabled={isPending}
-            className="sm:w-24"
+            size="sm"
           >
             Cancelar
           </Button>
           <Button 
             type="submit" 
             disabled={isPending || !proximoNumero}
-            className="sm:min-w-[140px] shadow-md transition-all active:scale-95"
+            size="sm"
+            className="min-w-[120px]"
           >
             {isPending ? (
               <>

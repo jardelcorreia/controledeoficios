@@ -59,41 +59,30 @@ export default function NovoOficioDialog({ triggerButton, proximoNumero: initial
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{triggerButton}</DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden flex flex-col gap-0">
-        <DialogHeader className="p-6 pb-4 border-b bg-muted/20">
-          <div className="flex items-center gap-3 mb-1">
-            <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <FilePlus2 className="size-5 text-primary" />
-            </div>
-            <DialogTitle className="text-xl">Novo Ofício</DialogTitle>
-          </div>
+      <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden flex flex-col gap-0">
+        <DialogHeader className="p-5 border-b">
+          <DialogTitle className="flex items-center gap-2 text-lg">
+            <FilePlus2 className="size-5 text-primary" />
+            Novo Ofício
+          </DialogTitle>
           
-          {loading ? (
-            <div className="flex items-center gap-2 pt-2">
-              <Loader2 className="size-4 animate-spin text-muted-foreground" />
-              <Skeleton className="h-4 w-40" />
-            </div>
-          ) : (
-            <DialogDescription className="text-sm">
-              {proximoNumero && proximoNumero !== "Erro!" ? (
-                <span>
-                  O documento será gerado sob o número:{" "}
-                  <span className="font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
-                    {proximoNumero}
-                  </span>
-                </span>
-              ) : (
-                <span className="flex items-center gap-1.5 text-destructive">
-                  <AlertCircle className="size-4" />
-                  Falha ao obter numeração automática.
-                </span>
-              )}
-            </DialogDescription>
-          )}
+          <DialogDescription className="text-sm mt-1">
+            {loading ? (
+              <Skeleton className="h-4 w-32" />
+            ) : proximoNumero && proximoNumero !== "Erro!" ? (
+              <span>
+                Número gerado: <span className="font-bold text-foreground">{proximoNumero}</span>
+              </span>
+            ) : (
+              <span className="text-destructive flex items-center gap-1">
+                <AlertCircle className="size-3" /> Erro na numeração
+              </span>
+            )}
+          </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 max-h-[80vh]">
-          <div className="p-6">
+        <ScrollArea className="flex-1 max-h-[85vh]">
+          <div className="p-5">
             {!loading && proximoNumero && proximoNumero !== "Erro!" ? (
               <NovoOficioForm
                 proximoNumero={proximoNumero}
@@ -101,21 +90,17 @@ export default function NovoOficioDialog({ triggerButton, proximoNumero: initial
                 onCancel={handleCancel}
               />
             ) : !loading && (
-              <div className="py-8 text-center space-y-3">
-                <AlertCircle className="size-10 text-destructive mx-auto opacity-50" />
-                <p className="text-sm text-muted-foreground">
-                  Ocorreu um erro ao carregar as configurações do sistema.<br/>
-                  Por favor, verifique a aba de configurações.
-                </p>
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                <AlertCircle className="size-8 text-destructive/50 mx-auto mb-2" />
+                Erro ao carregar configurações.
               </div>
             )}
             
             {loading && (
-              <div className="space-y-6 py-2">
-                <div className="space-y-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-11 w-full" /></div>
-                <div className="space-y-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-11 w-full" /></div>
-                <div className="space-y-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-11 w-full" /></div>
-                <div className="flex justify-end gap-3 pt-4"><Skeleton className="h-10 w-24" /><Skeleton className="h-10 w-32" /></div>
+              <div className="space-y-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
               </div>
             )}
           </div>
